@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     LIVENESS_WEIGHT: float = 0.30
     BACKGROUND_WEIGHT: float = 0.20
     PASS_THRESHOLD: float = 0.75
-    FRONTEND_URL: str = Field(default="http://localhost:3000", description="Frontend URL for CORS")
+    FRONTEND_URL: str = Field(default="https://smartattandancesystem.vercel.app", description="Frontend URL for CORS")
     ENVIRONMENT: str = "development"
     LOG_LEVEL: str = Field(default="DEBUG", description="Logging level: DEBUG, INFO, WARNING, ERROR, CRITICAL")
 

@@ -1,10 +1,8 @@
 library;
 
-const String kApiBaseUrl = String.fromEnvironment(
-  'API_BASE_URL',
-  // defaultValue: 'http://192.168.31.239:8000/api/v1',
-  defaultValue: 'http://10.0.2.2:8000/api/v1',
-);
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+final String kApiBaseUrl = dotenv.env['API_BASE_URL'] ?? '';
 
 const String kHiveBoxProfile = 'sas_profile';
 const String kHiveBoxOfflineQueue = 'sas_offline_queue';

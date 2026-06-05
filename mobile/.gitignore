@@ -39,3 +39,6 @@ app.*.map.json
 
 # OS files
 .DS_Store
+
+# Environment files
+.env

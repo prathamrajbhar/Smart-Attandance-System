@@ -60,6 +60,9 @@ uploads/
 *.joblib
 *.onnx
 
+# Allow tracking model files in the models directory
+!models/**/*.h5
+
 # Pytest
 .pytest_cache/
 .coverage

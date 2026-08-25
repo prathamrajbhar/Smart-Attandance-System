@@ -19,3 +19,4 @@ EXPOSE 7860
 
 CMD ["sh", "-c", "python -m prisma db push && uvicorn main:app --host 0.0.0.0 --port 7860"]
 
+

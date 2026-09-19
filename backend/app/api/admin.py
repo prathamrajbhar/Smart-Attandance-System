@@ -77,7 +77,12 @@ async def bulk_create_students(
     current_user: User = Depends(get_current_user),
     admin_service: AdminService = Depends(),
 ):
-    return await admin_service.bulk_create_students(data.students, actor=current_user.email, ip=_get_client_ip(request))
+    return await admin_service.bulk_create_students(
+        data.students,
+        send_invite=data.send_invite,
+        actor=current_user.email,
+        ip=_get_client_ip(request),
+    )
 
 
 @router.post("/users/teachers/bulk", response_model=BulkImportResponse, status_code=status.HTTP_200_OK)
@@ -88,7 +93,12 @@ async def bulk_create_teachers(
     current_user: User = Depends(get_current_user),
     admin_service: AdminService = Depends(),
 ):
-    return await admin_service.bulk_create_teachers(data.teachers, actor=current_user.email, ip=_get_client_ip(request))
+    return await admin_service.bulk_create_teachers(
+        data.teachers,
+        send_invite=data.send_invite,
+        actor=current_user.email,
+        ip=_get_client_ip(request),
+    )
 
 
 

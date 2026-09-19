@@ -12,7 +12,11 @@ export const teacherColumns: TableColumn<TeacherResponse & Record<string, unknow
     header: "Faculty / User",
     sortable: true,
     render: (r) => {
+      const firstName = r.first_name || (r as { firstName?: string }).firstName;
+      const lastName = r.last_name || (r as { lastName?: string }).lastName;
+      const combined = [firstName, lastName].filter(Boolean).join(" ");
       const name = String(
+        combined ||
         (r as { fullName?: string }).fullName ||
         (r as { full_name?: string }).full_name ||
         (r as { name?: string }).name ||
@@ -34,24 +38,53 @@ export const teacherColumns: TableColumn<TeacherResponse & Record<string, unknow
     },
   },
   {
+    key: "employee_id",
+    header: "Employee ID",
+    sortable: true,
+    render: (r) => {
+      const empId = r.employee_id || (r as { employeeId?: string }).employeeId || "FAC-000";
+      return (
+        <span className="font-mono text-xs text-foreground bg-secondary/80 px-2 py-0.5 rounded border border-border">
+          {String(empId)}
+        </span>
+      );
+    },
+  },
+  {
     key: "designation",
     header: "Academic Rank",
     sortable: true,
-    render: (r) => (
-      <span className="inline-flex items-center px-2 py-0.5 rounded-md border border-border bg-card text-[11px] font-medium text-foreground shadow-2xs">
-        {String(r.designation || "Faculty Member")}
-      </span>
-    ),
+    render: (r) => {
+      let desig = "Faculty Member";
+      if (typeof r.designation === "string") {
+        desig = r.designation;
+      } else if (r.designation && typeof (r.designation as { title?: string }).title === "string") {
+        desig = (r.designation as { title: string }).title;
+      }
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-md border border-border bg-card text-[11px] font-medium text-foreground shadow-2xs">
+          {desig}
+        </span>
+      );
+    },
   },
   {
     key: "department",
     header: "Department",
     sortable: true,
-    render: (r) => (
-      <span className="text-xs text-muted-foreground font-medium">
-        {String(r.department || "Academic Faculty")}
-      </span>
-    ),
+    render: (r) => {
+      let dept = "Academic Faculty";
+      if (typeof r.department === "string") {
+        dept = r.department;
+      } else if (r.department && typeof (r.department as { name?: string }).name === "string") {
+        dept = (r.department as { name: string }).name;
+      }
+      return (
+        <span className="text-xs text-muted-foreground font-medium">
+          {dept}
+        </span>
+      );
+    },
   },
   {
     key: "status",

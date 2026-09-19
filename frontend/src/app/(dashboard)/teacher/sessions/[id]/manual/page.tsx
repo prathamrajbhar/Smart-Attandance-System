@@ -108,11 +108,12 @@ export default function ManualAttendancePage(): React.ReactElement {
 
   const filteredStudents = useMemo(() => {
     return roster
-      ? roster.roster.filter(
-          (s) =>
-            s.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            s.enrollment_number.toLowerCase().includes(searchQuery.toLowerCase())
-        )
+      ? roster.roster.filter((s) => {
+          const name = (s.full_name || (s as { student_name?: string }).student_name || "").toLowerCase();
+          const enroll = (s.enrollment_number || "").toLowerCase();
+          const q = searchQuery.toLowerCase();
+          return name.includes(q) || enroll.includes(q);
+        })
       : [];
   }, [roster, searchQuery]);
 

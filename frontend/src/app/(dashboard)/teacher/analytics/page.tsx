@@ -75,7 +75,7 @@ export default function AnalyticsPage(): React.ReactElement {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
             <GlassStatCard icon={<BookOpen size={22} />} label="Total Sessions" value={stats.total_sessions} accentColor="emerald" />
             <GlassStatCard icon={<Users size={22} />} label="Enrolled Students" value={stats.total_students} accentColor="emerald" />
-            <GlassStatCard icon={<TrendingUp size={22} />} label="Attendance Rate" value={`${stats.overall_attendance_percentage.toFixed(1)}%`} accentColor="emerald" />
+            <GlassStatCard icon={<TrendingUp size={22} />} label="Attendance Rate" value={`${(stats.overall_attendance_percentage ?? 0).toFixed(1)}%`} accentColor="emerald" />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

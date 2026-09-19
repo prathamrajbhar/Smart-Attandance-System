@@ -26,12 +26,12 @@ export default function EditStudentPage(): React.ReactElement {
   useEffect(() => {
     async function fetchStudentAndDeps(): Promise<void> {
       try {
-        const [studentsRes, depsRes] = await Promise.all([
-          api.get<StudentResponse[]>("/admin/users/students"),
+        const [studentRes, depsRes] = await Promise.all([
+          api.get<StudentResponse>(`/admin/users/students/${id}`),
           api.get<DepartmentResponse[]>("/admin/departments").catch(() => ({ data: [] })),
         ]);
         setDepartments(depsRes.data);
-        const found = studentsRes.data.find((s) => s.id === id);
+        const found = studentRes.data;
         if (found) {
           setStudent(found);
           setForm({

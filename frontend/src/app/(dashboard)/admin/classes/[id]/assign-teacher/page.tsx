@@ -22,11 +22,19 @@ export default function AssignTeacherPage(): React.ReactElement {
 
   useEffect(() => {
     async function fetch(): Promise<void> {
-      try { const { data } = await api.get<TeacherResponse[]>("/admin/users/teachers"); setTeachers(data); }
-      catch (err: unknown) { toast.error(getApiErrorMessage(err, "Failed to load teachers")); }
-      finally { setLoading(false); }
+      try {
+        const { data } = await api.get<TeacherResponse[] | { items?: TeacherResponse[] }>(
+          "/admin/users/teachers?page_size=100"
+        );
+        const list = Array.isArray(data) ? data : data?.items || [];
+        setTeachers(list);
+      } catch (err: unknown) {
+        toast.error(getApiErrorMessage(err, "Failed to load teachers"));
+      } finally {
+        setLoading(false);
+      }
     }
-    fetch();
+    void fetch();
   }, []);
 
   async function handleSubmit(e: React.FormEvent): Promise<void> {
@@ -50,8 +58,16 @@ export default function AssignTeacherPage(): React.ReactElement {
       <GlassPageHeader title="Assign Teacher" description="Select a teacher to manage this class" />
       <GlassCard className="max-w-xl">
         <form onSubmit={handleSubmit} className="space-y-5">
-          <GlassSelect label="Teacher" options={teachers.map((t) => ({ value: t.id, label: `${t.email} — ${t.department}` }))}
-            value={teacherId} onChange={setTeacherId} placeholder="Select teacher..." />
+          <GlassSelect
+            label="Teacher"
+            options={teachers.map((t) => ({
+              value: t.id,
+              label: `${t.first_name || ""} ${t.last_name || ""} (${t.email})${t.department ? ` — ${t.department}` : ""}`.trim(),
+            }))}
+            value={teacherId}
+            onChange={setTeacherId}
+            placeholder="Select teacher..."
+          />
           <div className="flex justify-end gap-3 pt-4">
             <GlassButton variant="ghost" type="button" onClick={() => router.back()}>Cancel</GlassButton>
             <GlassButton variant="primary" type="submit" loading={saving}>Assign Teacher</GlassButton>

@@ -40,7 +40,7 @@ export default function ManualAttendanceStudentRow({
           {student.enrollment_number}
         </span>
         <span className="font-medium text-foreground text-sm truncate">
-          {student.full_name}
+          {student.full_name || (student as { student_name?: string }).student_name || "Unknown Student"}
         </span>
       </div>
 

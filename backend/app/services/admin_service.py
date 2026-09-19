@@ -636,6 +636,7 @@ class AdminService:
     async def bulk_create_students(
         self,
         students: list,
+        send_invite: bool = True,
         actor: str = "system",
         ip: Optional[str] = None,
     ) -> dict:
@@ -643,6 +644,7 @@ class AdminService:
 
         imported_count = 0
         failed_count = 0
+        invitations_sent = 0
         errors = []
 
         for idx, item in enumerate(students):
@@ -679,6 +681,28 @@ class AdminService:
                     }.items() if v is not None}
                 )
                 imported_count += 1
+
+                if send_invite:
+                    try:
+                        from app.services.auth_service import AuthService
+                        from app.services.email_service import email_service
+                        name = f"{item.first_name or ''} {item.last_name or ''}".strip() or "Student"
+                        token = await AuthService().create_invitation_token(
+                            user_id=user.id, email=user.email, role="STUDENT", name=name
+                        )
+                        await email_service.send_invitation_email(
+                            to_email=user.email,
+                            recipient_name=name,
+                            role="STUDENT",
+                            invite_token=token,
+                            identifier_label="Enrollment Number",
+                            identifier_value=item.enrollment_number,
+                            temp_password=plain_password,
+                        )
+                        invitations_sent += 1
+                    except Exception as invite_err:
+                        logger.warning("Failed to send student invite email to %s: %s", item.email, invite_err)
+
             except Exception as e:
                 errors.append(f"Row {idx + 1} ({item.email}): {str(e)}")
                 failed_count += 1
@@ -689,19 +713,21 @@ class AdminService:
                 "INFO",
                 actor,
                 "SYSTEM",
-                f"Bulk imported {imported_count} students ({failed_count} failed)",
+                f"Bulk imported {imported_count} students ({failed_count} failed, {invitations_sent} invited)",
                 ip,
             )
 
         return {
             "imported_count": imported_count,
             "failed_count": failed_count,
+            "invitations_sent": invitations_sent,
             "errors": errors,
         }
 
     async def bulk_create_teachers(
         self,
         teachers: list,
+        send_invite: bool = True,
         actor: str = "system",
         ip: Optional[str] = None,
     ) -> dict:
@@ -709,7 +735,17 @@ class AdminService:
 
         imported_count = 0
         failed_count = 0
+        invitations_sent = 0
         errors = []
+
+        default_dept_id = None
+        default_desig_id = None
+        first_dept = await db.department.find_first()
+        if first_dept:
+            default_dept_id = first_dept.id
+        first_desig = await db.designation.find_first()
+        if first_desig:
+            default_desig_id = first_desig.id
 
         for idx, item in enumerate(teachers):
             try:
@@ -725,6 +761,18 @@ class AdminService:
                     failed_count += 1
                     continue
 
+                dept_id = item.department_id or default_dept_id
+                if not dept_id:
+                    created_dept = await db.department.create(data={"name": "General Academics", "code": "GEN"})
+                    default_dept_id = created_dept.id
+                    dept_id = default_dept_id
+
+                desig_id = item.designation_id or default_desig_id
+                if not desig_id:
+                    created_desig = await db.designation.create(data={"name": "Lecturer", "code": "LEC"})
+                    default_desig_id = created_desig.id
+                    desig_id = default_desig_id
+
                 plain_password = generate_temporary_password()
                 user = await db.user.create(data={
                     "email": item.email,
@@ -739,11 +787,33 @@ class AdminService:
                         "firstName": item.first_name,
                         "lastName": item.last_name,
                         "phone": item.phone,
-                        "departmentId": item.department_id,
-                        "designationId": item.designation_id,
+                        "departmentId": dept_id,
+                        "designationId": desig_id,
                     }.items() if v is not None}
                 )
                 imported_count += 1
+
+                if send_invite:
+                    try:
+                        from app.services.auth_service import AuthService
+                        from app.services.email_service import email_service
+                        name = f"{item.first_name or ''} {item.last_name or ''}".strip() or "Faculty"
+                        token = await AuthService().create_invitation_token(
+                            user_id=user.id, email=user.email, role="TEACHER", name=name
+                        )
+                        await email_service.send_invitation_email(
+                            to_email=user.email,
+                            recipient_name=name,
+                            role="TEACHER",
+                            invite_token=token,
+                            identifier_label="Employee ID",
+                            identifier_value=item.employee_id,
+                            temp_password=plain_password,
+                        )
+                        invitations_sent += 1
+                    except Exception as invite_err:
+                        logger.warning("Failed to send faculty invite email to %s: %s", item.email, invite_err)
+
             except Exception as e:
                 errors.append(f"Row {idx + 1} ({item.email}): {str(e)}")
                 failed_count += 1
@@ -754,13 +824,14 @@ class AdminService:
                 "INFO",
                 actor,
                 "SYSTEM",
-                f"Bulk imported {imported_count} faculty ({failed_count} failed)",
+                f"Bulk imported {imported_count} faculty ({failed_count} failed, {invitations_sent} invited)",
                 ip,
             )
 
         return {
             "imported_count": imported_count,
             "failed_count": failed_count,
+            "invitations_sent": invitations_sent,
             "errors": errors,
         }
 

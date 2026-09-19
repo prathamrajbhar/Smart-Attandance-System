@@ -33,13 +33,16 @@ export default function CreateClassPage(): React.ReactElement {
     async function fetchMasterData(): Promise<void> {
       try {
         const [teachersRes, subjectsRes, classroomsRes] = await Promise.all([
-          api.get<TeacherResponse[]>("/admin/users/teachers"),
+          api.get<TeacherResponse[] | { items?: TeacherResponse[] }>("/admin/users/teachers?page_size=100"),
           api.get<SubjectResponse[]>("/admin/subjects"),
           api.get<ClassroomResponse[]>("/admin/classrooms"),
         ]);
-        setTeachers(teachersRes.data);
-        setSubjects(subjectsRes.data);
-        setClassrooms(classroomsRes.data);
+        const teacherList = Array.isArray(teachersRes.data)
+          ? teachersRes.data
+          : teachersRes.data?.items || [];
+        setTeachers(teacherList);
+        setSubjects(Array.isArray(subjectsRes.data) ? subjectsRes.data : []);
+        setClassrooms(Array.isArray(classroomsRes.data) ? classroomsRes.data : []);
       } catch {
         toast.error("Could not load master data.");
       }
@@ -78,7 +81,10 @@ export default function CreateClassPage(): React.ReactElement {
 
   const teacherOptions = [
     { value: "", label: "— Select Teacher —" },
-    ...teachers.map((t) => ({ value: t.id, label: `${t.first_name} ${t.last_name} — ${t.department}` })),
+    ...teachers.map((t) => ({
+      value: t.id,
+      label: `${t.first_name || ""} ${t.last_name || ""} (${t.email})${t.department ? ` — ${t.department}` : ""}`.trim(),
+    })),
   ];
   const subjectOptions = [
     { value: "", label: "— Select Subject —" },

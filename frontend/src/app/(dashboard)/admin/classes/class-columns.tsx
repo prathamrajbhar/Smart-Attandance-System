@@ -62,13 +62,45 @@ export const classColumns: TableColumn<ClassResponse & Record<string, unknown>>[
     },
   },
   {
+    key: "teacher_name",
+    header: "Teacher",
+    sortable: true,
+    render: (r) => {
+      let tName: string = typeof r.teacher_name === "string" ? r.teacher_name : "Unassigned";
+      const teacherObj = (r as { teacher?: { firstName?: string; lastName?: string; name?: string } }).teacher;
+      if (teacherObj) {
+        const full = [teacherObj.firstName, teacherObj.lastName].filter(Boolean).join(" ");
+        if (full) tName = full;
+        else if (typeof teacherObj.name === "string") tName = teacherObj.name;
+      }
+      return (
+        <span className="text-xs text-foreground font-medium">
+          {tName}
+        </span>
+      );
+    },
+  },
+  {
     key: "classroom_name",
     header: "Classroom / Hall",
-    render: (r) => (
-      <span className="text-muted-foreground text-xs font-medium">
-        {r.classroom_name || (r as { classroomName?: string }).classroomName || "Main Hall"}
-      </span>
-    ),
+    render: (r) => {
+      let room: string =
+        typeof r.classroom_name === "string"
+          ? r.classroom_name
+          : typeof (r as { classroomName?: string }).classroomName === "string"
+          ? (r as { classroomName?: string }).classroomName!
+          : "Main Hall";
+      const roomObj = (r as { classroom?: { roomNumber?: string; name?: string } }).classroom;
+      if (roomObj) {
+        if (typeof roomObj.roomNumber === "string") room = roomObj.roomNumber;
+        else if (typeof roomObj.name === "string") room = roomObj.name;
+      }
+      return (
+        <span className="text-muted-foreground text-xs font-medium">
+          {room}
+        </span>
+      );
+    },
   },
   {
     key: "actions",

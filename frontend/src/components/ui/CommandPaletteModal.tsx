@@ -19,6 +19,7 @@ interface CommandItem {
   category: "Navigation" | "Administration" | "Faculty";
   href: string;
   icon: React.ReactNode;
+  keywords?: string[];
 }
 
 export default function CommandPaletteModal({ isOpen, onClose }: CommandPaletteModalProps): React.ReactElement | null {
@@ -32,26 +33,28 @@ export default function CommandPaletteModal({ isOpen, onClose }: CommandPaletteM
 
   const allItems: CommandItem[] = [
     ...(isAdmin ? [
-      { id: "admin-dash", label: "Admin Dashboard", category: "Administration" as const, href: "/admin/dashboard", icon: <LayoutDashboard size={16} /> },
-      { id: "admin-students", label: "Student & Access Management", category: "Administration" as const, href: "/admin/users/students", icon: <GraduationCap size={16} /> },
-      { id: "admin-teachers", label: "Faculty & Staff Directory", category: "Administration" as const, href: "/admin/users/teachers", icon: <Users size={16} /> },
-      { id: "admin-classes", label: "Class & Course Directory", category: "Administration" as const, href: "/admin/classes", icon: <BookOpen size={16} /> },
-      { id: "admin-scanner", label: "AI Absentee Scanner", category: "Administration" as const, href: "/admin/scanner", icon: <Cpu size={16} /> },
-      { id: "admin-audit", label: "System Audit Trail", category: "Administration" as const, href: "/admin/audit", icon: <Activity size={16} /> },
-      { id: "admin-settings", label: "Verification Settings", category: "Administration" as const, href: "/admin/setup/verification-settings", icon: <ShieldCheck size={16} /> },
+      { id: "admin-dash", label: "Admin Dashboard", category: "Administration" as const, href: "/admin/dashboard", icon: <LayoutDashboard size={16} />, keywords: ["overview", "stats", "kpi"] },
+      { id: "admin-students", label: "Student & Access Management", category: "Administration" as const, href: "/admin/users/students", icon: <GraduationCap size={16} />, keywords: ["student", "students", "directory", "access", "enrollment"] },
+      { id: "admin-teachers", label: "Faculty & Staff Directory", category: "Administration" as const, href: "/admin/users/teachers", icon: <Users size={16} />, keywords: ["teacher", "teachers", "faculty", "staff", "professors"] },
+      { id: "admin-classes", label: "Class & Course Directory", category: "Administration" as const, href: "/admin/classes", icon: <BookOpen size={16} />, keywords: ["class", "classes", "course", "courses", "subjects"] },
+      { id: "admin-scanner", label: "AI Absentee Scanner", category: "Administration" as const, href: "/admin/scanner", icon: <Cpu size={16} />, keywords: ["scanner", "ai", "absentee", "anomalies"] },
+      { id: "admin-audit", label: "System Audit Trail", category: "Administration" as const, href: "/admin/audit", icon: <Activity size={16} />, keywords: ["audit", "logs", "events", "trail", "security"] },
+      { id: "admin-settings", label: "Verification Settings", category: "Administration" as const, href: "/admin/setup/verification-settings", icon: <ShieldCheck size={16} />, keywords: ["settings", "verification", "biometrics", "gps", "ble"] },
     ] : [
-      { id: "teacher-dash", label: "Faculty Console", category: "Faculty" as const, href: "/teacher/dashboard", icon: <LayoutDashboard size={16} /> },
-      { id: "teacher-classes", label: "My Classes & Geofences", category: "Faculty" as const, href: "/teacher/classes", icon: <BookOpen size={16} /> },
-      { id: "teacher-sessions", label: "Broadcast Sessions", category: "Faculty" as const, href: "/teacher/sessions", icon: <Radio size={16} /> },
-      { id: "teacher-review", label: "Review Queue", category: "Faculty" as const, href: "/teacher/review", icon: <ClipboardCheck size={16} /> },
-      { id: "teacher-analytics", label: "Attendance Analytics", category: "Faculty" as const, href: "/teacher/analytics", icon: <Activity size={16} /> },
-      { id: "teacher-profile", label: "Profile & Security", category: "Faculty" as const, href: "/teacher/profile", icon: <ShieldCheck size={16} /> },
+      { id: "teacher-dash", label: "Faculty Console", category: "Faculty" as const, href: "/teacher/dashboard", icon: <LayoutDashboard size={16} />, keywords: ["overview", "console"] },
+      { id: "teacher-classes", label: "My Classes & Geofences", category: "Faculty" as const, href: "/teacher/classes", icon: <BookOpen size={16} />, keywords: ["class", "classes", "courses"] },
+      { id: "teacher-sessions", label: "Broadcast Sessions", category: "Faculty" as const, href: "/teacher/sessions", icon: <Radio size={16} />, keywords: ["session", "sessions", "broadcast", "attendance"] },
+      { id: "teacher-review", label: "Review Queue", category: "Faculty" as const, href: "/teacher/review", icon: <ClipboardCheck size={16} />, keywords: ["review", "queue", "manual", "approvals"] },
+      { id: "teacher-analytics", label: "Attendance Analytics", category: "Faculty" as const, href: "/teacher/analytics", icon: <Activity size={16} />, keywords: ["analytics", "reports", "insights"] },
+      { id: "teacher-profile", label: "Profile & Security", category: "Faculty" as const, href: "/teacher/profile", icon: <ShieldCheck size={16} />, keywords: ["profile", "password", "security"] },
     ]),
   ];
 
+  const q = query.toLowerCase().trim();
   const filtered = allItems.filter(item => 
-    item.label.toLowerCase().includes(query.toLowerCase()) || 
-    item.category.toLowerCase().includes(query.toLowerCase())
+    item.label.toLowerCase().includes(q) || 
+    item.category.toLowerCase().includes(q) ||
+    (item.keywords && item.keywords.some(k => k.includes(q) || q.includes(k)))
   );
 
   useEffect(() => {

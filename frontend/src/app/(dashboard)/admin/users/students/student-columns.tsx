@@ -12,7 +12,9 @@ export const studentColumns: TableColumn<StudentResponse & Record<string, unknow
     header: "User",
     sortable: true,
     render: (r) => {
-      const name = [r.first_name, r.last_name].filter(Boolean).join(" ") || r.email || "Student";
+      const firstName = r.first_name || (r as { firstName?: string }).firstName;
+      const lastName = r.last_name || (r as { lastName?: string }).lastName;
+      const name = [firstName, lastName].filter(Boolean).join(" ") || r.email || "Student";
       const initial = name.charAt(0).toUpperCase();
       return (
         <div className="flex items-center gap-2.5">
@@ -50,11 +52,17 @@ export const studentColumns: TableColumn<StudentResponse & Record<string, unknow
     key: "department",
     header: "Associated Entity",
     sortable: true,
-    render: (r) => (
-      <span className="text-xs text-muted-foreground font-medium">
-        {String(r.department || "General Academic")}
-      </span>
-    ),
+    render: (r) => {
+      const deptName =
+        r.department_name ||
+        (typeof r.department === "string" ? r.department : (r.department as { name?: string })?.name) ||
+        "General Academic";
+      return (
+        <span className="text-xs text-muted-foreground font-medium">
+          {deptName}
+        </span>
+      );
+    },
   },
   {
     key: "status",

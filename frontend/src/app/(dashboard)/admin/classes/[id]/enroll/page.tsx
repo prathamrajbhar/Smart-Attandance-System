@@ -2,16 +2,13 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { UserPlus } from "lucide-react";
 import toast from "react-hot-toast";
 import api, { getApiErrorMessage } from "@/lib/api";
-import GlassBreadcrumb from "@/components/ui/GlassBreadcrumb";
-import GlassPageHeader from "@/components/ui/GlassPageHeader";
 import GlassCard from "@/components/ui/GlassCard";
-import GlassButton from "@/components/ui/GlassButton";
 import GlassLoader from "@/components/ui/GlassLoader";
 import EnrollStudentRow from "./EnrollStudentRow";
 import EnrollStudentFilters from "./EnrollStudentFilters";
+import EnrollHeader from "./EnrollHeader";
 import type { StudentResponse, ClassResponse } from "@/types";
 
 export default function EnrollStudentsPage(): React.ReactElement {
@@ -31,12 +28,25 @@ export default function EnrollStudentsPage(): React.ReactElement {
   useEffect(() => {
     async function fetchData(): Promise<void> {
       try {
-        const [clsRes, studentsRes] = await Promise.all([
-          api.get<ClassResponse[]>("/admin/classes"),
-          api.get<StudentResponse[]>("/admin/users/students")
-        ]);
-        setCls(clsRes.data.find(c => c.id === id) || null);
-        setStudents(studentsRes.data);
+        let foundCls: ClassResponse | null = null;
+        try {
+          const res = await api.get<ClassResponse>(`/admin/classes/${id}`);
+          foundCls = res.data;
+        } catch {
+          const res = await api.get<ClassResponse[] | { items: ClassResponse[] }>("/admin/classes");
+          const list = Array.isArray(res.data) ? res.data : (res.data as { items?: ClassResponse[] })?.items || [];
+          foundCls = list.find(c => c.id === id) || null;
+        }
+        setCls(foundCls);
+
+        let studentList: StudentResponse[] = [];
+        try {
+          const res = await api.get<StudentResponse[] | { items: StudentResponse[] }>("/admin/users/students");
+          studentList = Array.isArray(res.data) ? res.data : (res.data as { items?: StudentResponse[] })?.items || [];
+        } catch {
+          // fallback
+        }
+        setStudents(studentList);
       } catch {
         toast.error("Failed to load data");
       } finally {
@@ -128,31 +138,12 @@ export default function EnrollStudentsPage(): React.ReactElement {
 
   return (
     <div className="space-y-6">
-      <GlassBreadcrumb items={[{ label: "Admin", href: "/admin/dashboard" }, { label: "Classes", href: "/admin/classes" }, { label: cls.name, href: `/admin/classes/${id}` }, { label: "Enroll Students" }]} />
-      
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <GlassPageHeader 
-          title="Enroll Students" 
-          description={`Select students to enroll into ${cls.name} (${cls.subject_code})`} 
-        />
-        <div className="flex items-center gap-3 bg-card p-2.5 rounded-xl border border-border shadow-xs">
-          <div className="text-right">
-            <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Selected</p>
-            <p className="text-lg font-bold text-foreground leading-none">{selectedIds.size}</p>
-          </div>
-          <div className="h-6 w-px bg-border mx-1" />
-          <GlassButton 
-            variant="primary" 
-            size="sm"
-            icon={<UserPlus size={14} />} 
-            onClick={handleEnroll}
-            loading={enrolling}
-            disabled={selectedIds.size === 0}
-          >
-            Enroll Selected
-          </GlassButton>
-        </div>
-      </div>
+      <EnrollHeader
+        cls={cls}
+        selectedCount={selectedIds.size}
+        enrolling={enrolling}
+        onEnroll={() => void handleEnroll()}
+      />
 
       <GlassCard padding="none" className="overflow-hidden bg-card">
         <EnrollStudentFilters

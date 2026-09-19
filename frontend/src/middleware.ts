@@ -3,26 +3,30 @@ import type { NextRequest } from "next/server";
 
 const AUTH_COOKIE = "sas-auth-storage";
 
-function getTokenFromCookie(request: NextRequest): string | null {
+function parseAuthCookie(request: NextRequest): { token: string | null; role: string | null } {
   const cookie = request.cookies.get(AUTH_COOKIE);
-  if (!cookie?.value) return null;
-  try {
-    const parsed = JSON.parse(decodeURIComponent(cookie.value));
-    return parsed?.state?.token || null;
-  } catch {
-    return null;
-  }
-}
+  if (!cookie?.value) return { token: null, role: null };
 
-function parseRoleFromCookie(request: NextRequest): string | null {
-  const cookie = request.cookies.get(AUTH_COOKIE);
-  if (!cookie?.value) return null;
-  try {
-    const parsed = JSON.parse(decodeURIComponent(cookie.value));
-    return parsed?.state?.user?.role || null;
-  } catch {
-    return null;
+  const attempts = [
+    () => JSON.parse(cookie.value),
+    () => JSON.parse(decodeURIComponent(cookie.value)),
+  ];
+
+  for (const parseFn of attempts) {
+    try {
+      const parsed = parseFn();
+      if (parsed?.state) {
+        return {
+          token: parsed.state.token || null,
+          role: parsed.state.user?.role || null,
+        };
+      }
+    } catch {
+      // try next attempt
+    }
   }
+
+  return { token: null, role: null };
 }
 
 export function middleware(request: NextRequest): NextResponse {
@@ -41,11 +45,10 @@ export function middleware(request: NextRequest): NextResponse {
     return NextResponse.next();
   }
 
-  const token = getTokenFromCookie(request);
+  const { token, role } = parseAuthCookie(request);
 
   if (pathname === "/") {
     if (token) {
-      const role = parseRoleFromCookie(request);
       if (role === "ADMIN") {
         return NextResponse.redirect(new URL("/admin/dashboard", request.url));
       }
@@ -60,7 +63,6 @@ export function middleware(request: NextRequest): NextResponse {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  const role = parseRoleFromCookie(request);
   if (token && role) {
     if (role === "STUDENT") {
       if (pathname.startsWith("/admin") || pathname.startsWith("/teacher")) {

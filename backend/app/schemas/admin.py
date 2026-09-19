@@ -106,6 +106,7 @@ class StudentBulkItem(BaseModel):
 
 class StudentBulkCreateRequest(BaseModel):
     students: list[StudentBulkItem] = Field(..., min_length=1, description="List of student records to ingest")
+    send_invite: bool = Field(default=True, description="Whether to dispatch invitation email")
 
 
 class TeacherBulkItem(BaseModel):
@@ -113,18 +114,20 @@ class TeacherBulkItem(BaseModel):
     employee_id: str = Field(..., min_length=3, max_length=30)
     first_name: str = Field(..., min_length=1, max_length=100)
     last_name: str = Field(..., min_length=1, max_length=100)
-    department_id: str
-    designation_id: str
+    department_id: Optional[str] = None
+    designation_id: Optional[str] = None
     phone: Optional[str] = None
 
 
 class TeacherBulkCreateRequest(BaseModel):
     teachers: list[TeacherBulkItem] = Field(..., min_length=1, description="List of faculty records to ingest")
+    send_invite: bool = Field(default=True, description="Whether to dispatch invitation email")
 
 
 class BulkImportResponse(BaseModel):
     imported_count: int
     failed_count: int
+    invitations_sent: int = 0
     errors: list[str] = []
 
 

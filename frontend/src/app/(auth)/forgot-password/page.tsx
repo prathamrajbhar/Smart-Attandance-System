@@ -72,7 +72,7 @@ export default function ForgotPasswordPage(): React.ReactElement {
             </Link>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="rounded-2xl border border-border bg-card p-7 space-y-5 shadow-sm">
+          <form noValidate onSubmit={handleSubmit} className="rounded-2xl border border-border bg-card p-7 space-y-5 shadow-sm">
             <div className="space-y-1">
               <h2 className="text-base font-semibold text-foreground">Forgot Password?</h2>
               <p className="text-xs text-muted-foreground">

@@ -44,6 +44,7 @@ export default function AuditPage(): React.ReactElement {
     defaultPageSize: 15,
     defaultSortBy: "timestamp",
     defaultSortOrder: "desc",
+    filterKey: "severity",
   });
 
   const handleExportCSV = async (): Promise<void> => {

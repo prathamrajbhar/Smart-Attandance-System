@@ -81,7 +81,7 @@ export default function LoginPage(): React.ReactElement {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="rounded-2xl border border-border bg-card p-7 shadow-sm space-y-5">
+        <form noValidate onSubmit={handleSubmit} className="rounded-2xl border border-border bg-card p-7 shadow-sm space-y-5">
           <div className="space-y-1">
             <h2 className="text-base font-semibold text-foreground">Sign In</h2>
             <p className="text-xs text-muted-foreground">Access your administrator or faculty account</p>

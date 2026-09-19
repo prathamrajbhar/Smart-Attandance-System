@@ -24,9 +24,18 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      useAuthStore.getState().logout();
-      if (typeof window !== "undefined") {
-        window.location.href = "/login";
+      const requestUrl = error.config?.url || "";
+      const isAuthUrl =
+        requestUrl.includes("/auth/login") ||
+        requestUrl.includes("/auth/forgot-password") ||
+        requestUrl.includes("/auth/reset-password") ||
+        requestUrl.includes("/auth/verify-token");
+
+      if (!isAuthUrl) {
+        useAuthStore.getState().logout();
+        if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+          window.location.href = "/login";
+        }
       }
     }
     return Promise.reject(error);

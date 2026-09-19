@@ -28,15 +28,15 @@ export default function EditTeacherPage(): React.ReactElement {
   useEffect(() => {
     async function fetchData(): Promise<void> {
       try {
-        const [teachersRes, depsRes, desigsRes] = await Promise.all([
-          api.get<TeacherResponse[]>("/admin/users/teachers"),
+        const [teacherRes, depsRes, desigsRes] = await Promise.all([
+          api.get<TeacherResponse>(`/admin/users/teachers/${id}`),
           api.get<DepartmentResponse[]>("/admin/departments").catch(() => ({ data: [] })),
           api.get<DesignationResponse[]>("/admin/designations").catch(() => ({ data: [] })),
         ]);
         setDepartments(depsRes.data);
         setDesignations(desigsRes.data);
         
-        const found = teachersRes.data.find((t) => t.id === id);
+        const found = teacherRes.data;
         if (found) {
           setTeacher(found);
           setForm({

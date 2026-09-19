@@ -8,6 +8,7 @@ os.environ.setdefault('TF_USE_LEGACY_KERAS', '1')
 
 sentry_sdk.init(
     dsn=os.getenv("SENTRY_DSN", "https://9e62f4cdab9492bcc05c312bddeb6918@o4512113532010496.ingest.us.sentry.io/4512113546297344"),
+    enable_logs=True,
     send_default_pii=True,
     traces_sample_rate=1.0,
     profile_session_sample_rate=1.0,

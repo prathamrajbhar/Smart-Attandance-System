@@ -16,7 +16,7 @@ python-multipart==0.0.20
 gunicorn==23.0.0
 
 # --- Monitoring & Error Tracking ---
-sentry-sdk[fastapi]>=2.0.0
+sentry-sdk[fastapi]>=2.35.0
 
 # --- Data Validation & Settings ---
 pydantic==2.10.4

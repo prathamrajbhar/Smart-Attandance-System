@@ -17,7 +17,7 @@ from app.core.logging_config import setup_logging, get_logger
 from app.db.client import connect_db, disconnect_db, db
 from app.db.redis import connect_redis, disconnect_redis, get_redis
 from app.services.s3_service import s3_service
-from app.api import auth, student, teacher, admin, logs, ws as ws_module
+from app.api import auth, student, teacher, admin, logs, health, ws as ws_module
 from app.middleware.request_logging import RequestLoggingMiddleware
 
 setup_logging(level=settings.LOG_LEVEL)
@@ -58,6 +58,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(health.router)
+app.include_router(health.router, prefix=settings.API_V1_STR)
 app.include_router(auth.router, prefix=settings.API_V1_STR)
 app.include_router(student.router, prefix=settings.API_V1_STR)
 app.include_router(teacher.router, prefix=settings.API_V1_STR)
@@ -71,21 +73,3 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
     logger.critical("Unhandled exception: %s %s — %s", request.method, request.url.path, exc, exc_info=True)
     return JSONResponse(status_code=500, content={"detail": "Something went wrong"})
 
-
-@app.get("/health", tags=["System Maintenance"], status_code=status.HTTP_200_OK)
-async def system_health_check() -> dict:
-    db_ok = False
-    redis_ok = False
-    try:
-        await db.user.count()
-        db_ok = True
-    except Exception:
-        pass
-    try:
-        r = await get_redis()
-        await r.ping()
-        redis_ok = True
-    except Exception:
-        pass
-    overall = "healthy" if db_ok and redis_ok else "degraded"
-    return {"status": overall, "service": settings.PROJECT_NAME, "database": "ok" if db_ok else "unreachable", "redis": "ok" if redis_ok else "unreachable"}

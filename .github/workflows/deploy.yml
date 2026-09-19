@@ -81,10 +81,10 @@ jobs:
             if command -v pm2 >/dev/null 2>&1; then
               if pm2 describe smart-attendance-backend >/dev/null 2>&1; then
                 echo "Restarting PM2 process (smart-attendance-backend)..."
-                pm2 restart smart-attendance-backend --update-env
+                pm2 restart ecosystem.config.cjs --update-env || pm2 restart smart-attendance-backend --update-env
               else
                 echo "PM2 process not found. Starting smart-attendance-backend on port 8006..."
-                pm2 start .venv/bin/uvicorn --name "smart-attendance-backend" -- main:app --host 0.0.0.0 --port 8006
+                pm2 start ecosystem.config.cjs
                 pm2 save
               fi
             elif systemctl --user is-enabled smart-attendance-backend >/dev/null 2>&1 || systemctl --user is-active smart-attendance-backend >/dev/null 2>&1; then

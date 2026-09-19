@@ -85,9 +85,13 @@ jobs:
             export PATH="$PATH:/usr/local/bin:/usr/bin:~/.nvm/versions/node/$(ls ~/.nvm/versions/node 2>/dev/null | tail -n 1)/bin:~/.npm-global/bin"
 
             if command -v pm2 >/dev/null 2>&1; then
-              echo "Starting/Reloading PM2 service (smart-attendance-backend)..."
-              pm2 delete smart-attendance-backend >/dev/null 2>&1 || true
-              pm2 start ecosystem.config.cjs --update-env
+              if pm2 describe smart-attendance-backend >/dev/null 2>&1; then
+                echo "Restarting existing PM2 service (smart-attendance-backend)..."
+                pm2 restart smart-attendance-backend --update-env
+              else
+                echo "Starting PM2 service (smart-attendance-backend)..."
+                pm2 start ecosystem.config.cjs
+              fi
               pm2 save
             elif systemctl --user is-enabled smart-attendance-backend >/dev/null 2>&1 || systemctl --user is-active smart-attendance-backend >/dev/null 2>&1; then
               echo "Restarting user systemd service (smart-attendance-backend)..."

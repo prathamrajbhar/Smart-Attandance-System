@@ -153,8 +153,8 @@ export default function AdminDashboardPage(): React.ReactElement {
           label="Total Students"
           value={stats?.studentCount ?? 0}
           accentColor="blue"
-          trend="4.8% growth"
-          trendUp
+          trend={stats && stats.studentCount > 0 ? "Active roster" : "Empty roster"}
+          trendUp={stats ? stats.studentCount > 0 : false}
           subtext="Enrolled biometric accounts"
         />
         <GlassStatCard
@@ -162,8 +162,8 @@ export default function AdminDashboardPage(): React.ReactElement {
           label="Total Faculty"
           value={stats?.teacherCount ?? 0}
           accentColor="emerald"
-          trend="100% on schedule"
-          trendUp
+          trend={stats && stats.teacherCount > 0 ? "Faculty active" : "No staff"}
+          trendUp={stats ? stats.teacherCount > 0 : false}
           subtext="Active teaching staff"
         />
         <GlassStatCard
@@ -171,17 +171,17 @@ export default function AdminDashboardPage(): React.ReactElement {
           label="Configured Classes"
           value={stats?.classCount ?? 0}
           accentColor="purple"
-          trend="Active rosters"
-          trendUp
+          trend={stats && stats.classCount > 0 ? "Active classes" : "No classes"}
+          trendUp={stats ? stats.classCount > 0 : false}
           subtext="Geofenced amphitheaters"
         />
         <GlassStatCard
           icon={<ShieldCheck size={20} />}
           label="Biometric Passes"
-          value="99.2%"
+          value={stats?.biometricPassRate !== undefined && (stats.attendanceCount ?? 0) > 0 ? `${stats.biometricPassRate}%` : "0.0%"}
           accentColor="amber"
-          trend="Zero-trust active"
-          trendUp
+          trend={stats && (stats.attendanceCount ?? 0) > 0 ? "Live verification" : "No logs recorded"}
+          trendUp={stats ? (stats.attendanceCount ?? 0) > 0 : false}
           subtext="Liveness & face verification"
         />
       </div>

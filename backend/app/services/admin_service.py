@@ -624,10 +624,22 @@ class AdminService:
 
 
     async def get_stats(self) -> dict:
+        total_students = await db.student.count()
+        total_teachers = await db.teacher.count()
+        total_classes = await db.academicclass.count()
+        total_attendance = await db.attendance.count()
+        passed_attendance = await db.attendance.count(where={"status": {"in": ["Present", "Late", "Approved"]}})
+        
+        pass_rate = 0.0
+        if total_attendance > 0:
+            pass_rate = round((passed_attendance / total_attendance) * 100.0, 1)
+
         return {
-            "studentCount": await db.student.count(),
-            "teacherCount": await db.teacher.count(),
-            "classCount": await db.academicclass.count(),
+            "studentCount": total_students,
+            "teacherCount": total_teachers,
+            "classCount": total_classes,
+            "attendanceCount": total_attendance,
+            "biometricPassRate": pass_rate,
         }
 
     async def trigger_password_reset(self, user_id: str, actor: str = "system", ip: Optional[str] = None, frontend_url: Optional[str] = None) -> None:

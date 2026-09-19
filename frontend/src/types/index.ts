@@ -55,6 +55,8 @@ export interface AdminStatsResponse {
   studentCount: number;
   teacherCount: number;
   classCount: number;
+  attendanceCount?: number;
+  biometricPassRate?: number;
 }
 
 export interface GeofenceResponse {

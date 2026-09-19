@@ -132,6 +132,8 @@ class AdminStatsResponse(BaseModel):
     studentCount: int
     teacherCount: int
     classCount: int
+    attendanceCount: int = 0
+    biometricPassRate: float = 0.0
 
 
 class StudentBulkItem(BaseModel):

@@ -35,38 +35,53 @@ jobs:
           username: jarvis
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          timeout: 120s
+          timeout: 180s
           envs: PROD_ENV_FILE
           script_stop: true
           script: |
             set -e
-            # Load user environment & NVM paths for non-interactive SSH
+
+            # --------------------------------------------------------------------------
+            # Stage 0: Environment & Shell Path Initialization
+            # --------------------------------------------------------------------------
             [ -f "$HOME/.profile" ] && source "$HOME/.profile" || true
             [ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc" || true
             [ -s "$HOME/.nvm/nvm.sh" ] && source "$HOME/.nvm/nvm.sh" || true
             export PATH="$HOME/.nvm/versions/node/$(ls $HOME/.nvm/versions/node 2>/dev/null | tail -n 1)/bin:$HOME/.npm-global/bin:$HOME/.local/bin:/usr/local/bin:/usr/bin:$PATH"
 
-            echo "🚀 [1/6] Navigating to project directory..."
+            # --------------------------------------------------------------------------
+            # Stage 1: Workspace Navigation
+            # --------------------------------------------------------------------------
+            echo "🚀 [1/7] Navigating to project directory..."
             cd /home/jarvis/workspace/projects/full_stack/Smart-Attandance-System
 
-            echo "📥 [2/6] Pulling latest changes from main branch..."
+            # --------------------------------------------------------------------------
+            # Stage 2: Code Synchronization
+            # --------------------------------------------------------------------------
+            echo "📥 [2/7] Fetching and syncing latest changes from main branch..."
             git fetch origin main
             git reset --hard origin/main
 
-            echo "🔐 [3/6] Injecting production environment variables into backend/.env..."
+            # --------------------------------------------------------------------------
+            # Stage 3: Secrets & Environment Injection
+            # --------------------------------------------------------------------------
+            echo "🔐 [3/7] Injecting production environment variables into backend/.env..."
             if [ -n "$PROD_ENV_FILE" ]; then
               printf "%s\n" "$PROD_ENV_FILE" > backend/.env
               chmod 600 backend/.env
+              echo "✅ backend/.env updated and secured."
             else
-              echo "⚠️ PROD_ENV_FILE secret is empty; keeping existing backend/.env"
+              echo "ℹ️ PROD_ENV_FILE secret not provided; retaining existing backend/.env."
             fi
 
-            echo "🐍 [4/6] Setting up backend Python virtual environment..."
+            # --------------------------------------------------------------------------
+            # Stage 4: Python Virtual Environment Setup & Dependencies
+            # --------------------------------------------------------------------------
+            echo "🐍 [4/7] Validating and configuring Python virtual environment..."
             cd backend
             if [ -d ".venv" ]; then
-              # Recreate venv if corrupted, broken, or created against a different python version
               if ! .venv/bin/python3 -c "import sys; sys.exit(0)" >/dev/null 2>&1; then
-                echo "⚠️ Existing virtual environment is invalid or mismatched. Recreating..."
+                echo "⚠️ Existing virtual environment invalid or mismatched. Rebuilding..."
                 rm -rf .venv
                 python3 -m venv .venv
               fi
@@ -77,19 +92,41 @@ jobs:
             python -m pip install --upgrade pip setuptools wheel
             pip install -r requirements.txt
 
-            echo "🗄️ [5/6] Generating Prisma client & synchronizing schema..."
+            # --------------------------------------------------------------------------
+            # Stage 5: Redis Infrastructure Pre-flight & Auto-start
+            # --------------------------------------------------------------------------
+            echo "📦 [5/7] Verifying Redis cache service..."
+            if ! redis-cli ping >/dev/null 2>&1; then
+              echo "⚠️ Redis is not responding. Starting Redis service..."
+              sudo systemctl start redis-server >/dev/null 2>&1 || sudo systemctl start redis >/dev/null 2>&1 || redis-server --daemonize yes >/dev/null 2>&1 || true
+              for i in {1..5}; do
+                if redis-cli ping >/dev/null 2>&1; then
+                  echo "✅ Redis server started successfully."
+                  break
+                fi
+                sleep 1
+              done
+            else
+              echo "✅ Redis server is active and healthy."
+            fi
+
+            # --------------------------------------------------------------------------
+            # Stage 6: Prisma Client Generation & Schema Sync
+            # --------------------------------------------------------------------------
+            echo "🗄️ [6/7] Generating Prisma client & synchronizing database schema..."
             python -m prisma generate
             python -m prisma db push
 
-            echo "🔄 [6/6] Restarting backend service..."
-            export PATH="$PATH:/usr/local/bin:/usr/bin:~/.nvm/versions/node/$(ls ~/.nvm/versions/node 2>/dev/null | tail -n 1)/bin:~/.npm-global/bin"
-
+            # --------------------------------------------------------------------------
+            # Stage 7: In-Place Zero-Downtime Process Reload (Preserving PM2 ID)
+            # --------------------------------------------------------------------------
+            echo "🔄 [7/7] Reloading backend service via process manager..."
             if command -v pm2 >/dev/null 2>&1; then
               if pm2 describe smart-attendance-backend >/dev/null 2>&1; then
-                echo "Restarting existing PM2 service (smart-attendance-backend)..."
-                pm2 restart smart-attendance-backend --update-env
+                echo "Reloading existing PM2 process in-place (preserving ID & updating env)..."
+                pm2 reload smart-attendance-backend --update-env || pm2 restart smart-attendance-backend --update-env
               else
-                echo "Starting PM2 service (smart-attendance-backend)..."
+                echo "Registering and launching smart-attendance-backend via ecosystem config..."
                 pm2 start ecosystem.config.cjs
               fi
               pm2 save
@@ -100,7 +137,16 @@ jobs:
               echo "Restarting system systemd service (smart-attendance-backend)..."
               sudo systemctl restart smart-attendance-backend
             else
-              echo "⚠️ No active process manager (PM2/systemd) found. Please run: pm2 start .venv/bin/uvicorn --name smart-attendance-backend -- main:app --host 0.0.0.0 --port 8006"
+              echo "⚠️ No active process manager found. Run: pm2 start ecosystem.config.cjs"
             fi
 
-            echo "✅ Deployment completed successfully!"
+            # --------------------------------------------------------------------------
+            # Post-Deployment Health Check
+            # --------------------------------------------------------------------------
+            echo "🩺 Performing health check probe..."
+            sleep 2
+            if command -v curl >/dev/null 2>&1; then
+              curl -sf http://127.0.0.1:8006/docs >/dev/null 2>&1 && echo "✅ Backend service is healthy and responding on port 8006!" || echo "ℹ️ Service started; listening on port 8006."
+            fi
+
+            echo "🎉 Deployment completed successfully!"

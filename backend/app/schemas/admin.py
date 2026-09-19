@@ -92,6 +92,3 @@ class AdminStatsResponse(BaseModel):
     teacherCount: int
     classCount: int
 
-
-class AdminResetPasswordRequest(BaseModel):
-    new_password: str = Field(..., min_length=8, description="New password for the user")

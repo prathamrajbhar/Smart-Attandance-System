@@ -45,18 +45,23 @@ def decode_access_token(token: str) -> dict[str, Any] | None:
         return None
 
 
-def generate_temporary_password(length: int = 12) -> str:
+def generate_temporary_password(length: int = 8) -> str:
     import secrets
-    import string
-    alphabet = string.ascii_letters + string.digits + "!@#$%&*"
+    # Unambiguous uppercase, lowercase, and digits (no confusing chars like 0, O, 1, l, I)
+    upper = "ABCDEFGHJKLMNPQRSTUVWXYZ"
+    lower = "abcdefghijkmnpqrstuvwxyz"
+    digits = "23456789"
+    all_chars = upper + lower + digits
+
     password = [
-        secrets.choice(string.ascii_uppercase),
-        secrets.choice(string.ascii_lowercase),
-        secrets.choice(string.digits),
-        secrets.choice("!@#$%&*"),
+        secrets.choice(upper),
+        secrets.choice(lower),
+        secrets.choice(digits),
+        secrets.choice(digits),
     ]
-    password += [secrets.choice(alphabet) for _ in range(length - 4)]
+    password += [secrets.choice(all_chars) for _ in range(max(0, length - len(password)))]
     secrets.SystemRandom().shuffle(password)
     return "".join(password)
+
 
 

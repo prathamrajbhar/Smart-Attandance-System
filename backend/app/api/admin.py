@@ -11,7 +11,7 @@ from app.schemas.teacher import TeacherCreate, TeacherResponse, TeacherUpdate
 from app.schemas.admin import (
     ClassCreate, ClassUpdate, ClassResponse, AssignTeacherRequest, EnrollRequest,
     DepartmentCreate, DepartmentUpdate, DepartmentResponse,
-    AuditLogResponse, AdminStatsResponse, AdminResetPasswordRequest,
+    AuditLogResponse, AdminStatsResponse,
 )
 from app.schemas.master_data import (
     SubjectCreate, SubjectUpdate, SubjectResponse,
@@ -139,15 +139,24 @@ async def update_teacher(id: str, data: TeacherUpdate, request: Request, current
     return await admin_service.update_teacher(id, data.model_dump(exclude_unset=True), actor=current_user.email, ip=_get_client_ip(request))
 
 
-@router.put("/users/{user_id}/reset-password")
-async def reset_user_password(user_id: str, data: AdminResetPasswordRequest, request: Request, current_user: User = Depends(get_current_user), admin_service: AdminService = Depends()):
+@router.post("/users/{user_id}/reset-password", status_code=status.HTTP_200_OK)
+@router.put("/users/{user_id}/reset-password", status_code=status.HTTP_200_OK)
+async def trigger_user_password_reset(
+    user_id: str,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    admin_service: AdminService = Depends(),
+) -> dict:
     try:
-        await admin_service.reset_user_password(user_id, data.new_password, actor=current_user.email, ip=_get_client_ip(request))
-        return {"status": "success", "message": "Password updated successfully"}
+        await admin_service.trigger_password_reset(user_id, actor=current_user.email, ip=_get_client_ip(request))
+        return {
+            "status": "success",
+            "message": "Password reset instructions dispatched to the user's registered email address.",
+        }
     except ValueError as err:
-        raise HTTPException(status_code=404, detail=str(err))
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
     except Exception as err:
-        raise HTTPException(status_code=400, detail=str(err))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err))
 
 
 @router.get("/classes", response_model=list[ClassResponse])

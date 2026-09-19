@@ -21,10 +21,10 @@ from app.schemas.auth import (
     VerifyTokenResponse,
     ChangePasswordRequest,
 )
-from app.schemas.student import StudentCreate, StudentResponse
-from app.schemas.teacher import TeacherCreate, TeacherResponse
+from app.schemas.system_config import SystemConfigResponse
 from app.services.auth_service import AuthService
 from app.services.device_change_service import DeviceChangeService
+from app.services.system_config_service import SystemConfigService
 
 logger = get_logger("app.api.auth")
 
@@ -56,24 +56,6 @@ async def login(login_data: UserLogin, request: Request, auth_service: AuthServi
         logger.warning("Failed login: %s", login_data.email)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
     return token
-
-
-@router.post("/register/student", response_model=StudentResponse, status_code=status.HTTP_201_CREATED)
-async def register_student(data: StudentCreate, request: Request, auth_service: AuthService = Depends()) -> StudentResponse:
-    await _rate_limit(request)
-    student = await auth_service.register_student(data)
-    if not student:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User with this email is already registered")
-    return student
-
-
-@router.post("/register/teacher", response_model=TeacherResponse, status_code=status.HTTP_201_CREATED)
-async def register_teacher(data: TeacherCreate, request: Request, auth_service: AuthService = Depends()) -> TeacherResponse:
-    await _rate_limit(request)
-    teacher = await auth_service.register_teacher(data)
-    if not teacher:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User with this email is already registered")
-    return teacher
 
 
 @router.get("/me", response_model=UserProfileResponse)
@@ -143,6 +125,8 @@ async def logout(token: str = Depends(reusable_oauth2)) -> dict:
                 except Exception as cache_err:
                     logger.warning("Failed to add token to Redis denylist: %s", cache_err)
     return {"status": "success", "message": "Successfully logged out."}
+
+
 @router.post("/request-device-change", status_code=status.HTTP_200_OK)
 async def request_device_change(
     data: DeviceChangeRequestCreate,
@@ -210,11 +194,8 @@ async def complete_onboarding(
     return {"status": "success", "message": "Account onboarding completed. You may now login."}
 
 
-# --- System Config (Public) ---
-from app.schemas.system_config import SystemConfigResponse
-from app.services.system_config_service import SystemConfigService
-
 @router.get("/config", response_model=SystemConfigResponse)
 async def get_public_system_config(config_service: SystemConfigService = Depends()):
     return await config_service.get_config()
+
 

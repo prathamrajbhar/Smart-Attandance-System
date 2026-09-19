@@ -28,7 +28,15 @@ function parseRoleFromCookie(request: NextRequest): string | null {
 export function middleware(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
 
-  const publicPaths = ["/login", "/api", "/_next", "/favicon.ico"];
+  const publicPaths = [
+    "/login",
+    "/forgot-password",
+    "/reset-password",
+    "/onboarding",
+    "/api",
+    "/_next",
+    "/favicon.ico",
+  ];
   if (publicPaths.some((p) => pathname.startsWith(p))) {
     return NextResponse.next();
   }

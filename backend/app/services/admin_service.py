@@ -422,8 +422,12 @@ class AdminService:
             "classCount": await db.academicclass.count(),
         }
 
-    async def reset_user_password(self, user_id: str, new_password: str, actor: str = "system", ip: Optional[str] = None) -> None:
-        if not await db.user.find_unique(where={"id": user_id}):
+    async def trigger_password_reset(self, user_id: str, actor: str = "system", ip: Optional[str] = None) -> None:
+        user = await db.user.find_unique(where={"id": user_id})
+        if not user:
             raise ValueError("User not found.")
-        await db.user.update(where={"id": user_id}, data={"hashedPassword": hash_password(new_password)})
-        await self._log_action("RESET_PASSWORD", "WARNING", actor, user_id, "Reset user password", ip)
+
+        from app.services.auth_service import AuthService
+        await AuthService().request_password_reset(user.email)
+        await self._log_action("TRIGGER_PASSWORD_RESET", "INFO", actor, user_id, f"Dispatched password reset email for {user.email}", ip)
+

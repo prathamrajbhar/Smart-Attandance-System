@@ -64,14 +64,14 @@ export default function StudentDetailPage(): React.ReactElement {
     void fetchStudent();
   }, [id]);
 
-  const handleResetPassword = async (newPassword: string) => {
+  const handleResetPassword = async (): Promise<void> => {
     if (!student) return;
     try {
-      await api.put(`/admin/users/${student.user_id}/reset-password`, { new_password: newPassword });
-      toast.success(`Password reset for ${student.email}`);
+      await api.post(`/admin/users/${student.user_id}/reset-password`);
+      toast.success(`Password reset email sent to ${student.email}`);
       setIsResetDialogOpen(false);
     } catch (err: unknown) {
-      toast.error(getApiErrorMessage(err, "Failed to reset password"));
+      toast.error(getApiErrorMessage(err, "Failed to send password reset email"));
     }
   };
 
@@ -191,8 +191,8 @@ export default function StudentDetailPage(): React.ReactElement {
         isOpen={isResetDialogOpen}
         onClose={() => setIsResetDialogOpen(false)}
         onConfirm={handleResetPassword}
-        title="Force Password Reset"
-        description={student ? `Enter a new password for ${student.email}. They will be able to log in immediately with this new password.` : ""}
+        userEmail={student.email}
+        title="Send Password Reset Email"
       />
     </div>
   );

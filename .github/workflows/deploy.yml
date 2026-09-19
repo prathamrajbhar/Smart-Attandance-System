@@ -40,6 +40,12 @@ jobs:
           script_stop: true
           script: |
             set -e
+            # Load user environment & NVM paths for non-interactive SSH
+            [ -f "$HOME/.profile" ] && source "$HOME/.profile" || true
+            [ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc" || true
+            [ -s "$HOME/.nvm/nvm.sh" ] && source "$HOME/.nvm/nvm.sh" || true
+            export PATH="$HOME/.nvm/versions/node/$(ls $HOME/.nvm/versions/node 2>/dev/null | tail -n 1)/bin:$HOME/.npm-global/bin:$HOME/.local/bin:/usr/local/bin:/usr/bin:$PATH"
+
             echo "🚀 [1/6] Navigating to project directory..."
             cd /home/jarvis/workspace/projects/full_stack/Smart-Attandance-System
 

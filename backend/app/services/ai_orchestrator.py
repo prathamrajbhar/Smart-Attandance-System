@@ -4,6 +4,11 @@ import shutil
 import threading
 from typing import List, Optional, Tuple
 
+os.environ.setdefault('TF_CPP_MIN_LOG_LEVEL', '3')
+os.environ.setdefault('TF_ENABLE_ONEDNN_OPTS', '0')
+os.environ.setdefault('CUDA_VISIBLE_DEVICES', '-1')
+os.environ.setdefault('TF_USE_LEGACY_KERAS', '1')
+
 import cv2
 import numpy as np
 import tensorflow as tf
@@ -14,10 +19,6 @@ from tensorflow.keras.applications.mobilenet import preprocess_input
 from app.core.logging_config import get_logger
 
 logger = get_logger("app.ai")
-
-os.environ.setdefault('TF_CPP_MIN_LOG_LEVEL', '3')
-os.environ.setdefault('TF_ENABLE_ONEDNN_OPTS', '0')
-os.environ.setdefault('CUDA_VISIBLE_DEVICES', '-1')
 
 BASE_MODELS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../models"))
 LIVENESS_REPO = "prathamrajbhar/smart-attendance-liveness-detection"

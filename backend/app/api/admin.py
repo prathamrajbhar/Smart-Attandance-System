@@ -13,6 +13,7 @@ from app.schemas.admin import (
     DepartmentCreate, DepartmentUpdate, DepartmentResponse,
     AuditLogResponse, AdminStatsResponse, EnrollStudentsResponse,
     StudentBulkCreateRequest, TeacherBulkCreateRequest, ClassBulkCreateRequest, BulkImportResponse,
+    DepartmentBulkCreateRequest, SubjectBulkCreateRequest, ClassroomBulkCreateRequest, DesignationBulkCreateRequest,
     AbsenteeAnomalyItem,
 )
 from app.schemas.common import MessageResponse
@@ -114,6 +115,66 @@ async def bulk_create_classes(
 ):
     return await admin_service.bulk_create_classes(
         data.classes,
+        actor=current_user.email,
+        ip=_get_client_ip(request),
+    )
+
+
+@router.post("/departments/bulk", response_model=BulkImportResponse, status_code=status.HTTP_200_OK)
+@_handle_generic_err
+async def bulk_create_departments(
+    data: DepartmentBulkCreateRequest,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.bulk_create_departments(
+        data.departments,
+        actor=current_user.email,
+        ip=_get_client_ip(request),
+    )
+
+
+@router.post("/subjects/bulk", response_model=BulkImportResponse, status_code=status.HTTP_200_OK)
+@_handle_generic_err
+async def bulk_create_subjects(
+    data: SubjectBulkCreateRequest,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.bulk_create_subjects(
+        data.subjects,
+        actor=current_user.email,
+        ip=_get_client_ip(request),
+    )
+
+
+@router.post("/classrooms/bulk", response_model=BulkImportResponse, status_code=status.HTTP_200_OK)
+@_handle_generic_err
+async def bulk_create_classrooms(
+    data: ClassroomBulkCreateRequest,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.bulk_create_classrooms(
+        data.classrooms,
+        actor=current_user.email,
+        ip=_get_client_ip(request),
+    )
+
+
+@router.post("/designations/bulk", response_model=BulkImportResponse, status_code=status.HTTP_200_OK)
+@_handle_generic_err
+async def bulk_create_designations(
+    data: DesignationBulkCreateRequest,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.bulk_create_designations(
+        data.designations,
         actor=current_user.email,
         ip=_get_client_ip(request),
     )

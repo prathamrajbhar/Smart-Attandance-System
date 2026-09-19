@@ -52,6 +52,59 @@ export function buildBulkPayload(
     };
   }
 
+  if (entityType === "departments") {
+    return {
+      endpoint: "/admin/departments/bulk",
+      payload: {
+        departments: slice.map((d) => ({
+          name: d.first_name,
+          code: d.identifier,
+          head: d.last_name || null,
+          description: d.email || null,
+        })),
+      },
+    };
+  }
+
+  if (entityType === "subjects") {
+    return {
+      endpoint: "/admin/subjects/bulk",
+      payload: {
+        subjects: slice.map((s) => ({
+          name: s.first_name,
+          code: s.identifier,
+          description: s.email || null,
+        })),
+      },
+    };
+  }
+
+  if (entityType === "classrooms") {
+    return {
+      endpoint: "/admin/classrooms/bulk",
+      payload: {
+        classrooms: slice.map((c) => ({
+          name: c.first_name,
+          building: c.identifier || null,
+          capacity: c.max_students || null,
+        })),
+      },
+    };
+  }
+
+  if (entityType === "designations") {
+    return {
+      endpoint: "/admin/designations/bulk",
+      payload: {
+        designations: slice.map((d) => ({
+          name: d.first_name,
+          code: d.identifier,
+          description: d.email || null,
+        })),
+      },
+    };
+  }
+
   return {
     endpoint: "/admin/classes/bulk",
     payload: {

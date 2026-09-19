@@ -1,4 +1,11 @@
-export type BulkImportEntityType = "students" | "teachers" | "classes";
+export type BulkImportEntityType =
+  | "students"
+  | "teachers"
+  | "classes"
+  | "departments"
+  | "subjects"
+  | "classrooms"
+  | "designations";
 
 export interface ParsedBulkRecord {
   id: string;

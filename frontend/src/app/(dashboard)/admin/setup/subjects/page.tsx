@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload } from "lucide-react";
 import toast from "react-hot-toast";
 import api, { getApiErrorMessage } from "@/lib/api";
 import GlassPageHeader from "@/components/ui/GlassPageHeader";
@@ -12,6 +12,7 @@ import GlassSearch from "@/components/ui/GlassSearch";
 import GlassButton from "@/components/ui/GlassButton";
 import GlassConfirmDialog from "@/components/ui/GlassConfirmDialog";
 import GlassLoader from "@/components/ui/GlassLoader";
+import BulkImportModal from "@/components/admin/BulkImportModal";
 import type { SubjectResponse } from "@/types";
 
 export default function SubjectsPage(): React.ReactElement {
@@ -21,6 +22,7 @@ export default function SubjectsPage(): React.ReactElement {
   const [loading, setLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
 
   const fetchSubjects = useCallback(async (): Promise<void> => {
     try {
@@ -112,13 +114,22 @@ export default function SubjectsPage(): React.ReactElement {
         title="Subjects"
         description={`${subjects.length} subjects registered`}
         actions={
-          <GlassButton
-            variant="primary"
-            icon={<Plus size={16} />}
-            onClick={() => router.push("/admin/setup/subjects/create")}
-          >
-            Add Subject
-          </GlassButton>
+          <div className="flex items-center gap-3">
+            <GlassButton
+              variant="secondary"
+              icon={<Upload size={16} />}
+              onClick={() => setIsBulkImportOpen(true)}
+            >
+              Import CSV
+            </GlassButton>
+            <GlassButton
+              variant="primary"
+              icon={<Plus size={16} />}
+              onClick={() => router.push("/admin/setup/subjects/create")}
+            >
+              Add Subject
+            </GlassButton>
+          </div>
         }
       />
       <div className="mb-6">
@@ -137,6 +148,12 @@ export default function SubjectsPage(): React.ReactElement {
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
         loading={deleting}
+      />
+      <BulkImportModal
+        isOpen={isBulkImportOpen}
+        onClose={() => setIsBulkImportOpen(false)}
+        entityType="subjects"
+        onSuccess={() => void fetchSubjects()}
       />
     </div>
   );

@@ -926,6 +926,203 @@ class AdminService:
             "errors": errors,
         }
 
+    async def bulk_create_departments(
+        self,
+        departments: list,
+        actor: str = "system",
+        ip: Optional[str] = None,
+    ) -> dict:
+        imported_count = 0
+        failed_count = 0
+        errors = []
+
+        for idx, item in enumerate(departments):
+            try:
+                existing = await db.department.find_first(
+                    where={"OR": [{"code": {"equals": item.code, "mode": "insensitive"}}, {"name": {"equals": item.name, "mode": "insensitive"}}]}
+                )
+                if existing:
+                    errors.append(f"Row {idx + 1} ({item.name}): Department '{item.code}' already exists.")
+                    failed_count += 1
+                    continue
+
+                await db.department.create(
+                    data={
+                        "name": item.name,
+                        "code": item.code,
+                        "head": item.head,
+                        "description": item.description,
+                    }
+                )
+                imported_count += 1
+            except Exception as e:
+                errors.append(f"Row {idx + 1} ({item.name}): {str(e)}")
+                failed_count += 1
+
+        if imported_count > 0:
+            await self._log_action(
+                "BULK_IMPORT_DEPARTMENTS",
+                "INFO",
+                actor,
+                "SYSTEM",
+                f"Bulk imported {imported_count} departments ({failed_count} failed)",
+                ip,
+            )
+
+        return {
+            "imported_count": imported_count,
+            "failed_count": failed_count,
+            "invitations_sent": 0,
+            "errors": errors,
+        }
+
+    async def bulk_create_subjects(
+        self,
+        subjects: list,
+        actor: str = "system",
+        ip: Optional[str] = None,
+    ) -> dict:
+        imported_count = 0
+        failed_count = 0
+        errors = []
+
+        for idx, item in enumerate(subjects):
+            try:
+                existing = await db.subject.find_first(
+                    where={"OR": [{"code": {"equals": item.code, "mode": "insensitive"}}, {"name": {"equals": item.name, "mode": "insensitive"}}]}
+                )
+                if existing:
+                    errors.append(f"Row {idx + 1} ({item.name}): Subject '{item.code}' already exists.")
+                    failed_count += 1
+                    continue
+
+                await db.subject.create(
+                    data={
+                        "name": item.name,
+                        "code": item.code,
+                        "description": item.description,
+                    }
+                )
+                imported_count += 1
+            except Exception as e:
+                errors.append(f"Row {idx + 1} ({item.name}): {str(e)}")
+                failed_count += 1
+
+        if imported_count > 0:
+            await self._log_action(
+                "BULK_IMPORT_SUBJECTS",
+                "INFO",
+                actor,
+                "SYSTEM",
+                f"Bulk imported {imported_count} subjects ({failed_count} failed)",
+                ip,
+            )
+
+        return {
+            "imported_count": imported_count,
+            "failed_count": failed_count,
+            "invitations_sent": 0,
+            "errors": errors,
+        }
+
+    async def bulk_create_classrooms(
+        self,
+        classrooms: list,
+        actor: str = "system",
+        ip: Optional[str] = None,
+    ) -> dict:
+        imported_count = 0
+        failed_count = 0
+        errors = []
+
+        for idx, item in enumerate(classrooms):
+            try:
+                existing = await db.classroom.find_first(
+                    where={"name": {"equals": item.name, "mode": "insensitive"}}
+                )
+                if existing:
+                    errors.append(f"Row {idx + 1} ({item.name}): Classroom '{item.name}' already exists.")
+                    failed_count += 1
+                    continue
+
+                await db.classroom.create(
+                    data={
+                        "name": item.name,
+                        "building": item.building,
+                        "capacity": item.capacity,
+                    }
+                )
+                imported_count += 1
+            except Exception as e:
+                errors.append(f"Row {idx + 1} ({item.name}): {str(e)}")
+                failed_count += 1
+
+        if imported_count > 0:
+            await self._log_action(
+                "BULK_IMPORT_CLASSROOMS",
+                "INFO",
+                actor,
+                "SYSTEM",
+                f"Bulk imported {imported_count} classrooms ({failed_count} failed)",
+                ip,
+            )
+
+        return {
+            "imported_count": imported_count,
+            "failed_count": failed_count,
+            "invitations_sent": 0,
+            "errors": errors,
+        }
+
+    async def bulk_create_designations(
+        self,
+        designations: list,
+        actor: str = "system",
+        ip: Optional[str] = None,
+    ) -> dict:
+        imported_count = 0
+        failed_count = 0
+        errors = []
+
+        for idx, item in enumerate(designations):
+            try:
+                existing = await db.designation.find_first(
+                    where={"OR": [{"code": {"equals": item.code, "mode": "insensitive"}}, {"name": {"equals": item.name, "mode": "insensitive"}}]}
+                )
+                if existing:
+                    errors.append(f"Row {idx + 1} ({item.name}): Designation '{item.code}' already exists.")
+                    failed_count += 1
+                    continue
+
+                await db.designation.create(
+                    data={
+                        "name": item.name,
+                        "code": item.code,
+                        "description": item.description,
+                    }
+                )
+                imported_count += 1
+            except Exception as e:
+                errors.append(f"Row {idx + 1} ({item.name}): {str(e)}")
+                failed_count += 1
+
+        if imported_count > 0:
+            await self._log_action(
+                "BULK_IMPORT_DESIGNATIONS",
+                "INFO",
+                actor,
+                "SYSTEM",
+                f"Bulk imported {imported_count} designations ({failed_count} failed)",
+                ip,
+            )
+
+        return {
+            "imported_count": imported_count,
+            "failed_count": failed_count,
+            "invitations_sent": 0,
+            "errors": errors,
+        }
+
     async def export_audit_logs_csv(self) -> str:
         import io
         import csv
@@ -946,5 +1143,6 @@ class AdminService:
                 l.ipAddress or "",
             ])
         return output.getvalue()
+
 
 

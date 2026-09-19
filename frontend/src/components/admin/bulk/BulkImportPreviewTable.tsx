@@ -24,6 +24,7 @@ export default function BulkImportPreviewTable({
   const validCount = records.filter((r) => r.isValid).length;
   const invalidCount = records.length - validCount;
   const batchCount = Math.ceil(records.length / 10);
+  const showInviteToggle = entityType === "students" || entityType === "teachers";
 
   return (
     <div className="space-y-4">
@@ -53,26 +54,38 @@ export default function BulkImportPreviewTable({
           </div>
         </div>
 
-        <div className="p-3 bg-secondary/30 rounded-xl border border-border flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${sendInvite ? "bg-emerald-500/10 text-emerald-500" : "bg-muted text-muted-foreground"}`}>
-              <Mail size={16} />
+        {showInviteToggle ? (
+          <div className="p-3 bg-secondary/30 rounded-xl border border-border flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${sendInvite ? "bg-emerald-500/10 text-emerald-500" : "bg-muted text-muted-foreground"}`}>
+                <Mail size={16} />
+              </div>
+              <div>
+                <p className="text-[11px] text-muted-foreground font-medium">Email Invites</p>
+                <p className="text-xs font-semibold text-foreground">{sendInvite ? "Enabled" : "Disabled"}</p>
+              </div>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={sendInvite}
+                onChange={(e) => onSendInviteChange(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-9 h-5 bg-secondary peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+            </label>
+          </div>
+        ) : (
+          <div className="p-3 bg-secondary/30 rounded-xl border border-border flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 font-bold text-xs">
+              ✓
             </div>
             <div>
-              <p className="text-[11px] text-muted-foreground font-medium">Email Invites</p>
-              <p className="text-xs font-semibold text-foreground">{sendInvite ? "Enabled" : "Disabled"}</p>
+              <p className="text-[11px] text-muted-foreground font-medium">Direct Ingestion</p>
+              <p className="text-xs font-semibold text-foreground">Immediate DB Sync</p>
             </div>
           </div>
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              checked={sendInvite}
-              onChange={(e) => onSendInviteChange(e.target.checked)}
-              className="sr-only peer"
-            />
-            <div className="w-9 h-5 bg-secondary peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-          </label>
-        </div>
+        )}
       </div>
 
       {/* Table Container */}
@@ -84,9 +97,27 @@ export default function BulkImportPreviewTable({
                 <th className="py-2 px-3 w-10 text-center">#</th>
                 <th className="py-2 px-3">{entityType === "classes" ? "Class Name" : "Name"}</th>
                 <th className="py-2 px-3">
-                  {entityType === "students" ? "Enrollment No" : entityType === "teachers" ? "Employee ID" : "Subject Code"}
+                  {entityType === "students"
+                    ? "Enrollment No"
+                    : entityType === "teachers"
+                    ? "Employee ID"
+                    : entityType === "classrooms"
+                    ? "Building"
+                    : entityType === "classes"
+                    ? "Subject Code"
+                    : "Code"}
                 </th>
-                <th className="py-2 px-3">{entityType === "classes" ? "Teacher Email" : "Email"}</th>
+                <th className="py-2 px-3">
+                  {entityType === "classes"
+                    ? "Teacher Email"
+                    : entityType === "departments"
+                    ? "Head"
+                    : entityType === "classrooms"
+                    ? "Capacity"
+                    : entityType === "subjects" || entityType === "designations"
+                    ? "Description"
+                    : "Email"}
+                </th>
                 <th className="py-2 px-3 w-24">Status</th>
                 <th className="py-2 px-2 w-10 text-center">Action</th>
               </tr>
@@ -96,10 +127,18 @@ export default function BulkImportPreviewTable({
                 <tr key={rec.id} className="hover:bg-secondary/20 transition-colors">
                   <td className="py-2 px-3 text-center text-muted-foreground font-mono text-[11px]">{index + 1}</td>
                   <td className="py-2 px-3 font-medium text-foreground">
-                    {entityType === "classes" ? rec.first_name : `${rec.first_name} ${rec.last_name}`}
+                    {entityType === "students" || entityType === "teachers"
+                      ? `${rec.first_name} ${rec.last_name}`
+                      : rec.first_name}
                   </td>
-                  <td className="py-2 px-3 font-mono text-[11px] text-foreground/80">{rec.identifier}</td>
-                  <td className="py-2 px-3 text-muted-foreground font-mono text-[11px]">{rec.email}</td>
+                  <td className="py-2 px-3 font-mono text-[11px] text-foreground/80">{rec.identifier || "—"}</td>
+                  <td className="py-2 px-3 text-muted-foreground font-mono text-[11px] truncate max-w-[150px]">
+                    {entityType === "departments"
+                      ? rec.last_name || "—"
+                      : entityType === "classrooms"
+                      ? rec.max_students ? String(rec.max_students) : "—"
+                      : rec.email || "—"}
+                  </td>
                   <td className="py-2 px-3">
                     {rec.isValid ? (
                       <span className="inline-flex items-center gap-1 text-[11px] text-emerald-500 font-medium bg-emerald-500/10 px-2 py-0.5 rounded-full">

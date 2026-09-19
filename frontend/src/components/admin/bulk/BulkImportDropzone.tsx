@@ -30,9 +30,93 @@ export default function BulkImportDropzone({
 
     for (let i = 1; i < rawLines.length; i++) {
       const parts = rawLines[i].split(",").map((p) => p.trim().replace(/^["']|["']$/g, ""));
-      if (parts.length < 3) continue;
+      if (parts.length < 2) continue;
 
-      if (entityType === "classes") {
+      if (entityType === "departments") {
+        const name = parts[0] || "";
+        const code = parts[1] || "";
+        const head = parts[2] || "";
+        const description = parts[3] || "";
+
+        const hasName = name.length >= 2;
+        const hasCode = code.length >= 2;
+        const isValid = hasName && hasCode;
+        let validationError: string | undefined;
+        if (!hasName) validationError = "Department name is required (min 2 chars)";
+        else if (!hasCode) validationError = "Department code is required (min 2 chars)";
+
+        records.push({
+          id: `row-${i}-${Date.now()}`,
+          email: description,
+          identifier: code,
+          first_name: name,
+          last_name: head,
+          isValid,
+          validationError,
+        });
+      } else if (entityType === "subjects") {
+        const name = parts[0] || "";
+        const code = parts[1] || "";
+        const description = parts[2] || "";
+
+        const hasName = name.length >= 2;
+        const hasCode = code.length >= 2;
+        const isValid = hasName && hasCode;
+        let validationError: string | undefined;
+        if (!hasName) validationError = "Subject name is required (min 2 chars)";
+        else if (!hasCode) validationError = "Subject code is required (min 2 chars)";
+
+        records.push({
+          id: `row-${i}-${Date.now()}`,
+          email: description,
+          identifier: code,
+          first_name: name,
+          last_name: "",
+          isValid,
+          validationError,
+        });
+      } else if (entityType === "classrooms") {
+        const name = parts[0] || "";
+        const building = parts[1] || "";
+        const capacity = parts[2] ? parseInt(parts[2], 10) : undefined;
+
+        const hasName = name.length >= 1;
+        const isValid = hasName;
+        let validationError: string | undefined;
+        if (!hasName) validationError = "Classroom name / room number is required";
+
+        records.push({
+          id: `row-${i}-${Date.now()}`,
+          email: "",
+          identifier: building,
+          first_name: name,
+          last_name: "",
+          max_students: capacity,
+          isValid,
+          validationError,
+        });
+      } else if (entityType === "designations") {
+        const name = parts[0] || "";
+        const code = parts[1] || "";
+        const description = parts[2] || "";
+
+        const hasName = name.length >= 2;
+        const hasCode = code.length >= 2;
+        const isValid = hasName && hasCode;
+        let validationError: string | undefined;
+        if (!hasName) validationError = "Designation name is required (min 2 chars)";
+        else if (!hasCode) validationError = "Designation code is required (min 2 chars)";
+
+        records.push({
+          id: `row-${i}-${Date.now()}`,
+          email: description,
+          identifier: code,
+          first_name: name,
+          last_name: "",
+          isValid,
+          validationError,
+        });
+      } else if (entityType === "classes") {
         const name = parts[0] || "";
         const subjectCode = parts[1] || "";
         const teacherEmail = parts[2] || "";
@@ -123,14 +207,52 @@ export default function BulkImportDropzone({
     URL.revokeObjectURL(url);
   };
 
-  const columnGuide =
-    entityType === "classes" ? (
-      <>
-        Required columns: <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">class_name</code>,{" "}
-        <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">subject_code</code>,{" "}
-        <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">teacher_email</code>
-      </>
-    ) : (
+  const columnGuide = (() => {
+    if (entityType === "departments") {
+      return (
+        <>
+          Required columns: <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">name</code>,{" "}
+          <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">code</code>
+          {" "}(optional: <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">head</code>, <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">description</code>)
+        </>
+      );
+    }
+    if (entityType === "subjects") {
+      return (
+        <>
+          Required columns: <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">name</code>,{" "}
+          <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">code</code>
+          {" "}(optional: <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">description</code>)
+        </>
+      );
+    }
+    if (entityType === "classrooms") {
+      return (
+        <>
+          Required column: <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">name</code>
+          {" "}(optional: <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">building</code>, <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">capacity</code>)
+        </>
+      );
+    }
+    if (entityType === "designations") {
+      return (
+        <>
+          Required columns: <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">name</code>,{" "}
+          <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">code</code>
+          {" "}(optional: <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">description</code>)
+        </>
+      );
+    }
+    if (entityType === "classes") {
+      return (
+        <>
+          Required columns: <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">class_name</code>,{" "}
+          <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">subject_code</code>,{" "}
+          <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">teacher_email</code>
+        </>
+      );
+    }
+    return (
       <>
         Required columns: <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">email</code>,{" "}
         <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">
@@ -139,6 +261,7 @@ export default function BulkImportDropzone({
         <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">last_name</code>
       </>
     );
+  })();
 
   return (
     <div className="space-y-4">

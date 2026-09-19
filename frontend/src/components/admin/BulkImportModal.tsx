@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { X, Users, GraduationCap, BookOpen } from "lucide-react";
+import { X, Users, GraduationCap, BookOpen, Building2, DoorOpen, Award } from "lucide-react";
 import toast from "react-hot-toast";
 import { useBulkImportProcessor } from "./bulk/useBulkImportProcessor";
 import BulkImportDropzone from "./bulk/BulkImportDropzone";
@@ -55,12 +55,20 @@ export default function BulkImportModal({
   const getEntityIcon = (): React.ReactElement => {
     if (entityType === "students") return <GraduationCap size={18} />;
     if (entityType === "teachers") return <Users size={18} />;
+    if (entityType === "departments") return <Building2 size={18} />;
+    if (entityType === "subjects") return <BookOpen size={18} />;
+    if (entityType === "classrooms") return <DoorOpen size={18} />;
+    if (entityType === "designations") return <Award size={18} />;
     return <BookOpen size={18} />;
   };
 
   const getEntityTitle = (): string => {
     if (entityType === "students") return "Students";
     if (entityType === "teachers") return "Faculty";
+    if (entityType === "departments") return "Departments";
+    if (entityType === "subjects") return "Subjects";
+    if (entityType === "classrooms") return "Classrooms";
+    if (entityType === "designations") return "Designations";
     return "Classes";
   };
 

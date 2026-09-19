@@ -27,16 +27,33 @@ export default function BulkImportResults({
       header = "email,enrollment_number,first_name,last_name,error_reason\n";
     } else if (entityType === "teachers") {
       header = "email,employee_id,first_name,last_name,error_reason\n";
-    } else {
+    } else if (entityType === "classes") {
       header = "class_name,subject_code,teacher_email,classroom_name,error_reason\n";
+    } else if (entityType === "departments") {
+      header = "name,code,head,description,error_reason\n";
+    } else if (entityType === "subjects" || entityType === "designations") {
+      header = "name,code,description,error_reason\n";
+    } else if (entityType === "classrooms") {
+      header = "name,building,capacity,error_reason\n";
     }
 
     const rows = summary.failedRecords
-      .map((r) =>
-        entityType === "classes"
-          ? `${r.first_name},${r.identifier},${r.email},${r.last_name},"${r.validationError || "Ingestion error"}"`
-          : `${r.email},${r.identifier},${r.first_name},${r.last_name},"${r.validationError || "Ingestion error"}"`
-      )
+      .map((r) => {
+        const err = `"${r.validationError || "Ingestion error"}"`;
+        if (entityType === "classes") {
+          return `${r.first_name},${r.identifier},${r.email},${r.last_name},${err}`;
+        }
+        if (entityType === "departments") {
+          return `${r.first_name},${r.identifier},${r.last_name},${r.email},${err}`;
+        }
+        if (entityType === "subjects" || entityType === "designations") {
+          return `${r.first_name},${r.identifier},${r.email},${err}`;
+        }
+        if (entityType === "classrooms") {
+          return `${r.first_name},${r.identifier},${r.max_students || ""},${err}`;
+        }
+        return `${r.email},${r.identifier},${r.first_name},${r.last_name},${err}`;
+      })
       .join("\n");
 
     const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });

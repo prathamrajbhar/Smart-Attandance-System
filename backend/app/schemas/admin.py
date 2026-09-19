@@ -202,6 +202,55 @@ class ClassBulkCreateRequest(BaseModel):
     classes: list[ClassBulkItem] = Field(..., min_length=1, description="List of class records to ingest")
 
 
+class DepartmentBulkItem(BaseModel):
+    name: str = Field(..., min_length=2, max_length=100)
+    code: str = Field(..., min_length=2, max_length=20)
+    head: Optional[str] = Field(None, max_length=100)
+    description: Optional[str] = Field(None, max_length=500)
+
+
+class DepartmentBulkCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    departments: list[DepartmentBulkItem] = Field(..., min_length=1, description="List of departments to ingest")
+
+
+class SubjectBulkItem(BaseModel):
+    name: str = Field(..., min_length=2, max_length=100)
+    code: str = Field(..., min_length=2, max_length=20)
+    description: Optional[str] = Field(None, max_length=500)
+
+
+class SubjectBulkCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    subjects: list[SubjectBulkItem] = Field(..., min_length=1, description="List of subjects to ingest")
+
+
+class ClassroomBulkItem(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    building: Optional[str] = Field(None, max_length=100)
+    capacity: Optional[int] = Field(None, ge=1, le=1000)
+
+
+class ClassroomBulkCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    classrooms: list[ClassroomBulkItem] = Field(..., min_length=1, description="List of classrooms to ingest")
+
+
+class DesignationBulkItem(BaseModel):
+    name: str = Field(..., min_length=2, max_length=100)
+    code: str = Field(..., min_length=2, max_length=20)
+    description: Optional[str] = Field(None, max_length=500)
+
+
+class DesignationBulkCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    designations: list[DesignationBulkItem] = Field(..., min_length=1, description="List of designations to ingest")
+
+
 class BulkImportResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

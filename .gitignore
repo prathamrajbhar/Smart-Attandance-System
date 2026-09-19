@@ -28,8 +28,16 @@ desktop.ini
 logs/
 *.log
 
-# Local/Private
+# Environment & Secrets
 .env
-.env.local
-.env.*.local
 .env*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.crt
+*.cert
+credentials.txt
+*-credentials.json
+firebase-credentials*.json
+google-services*.json

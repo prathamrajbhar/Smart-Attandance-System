@@ -28,23 +28,34 @@ jobs:
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.3
+        env:
+          PROD_ENV_FILE: ${{ secrets.PROD_ENV_FILE }}
         with:
           host: 100.101.187.9
           username: jarvis
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           timeout: 120s
+          envs: PROD_ENV_FILE
           script_stop: true
           script: |
             set -e
-            echo "🚀 [1/5] Navigating to project directory..."
+            echo "🚀 [1/6] Navigating to project directory..."
             cd /home/jarvis/workspace/projects/full_stack/Smart-Attandance-System
 
-            echo "📥 [2/5] Pulling latest changes from main branch..."
+            echo "📥 [2/6] Pulling latest changes from main branch..."
             git fetch origin main
             git reset --hard origin/main
 
-            echo "🐍 [3/5] Setting up backend Python virtual environment..."
+            echo "🔐 [3/6] Injecting production environment variables into backend/.env..."
+            if [ -n "$PROD_ENV_FILE" ]; then
+              printf "%s\n" "$PROD_ENV_FILE" > backend/.env
+              chmod 600 backend/.env
+            else
+              echo "⚠️ PROD_ENV_FILE secret is empty; keeping existing backend/.env"
+            fi
+
+            echo "🐍 [4/6] Setting up backend Python virtual environment..."
             cd backend
             if [ -d ".venv" ]; then
               # Recreate venv if corrupted, broken, or created against a different python version
@@ -60,11 +71,11 @@ jobs:
             python -m pip install --upgrade pip setuptools wheel
             pip install -r requirements.txt
 
-            echo "🗄️ [4/5] Generating Prisma client & synchronizing schema..."
+            echo "🗄️ [5/6] Generating Prisma client & synchronizing schema..."
             python -m prisma generate
             python -m prisma db push
 
-            echo "🔄 [5/5] Restarting backend service..."
+            echo "🔄 [6/6] Restarting backend service..."
             if systemctl --user is-enabled smart-attendance-backend >/dev/null 2>&1 || systemctl --user is-active smart-attendance-backend >/dev/null 2>&1; then
               echo "Restarting user systemd service (smart-attendance-backend)..."
               systemctl --user restart smart-attendance-backend

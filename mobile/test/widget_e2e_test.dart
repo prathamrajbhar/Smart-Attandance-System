@@ -113,7 +113,6 @@ void main() {
 
     testWidgets('ForceChangePasswordScreen renders inputs and validation errors', (WidgetTester tester) async {
       final formKey = GlobalKey<FormState>();
-      final currController = TextEditingController();
       final newController = TextEditingController();
       final confirmController = TextEditingController();
 
@@ -126,13 +125,8 @@ void main() {
               child: Column(
                 children: [
                   GlassInput(
-                    controller: currController,
-                    label: 'Temporary Password',
-                    validator: (v) => (v == null || v.isEmpty) ? 'Temporary password is required' : null,
-                  ),
-                  GlassInput(
                     controller: newController,
-                    label: 'New Password',
+                    label: 'New Permanent Password',
                     validator: (v) => (v == null || v.length < 8) ? 'Must be at least 8 characters' : null,
                   ),
                   GlassInput(
@@ -148,14 +142,12 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 100));
 
-      expect(find.text('Temporary Password'), findsOneWidget);
-      expect(find.text('New Password'), findsOneWidget);
+      expect(find.text('New Permanent Password'), findsOneWidget);
       expect(find.text('Confirm New Password'), findsOneWidget);
 
       formKey.currentState!.validate();
       await tester.pump(const Duration(milliseconds: 100));
 
-      expect(find.text('Temporary password is required'), findsOneWidget);
       expect(find.text('Must be at least 8 characters'), findsOneWidget);
     });
   });

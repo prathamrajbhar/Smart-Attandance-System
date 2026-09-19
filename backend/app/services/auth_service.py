@@ -58,10 +58,18 @@ class AuthService:
             must_change_password=getattr(user, "mustChangePassword", False),
         )
 
-    async def change_password(self, user_id: str, current_password: str, new_password: str) -> bool:
+    async def change_password(self, user_id: str, new_password: str, current_password: Optional[str] = None) -> bool:
         user = await self.user_repo.get_by_id(user_id)
-        if not user or not verify_password(current_password, user.hashedPassword):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect.")
+        if not user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+
+        must_change = getattr(user, "mustChangePassword", False)
+        if not must_change:
+            if not current_password or not verify_password(current_password, user.hashedPassword):
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect.")
+        elif current_password:
+            if not verify_password(current_password, user.hashedPassword):
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Temporary password is incorrect.")
 
         hashed = hash_password(new_password)
         await db.user.update(

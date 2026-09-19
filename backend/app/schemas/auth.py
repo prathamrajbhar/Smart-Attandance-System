@@ -27,7 +27,7 @@ class UserProfileResponse(BaseModel):
 
 
 class ChangePasswordRequest(BaseModel):
-    current_password: str = Field(..., min_length=1, description="Current or temporary password")
+    current_password: Optional[str] = Field(None, description="Current or temporary password (optional during forced initial password setup)")
     new_password: str = Field(..., min_length=8, max_length=100, description="New secure password")
 
 

@@ -95,12 +95,12 @@ class AuthNotifier extends StateNotifier<AuthStateData> {
     state = state.copyWith(status: AuthStatus.authenticated);
   }
 
-  Future<bool> changePassword(String currentPassword, String newPassword) async {
+  Future<bool> changePassword(String newPassword, {String? currentPassword}) async {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
     try {
       await _repo.changePassword(
-        currentPassword: currentPassword,
         newPassword: newPassword,
+        currentPassword: currentPassword,
       );
       final result = await _repo.checkAuthState();
       state = AuthStateData(status: result.status, user: result.profile);

@@ -145,7 +145,6 @@ export default function LoginPage(): React.ReactElement {
 
       <ForceChangePasswordModal
         isOpen={showPasswordModal}
-        temporaryPassword={password}
         onSuccess={() => {
           setShowPasswordModal(false);
           if (pendingProfile) {

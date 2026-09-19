@@ -35,13 +35,14 @@ class AuthApi {
   }
 
   Future<void> changePassword({
-    required String currentPassword,
     required String newPassword,
+    String? currentPassword,
   }) async {
     await _dio.post<Map<String, dynamic>>(
       '/auth/change-password',
       data: {
-        'current_password': currentPassword,
+        if (currentPassword != null && currentPassword.isNotEmpty)
+          'current_password': currentPassword,
         'new_password': newPassword,
       },
     );

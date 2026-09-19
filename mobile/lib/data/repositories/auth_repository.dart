@@ -71,13 +71,13 @@ class AuthRepository {
   }
 
   Future<void> changePassword({
-    required String currentPassword,
     required String newPassword,
+    String? currentPassword,
   }) async {
     try {
       await _authApi.changePassword(
-        currentPassword: currentPassword,
         newPassword: newPassword,
+        currentPassword: currentPassword,
       );
       final profile = await _authApi.getProfile();
       await _hive.cacheProfile(profile);

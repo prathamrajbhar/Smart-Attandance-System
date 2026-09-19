@@ -20,17 +20,14 @@ class ForceChangePasswordScreen extends ConsumerStatefulWidget {
 class _ForceChangePasswordScreenState
     extends ConsumerState<ForceChangePasswordScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
-  bool _obscureCurrent = true;
   bool _obscureNew = true;
   bool _obscureConfirm = true;
 
   @override
   void dispose() {
-    _currentPasswordController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -39,13 +36,12 @@ class _ForceChangePasswordScreenState
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
     final success = await ref.read(authProvider.notifier).changePassword(
-          _currentPasswordController.text,
           _newPasswordController.text,
         );
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Password updated successfully! Welcome to your account.'),
+          content: Text('Password set successfully! Welcome to your account.'),
           backgroundColor: SasColors.accentEmerald,
         ),
       );
@@ -75,30 +71,30 @@ class _ForceChangePasswordScreenState
                           shape: BoxShape.circle,
                           gradient: LinearGradient(
                             colors: [
-                              SasColors.accentAmber.withValues(alpha: 0.25),
+                              SasColors.accentEmerald.withValues(alpha: 0.25),
                               SasColors.accentTeal.withValues(alpha: 0.1),
                             ],
                           ),
                           border: Border.all(
-                            color: SasColors.accentAmber.withValues(alpha: 0.3),
+                            color: SasColors.accentEmerald.withValues(alpha: 0.3),
                           ),
                         ),
                         child: const Icon(
-                          Icons.security_rounded,
-                          color: SasColors.accentAmber,
+                          Icons.shield_outlined,
+                          color: SasColors.accentEmerald,
                           size: 28,
                         ),
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Set New Password',
+                        'Set Permanent Password',
                         style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                               fontWeight: FontWeight.w800,
                             ),
                       ),
                       const SizedBox(height: 6),
                       const Text(
-                        'Please choose a permanent password for your student account',
+                        'Create a secure password to activate and protect your account',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: SasColors.textMuted, fontSize: 13),
                       ),
@@ -111,29 +107,10 @@ class _ForceChangePasswordScreenState
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               GlassInput(
-                                controller: _currentPasswordController,
-                                label: 'Temporary Password',
-                                hint: 'Enter temporary password',
-                                prefixIcon: Icons.lock_outline_rounded,
-                                obscureText: _obscureCurrent,
-                                suffix: IconButton(
-                                  icon: Icon(
-                                    _obscureCurrent
-                                        ? Icons.visibility_off_rounded
-                                        : Icons.visibility_rounded,
-                                    color: SasColors.textMuted,
-                                    size: 20,
-                                  ),
-                                  onPressed: () => setState(() => _obscureCurrent = !_obscureCurrent),
-                                ),
-                                validator: (v) => (v == null || v.isEmpty) ? 'Temporary password is required' : null,
-                              ),
-                              const SizedBox(height: 16),
-                              GlassInput(
                                 controller: _newPasswordController,
-                                label: 'New Password',
-                                hint: 'Min. 8 chars (letters, digits, symbols)',
-                                prefixIcon: Icons.lock_reset_rounded,
+                                label: 'New Permanent Password',
+                                hint: 'Min. 8 characters',
+                                prefixIcon: Icons.lock_outline_rounded,
                                 obscureText: _obscureNew,
                                 suffix: IconButton(
                                   icon: Icon(
@@ -155,7 +132,7 @@ class _ForceChangePasswordScreenState
                               GlassInput(
                                 controller: _confirmPasswordController,
                                 label: 'Confirm New Password',
-                                hint: 'Re-enter new password',
+                                hint: 'Re-enter permanent password',
                                 prefixIcon: Icons.check_circle_outline_rounded,
                                 obscureText: _obscureConfirm,
                                 suffix: IconButton(
@@ -182,7 +159,7 @@ class _ForceChangePasswordScreenState
                               ],
                               const SizedBox(height: 24),
                               GlassButton(
-                                label: 'Update Password',
+                                label: 'Activate Account & Continue',
                                 isExpanded: true,
                                 isLoading: isLoading,
                                 onPressed: isLoading ? null : _handleSubmit,
@@ -206,7 +183,7 @@ class _ForceChangePasswordScreenState
               ),
             ),
           ),
-          if (isLoading) const LoadingOverlay(message: 'Updating password...'),
+          if (isLoading) const LoadingOverlay(message: 'Activating account...'),
         ],
       ),
     );

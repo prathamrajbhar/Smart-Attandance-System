@@ -1,4 +1,4 @@
-name: Backend Deploy (Tailscale SSH)
+name: Production Deployment (Backend & Frontend)
 
 on:
   push:
@@ -6,15 +6,19 @@ on:
       - main
     paths:
       - 'backend/**'
+      - 'frontend/**'
       - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
 concurrency:
-  group: production-backend-deploy
+  group: production-deploy
   cancel-in-progress: false
 
 jobs:
-  deploy:
+  # ============================================================================
+  # 1. Backend Server Deployment (Tailscale SSH -> Ubuntu)
+  # ============================================================================
+  deploy-backend:
     name: Deploy Backend to Server
     runs-on: ubuntu-latest
 
@@ -41,30 +45,22 @@ jobs:
           script: |
             set -e
 
-            # --------------------------------------------------------------------------
             # Stage 0: Environment & Shell Path Initialization
-            # --------------------------------------------------------------------------
             [ -f "$HOME/.profile" ] && source "$HOME/.profile" || true
             [ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc" || true
             [ -s "$HOME/.nvm/nvm.sh" ] && source "$HOME/.nvm/nvm.sh" || true
             export PATH="$HOME/.nvm/versions/node/$(ls $HOME/.nvm/versions/node 2>/dev/null | tail -n 1)/bin:$HOME/.npm-global/bin:$HOME/.local/bin:/usr/local/bin:/usr/bin:$PATH"
 
-            # --------------------------------------------------------------------------
             # Stage 1: Workspace Navigation
-            # --------------------------------------------------------------------------
             echo "🚀 [1/7] Navigating to project directory..."
             cd /home/jarvis/workspace/projects/full_stack/Smart-Attandance-System
 
-            # --------------------------------------------------------------------------
             # Stage 2: Code Synchronization
-            # --------------------------------------------------------------------------
             echo "📥 [2/7] Fetching and syncing latest changes from main branch..."
             git fetch origin main
             git reset --hard origin/main
 
-            # --------------------------------------------------------------------------
             # Stage 3: Secrets & Environment Injection
-            # --------------------------------------------------------------------------
             echo "🔐 [3/7] Injecting production environment variables into backend/.env..."
             if [ -n "$PROD_ENV_FILE" ]; then
               printf "%s\n" "$PROD_ENV_FILE" > backend/.env
@@ -74,9 +70,7 @@ jobs:
               echo "ℹ️ PROD_ENV_FILE secret not provided; retaining existing backend/.env."
             fi
 
-            # --------------------------------------------------------------------------
             # Stage 4: Python Virtual Environment Setup & Dependencies
-            # --------------------------------------------------------------------------
             echo "🐍 [4/7] Validating and configuring Python virtual environment..."
             cd backend
             if [ -d ".venv" ]; then
@@ -92,9 +86,7 @@ jobs:
             python -m pip install --upgrade pip setuptools wheel
             pip install -r requirements.txt
 
-            # --------------------------------------------------------------------------
             # Stage 5: Redis Infrastructure Pre-flight & Auto-start
-            # --------------------------------------------------------------------------
             echo "📦 [5/7] Verifying Redis cache service..."
             if ! redis-cli ping >/dev/null 2>&1; then
               echo "⚠️ Redis is not responding. Starting Redis service..."
@@ -110,16 +102,12 @@ jobs:
               echo "✅ Redis server is active and healthy."
             fi
 
-            # --------------------------------------------------------------------------
             # Stage 6: Prisma Client Generation & Schema Sync
-            # --------------------------------------------------------------------------
             echo "🗄️ [6/7] Generating Prisma client & synchronizing database schema..."
             python -m prisma generate
             python -m prisma db push
 
-            # --------------------------------------------------------------------------
             # Stage 7: In-Place Zero-Downtime Process Reload (Preserving PM2 ID)
-            # --------------------------------------------------------------------------
             echo "🔄 [7/7] Reloading backend service via process manager..."
             if command -v pm2 >/dev/null 2>&1; then
               if pm2 describe smart-attendance-backend >/dev/null 2>&1; then
@@ -140,13 +128,36 @@ jobs:
               echo "⚠️ No active process manager found. Run: pm2 start ecosystem.config.cjs"
             fi
 
-            # --------------------------------------------------------------------------
             # Post-Deployment Health Check
-            # --------------------------------------------------------------------------
             echo "🩺 Performing health check probe..."
             sleep 2
             if command -v curl >/dev/null 2>&1; then
               curl -sf http://127.0.0.1:8006/docs >/dev/null 2>&1 && echo "✅ Backend service is healthy and responding on port 8006!" || echo "ℹ️ Service started; listening on port 8006."
             fi
 
-            echo "🎉 Deployment completed successfully!"
+            echo "🎉 Backend deployment completed successfully!"
+
+  # ============================================================================
+  # 2. Frontend Deployment (Vercel Production Deploy)
+  # ============================================================================
+  deploy-frontend:
+    name: Deploy Frontend to Vercel
+    runs-on: ubuntu-latest
+    needs: deploy-backend
+    if: always()
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to Vercel Production
+        uses: amondnet/vercel-action@v25
+        if: env.VERCEL_TOKEN != ''
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID || 'team_AtYRp8RbekEe9ODI4bXdfmkl' }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID || 'prj_umoE9lDEnTx7GpO5dbGumyMZp0MK' }}
+          working-directory: frontend
+          vercel-args: '--prod --build-env NEXT_PUBLIC_API_URL=https://smart_attandance_system.bytemap.in/api/v1'

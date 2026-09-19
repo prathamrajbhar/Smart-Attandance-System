@@ -317,50 +317,8 @@ BATCH_MAP: dict[int, str] = {2: "2025-2029", 4: "2024-2028", 6: "2023-2027", 8: 
 CAMPUS_LAT = 19.1334
 CAMPUS_LNG = 72.9133
 
-# Attendance scoring weights (mirroring app config)
-FACE_WEIGHT = 0.50
-LIVENESS_WEIGHT = 0.30
-BACKGROUND_WEIGHT = 0.20
-PASS_THRESHOLD = 0.75
-
-# ==============================================================================
-# HELPERS
-# ==============================================================================
-
-def random_date(start_dt: date, end_dt: date) -> datetime:
-    delta = end_dt - start_dt
-    offset_days = random.random() * delta.days
-    offset_seconds = random.random() * 86400.0
-    result = datetime.combine(start_dt, datetime.min.time()) + timedelta(days=offset_days, seconds=offset_seconds)
-    return result.replace(tzinfo=timezone.utc)
-
-
-def _to_datetime(d: date | datetime) -> datetime:
-    if isinstance(d, datetime):
-        return d
-    return datetime.combine(d, datetime.min.time()).replace(tzinfo=timezone.utc)
-
-
-def _pick(items: list[T]) -> T:
-    return random.choice(items)
-
-
-def _pick_n(items: list[T], n: int) -> list[T]:
-    return random.sample(items, min(n, len(items)))
-
-
-def _weighted_choice(items: list[Any], weights: list[float]) -> Any:
-    return random.choices(items, weights=weights, k=1)[0]
-
-
-def jitter_gps(base_lat: float, base_lng: float, radius_deg: float = 0.002) -> tuple[float, float]:
-    lat = base_lat + random.uniform(-radius_deg, radius_deg)
-    lng = base_lng + random.uniform(-radius_deg, radius_deg)
-    return (round(lat, 6), round(lng, 6))
-
-
 def compute_final_score(face: float, liveness: float, background: float) -> float:
-    return round(face * FACE_WEIGHT + liveness * LIVENESS_WEIGHT + background * BACKGROUND_WEIGHT, 4)
+    return round((face + liveness + background) / 3.0, 4)
 
 
 def generate_present_scores() -> dict[str, float]:

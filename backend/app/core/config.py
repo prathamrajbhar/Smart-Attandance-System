@@ -27,15 +27,17 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
     REDIS_URL: str = "redis://localhost:6379/0"
-    UPLOAD_DIR: str = "static"
-    FACE_WEIGHT: float = 0.50
-    LIVENESS_WEIGHT: float = 0.30
-    BACKGROUND_WEIGHT: float = 0.20
-    PASS_THRESHOLD: float = 0.75
-    FRONTEND_URL: str = Field(default="https://smartattandancesystem.vercel.app", description="Frontend URL for CORS")
+
+    # AWS S3 Storage
+    AWS_ENDPOINT_URL: str = "http://localhost:4566"
+    AWS_DEFAULT_REGION: str = "us-east-1"
+    AWS_ACCESS_KEY_ID: str = "test"
+    AWS_SECRET_ACCESS_KEY: str = "test"
+    S3_BUCKET_NAME: str = "smartattandancesystem"
+
+    FRONTEND_URL: str = Field(default="http://localhost:3000", description="Frontend URL for CORS")
     ENVIRONMENT: str = "development"
     LOG_LEVEL: str = Field(default="DEBUG", description="Logging level: DEBUG, INFO, WARNING, ERROR, CRITICAL")
 
 
 settings = Settings()
-

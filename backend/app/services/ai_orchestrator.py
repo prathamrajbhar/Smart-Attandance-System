@@ -119,34 +119,47 @@ class AIOrchestrator:
         with _background_lock:
             return float(background_model.predict(self._preprocess_background(img), verbose=0)[0][0])
 
-    def _run_embedding_extraction(self, image_path: str) -> List[float]:
+    def _load_image_array(self, image_input: str | bytes) -> Optional[np.ndarray]:
+        if isinstance(image_input, bytes):
+            return cv2.imdecode(np.frombuffer(image_input, np.uint8), cv2.IMREAD_COLOR)
+        if not image_input:
+            return None
+        if os.path.exists(image_input):
+            return cv2.imread(image_input)
         try:
-            img = cv2.imread(image_path)
+            from app.services.s3_service import s3_service
+            raw_bytes = s3_service.download_bytes(image_input)
+            return cv2.imdecode(np.frombuffer(raw_bytes, np.uint8), cv2.IMREAD_COLOR)
+        except Exception as exc:
+            logger.warning("Failed to load image from S3 '%s': %s", image_input, exc)
+            return None
+
+    def _run_embedding_extraction(self, image_input: str | bytes) -> List[float]:
+        try:
+            img = self._load_image_array(image_input)
             if img is None:
                 return []
             with _deepface_lock:
-                results = DeepFace.represent(img_path=cv2.cvtColor(img, cv2.COLOR_BGR2RGB), model_name="Facenet", enforce_detection=True)
+                results = DeepFace.represent(
+                    img_path=cv2.cvtColor(img, cv2.COLOR_BGR2RGB),
+                    model_name="Facenet",
+                    enforce_detection=True,
+                )
             return [float(v) for v in results[0]["embedding"]] if results else []
         except Exception as e:
             logger.error("DeepFace face embedding extraction failed safely: %s", e, exc_info=True)
             return []
 
-    async def extract_face_embedding(self, image_path: str) -> List[float]:
-        if not os.path.exists(image_path):
-            return []
+    async def extract_face_embedding(self, image_input: str | bytes) -> List[float]:
         try:
-            return await asyncio.to_thread(self._run_embedding_extraction, image_path)
+            return await asyncio.to_thread(self._run_embedding_extraction, image_input)
         except Exception as e:
             logger.error("Face embedding extraction thread run failed: %s", e, exc_info=True)
             return []
 
-    async def analyze_attendance(self, image_path: str, face_embedding: List[float]) -> dict:
-        if not os.path.exists(image_path):
-            logger.warning("Image path does not exist for attendance analysis: %s", image_path)
-            return {"face_score": 0.0, "liveness_score": 0.0, "background_score": 0.0}
-
+    async def analyze_attendance(self, image_input: str | bytes, face_embedding: List[float]) -> dict:
         def _load_and_crop():
-            img = cv2.imread(image_path)
+            img = self._load_image_array(image_input)
             if img is None:
                 return None, None, None
             img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)

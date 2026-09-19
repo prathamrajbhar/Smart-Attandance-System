@@ -63,6 +63,17 @@ To mark attendance, the student uploads a live selfie which undergoes three inde
 
 ## ⚙️ Getting Started
 
+### ⚡ Quick Start (Automated Workspace Setup)
+Run one command to verify requirements, configure `.env` files with secure keys, and install all dependencies across backend, frontend, and mobile:
+
+```bash
+# 1. Setup entire workspace (dependencies, .env, prisma)
+npm run setup
+
+# 2. Run backend & frontend concurrently
+npm run dev
+```
+
 ### Prerequisites
 1. **Python 3.11** installed on the host system.
 2. **Node.js 20+** and **npm** installed.
@@ -158,8 +169,8 @@ To mark attendance, the student uploads a live selfie which undergoes three inde
 
 ---
 
-## 🔒 Security & Verification Parameters
-The verification strictness can be controlled globally via the administrator settings page or in `.env`:
-* **Face Embedding matching threshold**: Standard threshold is configured to `0.75` (cosine similarity/confidence score).
-* **Liveness Detection threshold**: Values above `0.5` denote real face image inputs.
+## 🔒 Security & Dynamic Verification
+The verification is dynamically controlled via the administrator settings:
+* **Facial Recognition & Liveness**: Live face matching and anti-spoofing verification when enabled in system configuration.
+* **Background Validation**: AI environment validation matching classroom backgrounds when enabled.
 * **Geofencing validation**: Distance calculated dynamically using the Haversine formula based on student's GPS reports and active class geofence boundaries.

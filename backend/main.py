@@ -9,13 +9,13 @@ from typing import AsyncGenerator
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 from app.core.logging_config import setup_logging, get_logger
 from app.db.client import connect_db, disconnect_db, db
 from app.db.redis import connect_redis, disconnect_redis, get_redis
+from app.services.s3_service import s3_service
 from app.api import auth, student, teacher, admin, logs, ws as ws_module
 from app.middleware.request_logging import RequestLoggingMiddleware
 
@@ -28,6 +28,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info("Starting server...")
     await connect_db()
     await connect_redis()
+    s3_service.ensure_bucket_exists()
     ws_module.manager.start_heartbeat()
     logger.info("Server ready")
     yield
@@ -62,10 +63,6 @@ app.include_router(teacher.router, prefix=settings.API_V1_STR)
 app.include_router(admin.router, prefix=settings.API_V1_STR)
 app.include_router(logs.router, prefix=settings.API_V1_STR)
 app.include_router(ws_module.router, prefix=settings.API_V1_STR)
-
-os.makedirs("static/proofs", exist_ok=True)
-os.makedirs("static/leaves", exist_ok=True)
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 @app.exception_handler(Exception)

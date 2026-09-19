@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 
 from prisma.models import Attendance
 
-from app.core.config import settings
 from app.core.logging_config import get_logger
 from app.db.redis import get_redis
 from app.repositories.attendance_repo import AttendanceRepository
@@ -142,18 +141,25 @@ class AttendanceService:
         else:
             ai_results = {"face_score": 1.0, "liveness_score": 1.0, "background_score": 1.0}
             
-        if not config.isFaceRecognitionEnabled:
-            ai_results["face_score"] = 1.0
-            ai_results["liveness_score"] = 1.0
-            
-        if not config.isAiBackgroundValidationEnabled:
-            ai_results["background_score"] = 1.0
+        active_scores: list[float] = []
+        is_verified = True
+
+        if config.isFaceRecognitionEnabled:
+            active_scores.extend([ai_results["face_score"], ai_results["liveness_score"]])
+            if ai_results["face_score"] < 0.60 or ai_results["liveness_score"] < 0.50:
+                is_verified = False
+
+        if config.isAiBackgroundValidationEnabled:
+            active_scores.append(ai_results["background_score"])
+            if ai_results["background_score"] < 0.50:
+                is_verified = False
+
         final_score = (
-            settings.FACE_WEIGHT * ai_results["face_score"]
-            + settings.LIVENESS_WEIGHT * ai_results["liveness_score"]
-            + settings.BACKGROUND_WEIGHT * ai_results["background_score"]
+            round(sum(active_scores) / len(active_scores), 4)
+            if active_scores
+            else 1.0
         )
-        status = "Flagged" if geofence_missing else ("Present" if final_score >= settings.PASS_THRESHOLD else "Flagged")
+        status = "Flagged" if (geofence_missing or not is_verified) else "Present"
 
         attendance_record = await self.attendance_repo.create({
             "studentId": submission.student_id, "sessionId": submission.session_id,
@@ -288,18 +294,25 @@ class AttendanceService:
         else:
             ai_results = {"face_score": 1.0, "liveness_score": 1.0, "background_score": 1.0}
             
-        if not config.isFaceRecognitionEnabled:
-            ai_results["face_score"] = 1.0
-            ai_results["liveness_score"] = 1.0
-            
-        if not config.isAiBackgroundValidationEnabled:
-            ai_results["background_score"] = 1.0
+        active_scores: list[float] = []
+        is_verified = True
+
+        if config.isFaceRecognitionEnabled:
+            active_scores.extend([ai_results["face_score"], ai_results["liveness_score"]])
+            if ai_results["face_score"] < 0.60 or ai_results["liveness_score"] < 0.50:
+                is_verified = False
+
+        if config.isAiBackgroundValidationEnabled:
+            active_scores.append(ai_results["background_score"])
+            if ai_results["background_score"] < 0.50:
+                is_verified = False
+
         final_score = (
-            settings.FACE_WEIGHT * ai_results["face_score"]
-            + settings.LIVENESS_WEIGHT * ai_results["liveness_score"]
-            + settings.BACKGROUND_WEIGHT * ai_results["background_score"]
+            round(sum(active_scores) / len(active_scores), 4)
+            if active_scores
+            else 1.0
         )
-        predicted_status = "Flagged" if geofence_missing else ("Present" if final_score >= settings.PASS_THRESHOLD else "Flagged")
+        predicted_status = "Flagged" if (geofence_missing or not is_verified) else "Present"
 
         # ── Build review token (5-minute TTL) ───────────────────────────────
         review_token = create_access_token(
@@ -416,16 +429,20 @@ class AttendanceService:
         except Exception as e:
             logger.warning("Streak update failed: %s", e)
 
-        if predicted_status == "Present" and image_path and os.path.exists(image_path):
-            try:
-                os.remove(image_path)
-            except Exception as e:
-                logger.error("Failed to remove temp image %s: %s", image_path, e, exc_info=True)
+        if predicted_status == "Present" and image_path:
+            if os.path.exists(image_path):
+                try:
+                    os.remove(image_path)
+                except Exception as e:
+                    logger.error("Failed to remove temp image %s: %s", image_path, e, exc_info=True)
+            else:
+                from app.services.s3_service import s3_service
+                s3_service.delete_file(image_path)
 
         return attendance_record
 
-    async def register_face(self, student_id: str, image_path: str) -> bool:
-        embedding = await self.ai_orchestrator.extract_face_embedding(image_path)
+    async def register_face(self, student_id: str, image_input: str | bytes) -> bool:
+        embedding = await self.ai_orchestrator.extract_face_embedding(image_input)
         if not embedding:
             return False
         await self.student_repo.update_face_embedding(student_id, embedding)

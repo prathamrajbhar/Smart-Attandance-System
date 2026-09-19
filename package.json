@@ -1,0 +1,22 @@
+{
+  "name": "smart-attendance-system-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Multi-layer AI-powered Smart Attendance System workspace CLI & runner",
+  "type": "module",
+  "bin": {
+    "setup": "./scripts/setup.mjs",
+    "dev": "./scripts/dev.mjs"
+  },
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "setup": "node scripts/setup.mjs --setup",
+    "check": "node scripts/setup.mjs --check",
+    "backend:setup": "node scripts/setup.mjs --backend",
+    "frontend:setup": "node scripts/setup.mjs --frontend",
+    "mobile:setup": "node scripts/setup.mjs --mobile",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && uvicorn main:app --reload --port 8000",
+    "dev:mobile": "cd mobile && flutter run"
+  }
+}

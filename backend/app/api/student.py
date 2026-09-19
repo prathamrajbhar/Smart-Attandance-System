@@ -24,18 +24,15 @@ logger = get_logger("app.api.student")
 
 router = APIRouter(prefix="/student", tags=["Student Features"])
 
+from app.services.s3_service import s3_service
+
 _MAX_IMAGE_SIZE = 5 * 1024 * 1024
 _VALID_IMAGE_TYPES = {"image/jpeg", "image/png", "image/jpg"}
 
 
-def _save_uploaded_image(upload_file: UploadFile, folder: str) -> str:
-    target_dir = os.path.join(settings.UPLOAD_DIR, folder)
-    os.makedirs(target_dir, exist_ok=True)
-    ext = os.path.splitext(upload_file.filename or "")[1] or ".jpg"
-    target_path = os.path.join(target_dir, f"{uuid.uuid4()}{ext}")
-    with open(target_path, "wb") as buffer:
-        shutil.copyfileobj(upload_file.file, buffer)
-    return target_path
+async def _save_uploaded_image(upload_file: UploadFile, folder: str) -> tuple[str, bytes]:
+    _key, url, contents = await s3_service.upload_uploadfile(upload_file, folder)
+    return url, contents
 
 
 
@@ -86,20 +83,20 @@ async def mark_attendance(
     student: Student = Depends(get_current_student),
     attendance_service: AttendanceService = Depends(),
 ) -> AttendanceMarkResponse:
-    image_path = None
+    image_url = None
     if image:
         _validate_image(image)
-        image_path = _save_uploaded_image(image, "attendance")
+        image_url, _ = await _save_uploaded_image(image, "attendance")
     submission = AttendanceSubmission(
         student_id=student.id, session_id=session_id,
-        latitude=latitude, longitude=longitude, accuracy=accuracy, image_path=image_path,
+        latitude=latitude, longitude=longitude, accuracy=accuracy, image_path=image_url,
     )
     try:
         attendance = await attendance_service.mark_attendance(submission)
         return AttendanceMarkResponse.model_validate(attendance)
     except ValueError as err:
-        if image_path and os.path.exists(image_path):
-            os.remove(image_path)
+        if image_url:
+            s3_service.delete_file(image_url)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err))
 
 
@@ -118,20 +115,20 @@ async def analyze_attendance(
     Returns scores and a short-lived review_token (5 min) that the student
     can use to confirm submission via POST /attendance/confirm.
     """
-    image_path = None
+    image_url = None
     if image:
         _validate_image(image)
-        image_path = _save_uploaded_image(image, "attendance")
+        image_url, _ = await _save_uploaded_image(image, "attendance")
     submission = AttendanceSubmission(
         student_id=student.id, session_id=session_id,
-        latitude=latitude, longitude=longitude, accuracy=accuracy, image_path=image_path,
+        latitude=latitude, longitude=longitude, accuracy=accuracy, image_path=image_url,
     )
     try:
         result = await attendance_service.analyze_attendance(submission)
         return AttendanceAnalyzeResponse(**result)
     except ValueError as err:
-        if image_path and os.path.exists(image_path):
-            os.remove(image_path)
+        if image_url:
+            s3_service.delete_file(image_url)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err))
 
 
@@ -160,17 +157,16 @@ async def register_face(
     attendance_service: AttendanceService = Depends(),
 ) -> dict:
     _validate_image(image)
-    image_path = _save_uploaded_image(image, "registration")
+    image_url, image_bytes = await _save_uploaded_image(image, "registration")
     try:
-        success = await attendance_service.register_face(student.id, image_path)
+        success = await attendance_service.register_face(student.id, image_bytes)
         if not success:
             raise ValueError("Could not extract a valid face from the image.")
         return {"status": "success", "message": "Face embedding registered successfully."}
     except ValueError as err:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err))
     finally:
-        if os.path.exists(image_path):
-            os.remove(image_path)
+        s3_service.delete_file(image_url)
 
 
 @router.get("/my-attendance", response_model=StudentAttendanceHistoryResponse)
@@ -259,15 +255,9 @@ async def create_leave_request(
     document_url = None
     if document and document.filename:
         try:
-            upload_dir = "static/leaves"
-            os.makedirs(upload_dir, exist_ok=True)
-            ext = os.path.splitext(document.filename)[1]
-            filename = f"leave_{student.id}_{int(datetime.now().timestamp())}{ext}"
-            file_path = os.path.join(upload_dir, filename)
-            with open(file_path, "wb") as f:
-                f.write(await document.read())
-            document_url = f"/static/leaves/{filename}"
-        except Exception:
+            _key, document_url, _ = await s3_service.upload_uploadfile(document, "leaves")
+        except Exception as exc:
+            logger.error("Could not upload leave document to S3: %s", exc)
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not save leave document.")
 
     leave = await leave_repo.create({

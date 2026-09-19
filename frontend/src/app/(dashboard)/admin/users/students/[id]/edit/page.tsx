@@ -2,9 +2,11 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { User, GraduationCap, Save, X } from "lucide-react";
 import toast from "react-hot-toast";
-import api, { getApiErrorMessage } from "@/lib/api";
+import api, { getApiErrorMessage, applyValidationErrorsToForm } from "@/lib/api";
 import GlassBreadcrumb from "@/components/ui/GlassBreadcrumb";
 import GlassPageHeader from "@/components/ui/GlassPageHeader";
 import GlassCard from "@/components/ui/GlassCard";
@@ -12,6 +14,7 @@ import GlassInput from "@/components/ui/GlassInput";
 import GlassButton from "@/components/ui/GlassButton";
 import GlassLoader from "@/components/ui/GlassLoader";
 import EditStudentFormFields from "./EditStudentFormFields";
+import { studentUpdateSchema, StudentUpdateFormData } from "@/lib/validations/student";
 import type { StudentResponse, DepartmentResponse } from "@/types";
 
 export default function EditStudentPage(): React.ReactElement {
@@ -19,9 +22,30 @@ export default function EditStudentPage(): React.ReactElement {
   const router = useRouter();
   const [student, setStudent] = useState<StudentResponse | null>(null);
   const [departments, setDepartments] = useState<DepartmentResponse[]>([]);
-  const [form, setForm] = useState<Partial<StudentResponse>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  const {
+    register,
+    control,
+    handleSubmit,
+    reset,
+    setError,
+    formState: { errors },
+  } = useForm<StudentUpdateFormData>({
+    resolver: zodResolver(studentUpdateSchema),
+    defaultValues: {
+      enrollment_number: "",
+      first_name: "",
+      last_name: "",
+      phone: "",
+      gender: "",
+      date_of_birth: "",
+      semester: undefined,
+      batch: "",
+      department_id: "",
+    },
+  });
 
   useEffect(() => {
     async function fetchStudentAndDeps(): Promise<void> {
@@ -34,16 +58,16 @@ export default function EditStudentPage(): React.ReactElement {
         const found = studentRes.data;
         if (found) {
           setStudent(found);
-          setForm({
+          reset({
             enrollment_number: found.enrollment_number,
-            first_name: found.first_name,
-            last_name: found.last_name,
-            phone: found.phone,
-            gender: found.gender,
-            date_of_birth: found.date_of_birth ? new Date(found.date_of_birth).toISOString().split("T")[0] : undefined,
-            semester: found.semester,
-            batch: found.batch,
-            department_id: found.department_id,
+            first_name: found.first_name || "",
+            last_name: found.last_name || "",
+            phone: found.phone ?? "",
+            gender: found.gender ?? "",
+            date_of_birth: found.date_of_birth ? new Date(found.date_of_birth).toISOString().split("T")[0] : "",
+            semester: found.semester ?? undefined,
+            batch: found.batch ?? "",
+            department_id: found.department_id ?? "",
           });
         }
       } catch {
@@ -52,36 +76,28 @@ export default function EditStudentPage(): React.ReactElement {
         setLoading(false);
       }
     }
-    
+
     void fetchStudentAndDeps();
-  }, [id]);
+  }, [id, reset]);
 
-  function set(field: keyof StudentResponse, value: string | number | undefined): void {
-    setForm((prev) => ({ ...prev, [field]: value }));
-  }
-
-  async function handleSubmit(e: React.FormEvent): Promise<void> {
-    e.preventDefault();
-    if (!form.enrollment_number?.trim()) {
-      toast.error("Enrollment number is required");
-      return;
-    }
+  async function onSubmit(formData: StudentUpdateFormData): Promise<void> {
     setSaving(true);
     try {
       await api.put(`/admin/users/students/${id}`, {
-        enrollment_number: form.enrollment_number,
-        first_name: form.first_name,
-        last_name: form.last_name,
-        phone: form.phone || undefined,
-        gender: form.gender || undefined,
-        date_of_birth: form.date_of_birth ? new Date(form.date_of_birth).toISOString() : undefined,
-        semester: form.semester ? Number(form.semester) : undefined,
-        batch: form.batch || undefined,
-        department_id: form.department_id || undefined,
+        enrollment_number: formData.enrollment_number,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        phone: formData.phone || undefined,
+        gender: formData.gender || undefined,
+        date_of_birth: formData.date_of_birth ? new Date(formData.date_of_birth).toISOString() : undefined,
+        semester: formData.semester !== undefined && formData.semester !== null ? Number(formData.semester) : undefined,
+        batch: formData.batch || undefined,
+        department_id: formData.department_id || undefined,
       });
       toast.success("Student updated successfully");
       router.push(`/admin/users/students/${id}`);
     } catch (err: unknown) {
+      applyValidationErrorsToForm(err, setError);
       toast.error(getApiErrorMessage(err, "Update failed"));
     } finally {
       setSaving(false);
@@ -107,8 +123,8 @@ export default function EditStudentPage(): React.ReactElement {
         ]}
       />
       <GlassPageHeader title="Edit Student Profile" description="Update student personal and academic details." />
-      
-      <form onSubmit={handleSubmit} className="max-w-4xl space-y-8">
+
+      <form onSubmit={handleSubmit(onSubmit)} className="max-w-4xl space-y-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-1 space-y-8">
             <GlassCard className="!p-0 overflow-hidden">
@@ -123,8 +139,8 @@ export default function EditStudentPage(): React.ReactElement {
                 <GlassInput label="Email Address" value={student.email} disabled />
                 <GlassInput
                   label="Enrollment Number"
-                  value={form.enrollment_number ?? ""}
-                  onChange={(e) => set("enrollment_number", e.target.value)}
+                  {...register("enrollment_number")}
+                  error={errors.enrollment_number?.message}
                 />
               </div>
             </GlassCard>
@@ -140,8 +156,9 @@ export default function EditStudentPage(): React.ReactElement {
                 <p className="text-xs text-muted-foreground mt-0.5">Personal and academic details.</p>
               </div>
               <EditStudentFormFields
-                form={form}
-                set={set}
+                register={register}
+                control={control}
+                errors={errors}
                 deptOptions={deptOptions}
               />
             </GlassCard>

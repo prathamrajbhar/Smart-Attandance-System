@@ -2,9 +2,11 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { User, Briefcase, Save, X } from "lucide-react";
 import toast from "react-hot-toast";
-import api, { getApiErrorMessage } from "@/lib/api";
+import api, { getApiErrorMessage, applyValidationErrorsToForm } from "@/lib/api";
 import GlassBreadcrumb from "@/components/ui/GlassBreadcrumb";
 import GlassPageHeader from "@/components/ui/GlassPageHeader";
 import GlassCard from "@/components/ui/GlassCard";
@@ -12,6 +14,7 @@ import GlassInput from "@/components/ui/GlassInput";
 import GlassButton from "@/components/ui/GlassButton";
 import GlassLoader from "@/components/ui/GlassLoader";
 import EditTeacherFormFields from "./EditTeacherFormFields";
+import { teacherUpdateSchema, TeacherUpdateFormData } from "@/lib/validations/teacher";
 import type { TeacherResponse, DepartmentResponse, DesignationResponse } from "@/types";
 
 export default function EditTeacherPage(): React.ReactElement {
@@ -20,10 +23,31 @@ export default function EditTeacherPage(): React.ReactElement {
   const [teacher, setTeacher] = useState<TeacherResponse | null>(null);
   const [departments, setDepartments] = useState<DepartmentResponse[]>([]);
   const [designations, setDesignations] = useState<DesignationResponse[]>([]);
-  
-  const [form, setForm] = useState<Partial<TeacherResponse>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  const {
+    register,
+    control,
+    handleSubmit,
+    reset,
+    setError,
+    formState: { errors },
+  } = useForm<TeacherUpdateFormData>({
+    resolver: zodResolver(teacherUpdateSchema),
+    defaultValues: {
+      employee_id: "",
+      first_name: "",
+      last_name: "",
+      department_id: "",
+      designation_id: "",
+      phone: "",
+      qualification: "",
+      specialization: "",
+      experience_years: undefined,
+      joining_date: "",
+    },
+  });
 
   useEffect(() => {
     async function fetchData(): Promise<void> {
@@ -39,15 +63,15 @@ export default function EditTeacherPage(): React.ReactElement {
         const found = teacherRes.data;
         if (found) {
           setTeacher(found);
-          setForm({
+          reset({
             employee_id: found.employee_id,
             first_name: found.first_name,
             last_name: found.last_name,
-            phone: found.phone,
-            qualification: found.qualification,
-            specialization: found.specialization,
-            experience_years: found.experience_years,
-            joining_date: found.joining_date ? new Date(found.joining_date).toISOString().split("T")[0] : undefined,
+            phone: found.phone ?? "",
+            qualification: found.qualification ?? "",
+            specialization: found.specialization ?? "",
+            experience_years: found.experience_years ?? undefined,
+            joining_date: found.joining_date ? new Date(found.joining_date).toISOString().split("T")[0] : "",
             department_id: found.department_id,
             designation_id: found.designation_id,
           });
@@ -60,35 +84,27 @@ export default function EditTeacherPage(): React.ReactElement {
     }
 
     void fetchData();
-  }, [id]);
+  }, [id, reset]);
 
-  function set(field: keyof TeacherResponse, value: string | number | undefined): void {
-    setForm((prev) => ({ ...prev, [field]: value }));
-  }
-
-  async function handleSubmit(e: React.FormEvent): Promise<void> {
-    e.preventDefault();
-    if (!form.employee_id?.trim() || !form.first_name?.trim() || !form.last_name?.trim() || !form.department_id || !form.designation_id) {
-      toast.error("Please fill all required fields");
-      return;
-    }
+  async function onSubmit(formData: TeacherUpdateFormData): Promise<void> {
     setSaving(true);
     try {
       await api.put(`/admin/users/teachers/${id}`, {
-        employee_id: form.employee_id,
-        first_name: form.first_name,
-        last_name: form.last_name,
-        phone: form.phone || undefined,
-        qualification: form.qualification || undefined,
-        specialization: form.specialization || undefined,
-        experience_years: form.experience_years !== undefined && form.experience_years !== null ? Number(form.experience_years) : undefined,
-        joining_date: form.joining_date ? new Date(form.joining_date).toISOString() : undefined,
-        department_id: form.department_id,
-        designation_id: form.designation_id,
+        employee_id: formData.employee_id,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        phone: formData.phone || undefined,
+        qualification: formData.qualification || undefined,
+        specialization: formData.specialization || undefined,
+        experience_years: formData.experience_years !== undefined && formData.experience_years !== null ? Number(formData.experience_years) : undefined,
+        joining_date: formData.joining_date ? new Date(formData.joining_date).toISOString() : undefined,
+        department_id: formData.department_id,
+        designation_id: formData.designation_id,
       });
       toast.success("Teacher updated successfully");
       router.push(`/admin/users/teachers/${id}`);
     } catch (err: unknown) {
+      applyValidationErrorsToForm(err, setError);
       toast.error(getApiErrorMessage(err, "Update failed"));
     } finally {
       setSaving(false);
@@ -113,7 +129,7 @@ export default function EditTeacherPage(): React.ReactElement {
       />
       <GlassPageHeader title="Edit Teacher Profile" description="Update teacher personal and academic details." />
 
-      <form onSubmit={handleSubmit} className="max-w-4xl space-y-8">
+      <form onSubmit={handleSubmit(onSubmit)} className="max-w-4xl space-y-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-6">
             <GlassCard className="!p-0 overflow-hidden">
@@ -128,8 +144,8 @@ export default function EditTeacherPage(): React.ReactElement {
                 <GlassInput label="Email Address" value={teacher.email} disabled />
                 <GlassInput
                   label="Employee ID *"
-                  value={form.employee_id ?? ""}
-                  onChange={(e) => set("employee_id", e.target.value)}
+                  {...register("employee_id")}
+                  error={errors.employee_id?.message}
                 />
               </div>
             </GlassCard>
@@ -145,8 +161,9 @@ export default function EditTeacherPage(): React.ReactElement {
                 <p className="text-xs text-muted-foreground mt-0.5">Personal and academic details.</p>
               </div>
               <EditTeacherFormFields
-                form={form}
-                set={set}
+                register={register}
+                control={control}
+                errors={errors}
                 deptOptions={deptOptions}
                 desigOptions={desigOptions}
               />

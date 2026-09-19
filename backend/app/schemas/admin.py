@@ -1,35 +1,60 @@
 from datetime import datetime
-from typing import Optional
-
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from typing import Optional, Any
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
 
 
 class ClassCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     name: str = Field(..., min_length=2, max_length=100, description="Name of the class e.g. CS-101-A")
-    subject_id: str = Field(..., description="UUID of the linked Subject")
-    teacher_id: str = Field(..., min_length=36, max_length=36, description="UUID of the associated Teacher profile")
-    classroom_id: Optional[str] = Field(None, description="UUID of the assigned Classroom (optional)")
+    subject_id: str = Field(..., min_length=1, max_length=64, description="UUID of the linked Subject")
+    teacher_id: str = Field(..., min_length=1, max_length=64, description="UUID of the associated Teacher profile")
+    classroom_id: Optional[str] = Field(None, max_length=64, description="UUID of the assigned Classroom (optional)")
     semester: Optional[int] = Field(None, ge=1, le=8, description="Academic semester (1–8)")
     batch: Optional[str] = Field(None, max_length=20, description="Batch year range e.g. 2022-2026")
-    max_students: Optional[int] = Field(None, ge=1, description="Maximum student capacity for the class")
+    max_students: Optional[int] = Field(None, ge=1, le=1000, description="Maximum student capacity for the class")
+
+    @field_validator("name", "batch", mode="before")
+    @classmethod
+    def strip_text(cls, v: Optional[str]) -> Optional[str]:
+        return v.strip() if isinstance(v, str) else v
 
 
 class ClassUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     name: Optional[str] = Field(None, min_length=2, max_length=100)
-    subject_id: Optional[str] = Field(None)
-    teacher_id: Optional[str] = Field(None, min_length=36, max_length=36)
-    classroom_id: Optional[str] = Field(None)
+    subject_id: Optional[str] = Field(None, min_length=1, max_length=64)
+    teacher_id: Optional[str] = Field(None, min_length=1, max_length=64)
+    classroom_id: Optional[str] = Field(None, max_length=64)
     semester: Optional[int] = Field(None, ge=1, le=8)
     batch: Optional[str] = Field(None, max_length=20)
-    max_students: Optional[int] = Field(None, ge=1)
+    max_students: Optional[int] = Field(None, ge=1, le=1000)
+
+    @field_validator("name", "batch", mode="before")
+    @classmethod
+    def strip_text(cls, v: Optional[str]) -> Optional[str]:
+        return v.strip() if isinstance(v, str) else v
 
 
 class AssignTeacherRequest(BaseModel):
-    teacher_id: str = Field(..., min_length=36, max_length=36, description="UUID of the Teacher profile to assign")
+    model_config = ConfigDict(extra="forbid")
+
+    teacher_id: str = Field(..., min_length=1, max_length=64, description="UUID of the Teacher profile to assign")
 
 
 class EnrollRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     student_ids: list[str] = Field(..., min_length=1, description="List of Student UUIDs to enroll in the class")
+
+
+class EnrollStudentsResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    enrolled_count: int
+    class_id: str
+    message: str = "Students successfully enrolled"
 
 
 class ClassResponse(BaseModel):
@@ -49,17 +74,31 @@ class ClassResponse(BaseModel):
 
 
 class DepartmentCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     name: str = Field(..., min_length=3, max_length=100)
-    code: str = Field(..., min_length=2, max_length=10)
-    head: Optional[str] = None
-    description: Optional[str] = None
+    code: str = Field(..., min_length=2, max_length=20)
+    head: Optional[str] = Field(None, max_length=100)
+    description: Optional[str] = Field(None, max_length=500)
+
+    @field_validator("name", "code", "head", mode="before")
+    @classmethod
+    def strip_text(cls, v: Optional[str]) -> Optional[str]:
+        return v.strip() if isinstance(v, str) else v
 
 
 class DepartmentUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     name: Optional[str] = Field(None, min_length=3, max_length=100)
-    code: Optional[str] = Field(None, min_length=2, max_length=10)
-    head: Optional[str] = None
-    description: Optional[str] = None
+    code: Optional[str] = Field(None, min_length=2, max_length=20)
+    head: Optional[str] = Field(None, max_length=100)
+    description: Optional[str] = Field(None, max_length=500)
+
+    @field_validator("name", "code", "head", mode="before")
+    @classmethod
+    def strip_text(cls, v: Optional[str]) -> Optional[str]:
+        return v.strip() if isinstance(v, str) else v
 
 
 class DepartmentResponse(BaseModel):
@@ -84,10 +123,12 @@ class AuditLogResponse(BaseModel):
     target: str
     description: str
     ip: Optional[str] = Field(None, alias="ipAddress")
-    meta: Optional[dict] = Field(None, alias="metadata")
+    meta: Optional[dict[str, Any]] = Field(None, alias="metadata")
 
 
 class AdminStatsResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     studentCount: int
     teacherCount: int
     classCount: int
@@ -98,13 +139,20 @@ class StudentBulkItem(BaseModel):
     enrollment_number: str = Field(..., min_length=3, max_length=30)
     first_name: str = Field(..., min_length=1, max_length=100)
     last_name: str = Field(..., min_length=1, max_length=100)
-    department_id: Optional[str] = None
+    department_id: Optional[str] = Field(None, max_length=64)
     semester: Optional[int] = Field(None, ge=1, le=8)
     batch: Optional[str] = Field(None, max_length=20)
-    phone: Optional[str] = None
+    phone: Optional[str] = Field(None, max_length=20)
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def strip_email(cls, v: str) -> str:
+        return v.strip().lower() if isinstance(v, str) else v
 
 
 class StudentBulkCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     students: list[StudentBulkItem] = Field(..., min_length=1, description="List of student records to ingest")
     send_invite: bool = Field(default=True, description="Whether to dispatch invitation email")
 
@@ -114,12 +162,19 @@ class TeacherBulkItem(BaseModel):
     employee_id: str = Field(..., min_length=3, max_length=30)
     first_name: str = Field(..., min_length=1, max_length=100)
     last_name: str = Field(..., min_length=1, max_length=100)
-    department_id: Optional[str] = None
-    designation_id: Optional[str] = None
-    phone: Optional[str] = None
+    department_id: Optional[str] = Field(None, max_length=64)
+    designation_id: Optional[str] = Field(None, max_length=64)
+    phone: Optional[str] = Field(None, max_length=20)
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def strip_email(cls, v: str) -> str:
+        return v.strip().lower() if isinstance(v, str) else v
 
 
 class TeacherBulkCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     teachers: list[TeacherBulkItem] = Field(..., min_length=1, description="List of faculty records to ingest")
     send_invite: bool = Field(default=True, description="Whether to dispatch invitation email")
 
@@ -128,20 +183,37 @@ class ClassBulkItem(BaseModel):
     name: str = Field(..., min_length=2, max_length=100)
     subject_code: str = Field(..., min_length=1, max_length=50)
     teacher_email: EmailStr
-    classroom_name: Optional[str] = None
+    classroom_name: Optional[str] = Field(None, max_length=100)
     semester: Optional[int] = Field(None, ge=1, le=8)
     batch: Optional[str] = Field(None, max_length=20)
-    max_students: Optional[int] = Field(None, ge=1)
+    max_students: Optional[int] = Field(None, ge=1, le=1000)
+
+    @field_validator("teacher_email", mode="before")
+    @classmethod
+    def strip_email(cls, v: str) -> str:
+        return v.strip().lower() if isinstance(v, str) else v
 
 
 class ClassBulkCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     classes: list[ClassBulkItem] = Field(..., min_length=1, description="List of class records to ingest")
 
 
 class BulkImportResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     imported_count: int
     failed_count: int
     invitations_sent: int = 0
-    errors: list[str] = []
+    errors: list[str] = Field(default_factory=list)
 
 
+class AbsenteeAnomalyItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True, extra="allow")
+
+    student_id: str
+    student_name: str
+    enrollment_number: str
+    total_absences: int
+    anomaly_score: float

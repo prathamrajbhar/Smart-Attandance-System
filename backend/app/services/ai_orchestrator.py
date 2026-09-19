@@ -1,20 +1,30 @@
+from __future__ import annotations
+
 import asyncio
 import os
 import shutil
 import threading
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Any
 
 os.environ.setdefault('TF_CPP_MIN_LOG_LEVEL', '3')
 os.environ.setdefault('TF_ENABLE_ONEDNN_OPTS', '0')
 os.environ.setdefault('CUDA_VISIBLE_DEVICES', '-1')
 os.environ.setdefault('TF_USE_LEGACY_KERAS', '1')
 
-import cv2
-import numpy as np
-import tensorflow as tf
-from deepface import DeepFace
-from huggingface_hub import hf_hub_download
-from tensorflow.keras.applications.mobilenet import preprocess_input
+try:
+    import cv2
+    import numpy as np
+    import tensorflow as tf
+    from deepface import DeepFace
+    from huggingface_hub import hf_hub_download
+    from tensorflow.keras.applications.mobilenet import preprocess_input
+except ImportError:
+    cv2 = None  # type: ignore
+    np = None  # type: ignore
+    tf = None  # type: ignore
+    DeepFace = None  # type: ignore
+    hf_hub_download = None  # type: ignore
+    preprocess_input = None  # type: ignore
 
 from app.core.logging_config import get_logger
 
@@ -45,7 +55,9 @@ def _ensure_model_downloaded(repo_id: str, filename: str, local_path: str) -> st
         raise RuntimeError(f"Could not load model {filename} from {repo_id}: {e}") from e
 
 
-def _load_liveness_model(model_path: str) -> tf.keras.Model:
+def _load_liveness_model(model_path: str) -> Any:
+    if tf is None:
+        return None
     base = tf.keras.applications.MobileNetV2(input_shape=(224, 224, 3), include_top=False, weights=None)
     x = base.output
     x = tf.keras.layers.GlobalAveragePooling2D(name="global_average_pooling2d_3")(x)
@@ -56,12 +68,18 @@ def _load_liveness_model(model_path: str) -> tf.keras.Model:
     return model
 
 
-_liveness_path = LIVENESS_MODEL_PATH_V2 if os.path.exists(LIVENESS_MODEL_PATH_V2) else (LIVENESS_MODEL_PATH_V1 if os.path.exists(LIVENESS_MODEL_PATH_V1) else LIVENESS_MODEL_PATH_V2)
-_final_liveness_path = _ensure_model_downloaded(LIVENESS_REPO, LIVENESS_FILENAME, _liveness_path)
-_final_background_path = _ensure_model_downloaded(BACKGROUND_REPO, BACKGROUND_FILENAME, BACKGROUND_MODEL_PATH)
+liveness_model: Any = None
+background_model: Any = None
 
-liveness_model = _load_liveness_model(_final_liveness_path)
-background_model = tf.keras.models.load_model(_final_background_path)
+if tf is not None:
+    try:
+        _liveness_path = LIVENESS_MODEL_PATH_V2 if os.path.exists(LIVENESS_MODEL_PATH_V2) else (LIVENESS_MODEL_PATH_V1 if os.path.exists(LIVENESS_MODEL_PATH_V1) else LIVENESS_MODEL_PATH_V2)
+        _final_liveness_path = _ensure_model_downloaded(LIVENESS_REPO, LIVENESS_FILENAME, _liveness_path)
+        _final_background_path = _ensure_model_downloaded(BACKGROUND_REPO, BACKGROUND_FILENAME, BACKGROUND_MODEL_PATH)
+        liveness_model = _load_liveness_model(_final_liveness_path)
+        background_model = tf.keras.models.load_model(_final_background_path)
+    except Exception as e:
+        logger.warning("Could not initialize TensorFlow models: %s", e)
 
 _liveness_lock = threading.Lock()
 _background_lock = threading.Lock()

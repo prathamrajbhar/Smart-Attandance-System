@@ -2,7 +2,10 @@ import os
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Any, Dict, Optional
-import aiosmtplib
+try:
+    import aiosmtplib
+except ImportError:
+    aiosmtplib = None  # type: ignore
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from app.core.config import settings

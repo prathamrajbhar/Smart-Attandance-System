@@ -1,24 +1,38 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { User, Building, Briefcase, Award, Shield, Lock } from "lucide-react";
 import toast from "react-hot-toast";
-import api, { getApiErrorMessage } from "@/lib/api";
+import api, { getApiErrorMessage, applyValidationErrorsToForm } from "@/lib/api";
 import GlassPageHeader from "@/components/ui/GlassPageHeader";
 import GlassCard from "@/components/ui/GlassCard";
 import GlassButton from "@/components/ui/GlassButton";
 import GlassInput from "@/components/ui/GlassInput";
 import GlassLoader from "@/components/ui/GlassLoader";
 import GlassBadge from "@/components/ui/GlassBadge";
+import { changePasswordSchema, ChangePasswordFormData } from "@/lib/validations/auth";
 import type { UserProfile } from "@/types";
 
 export default function TeacherProfilePage(): React.ReactElement {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [changingPassword, setChangingPassword] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<ChangePasswordFormData>({
+    resolver: zodResolver(changePasswordSchema),
+    defaultValues: {
+      current_password: "",
+      new_password: "",
+      confirm_password: "",
+    },
+  });
 
   useEffect(() => {
     async function loadProfile() {
@@ -34,35 +48,17 @@ export default function TeacherProfilePage(): React.ReactElement {
     void loadProfile();
   }, []);
 
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentPassword) {
-      toast.error("Current password is required");
-      return;
-    }
-    if (!newPassword || newPassword.length < 8) {
-      toast.error("New password must be at least 8 characters");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      toast.error("New passwords do not match");
-      return;
-    }
-
-    setChangingPassword(true);
+  const handleChangePassword = async (formData: ChangePasswordFormData) => {
     try {
       await api.post("/auth/change-password", {
-        current_password: currentPassword,
-        new_password: newPassword,
+        current_password: formData.current_password,
+        new_password: formData.new_password,
       });
       toast.success("Password updated successfully");
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
+      reset();
     } catch (err: unknown) {
+      applyValidationErrorsToForm(err, setError);
       toast.error(getApiErrorMessage(err, "Password update failed"));
-    } finally {
-      setChangingPassword(false);
     }
   };
 
@@ -127,31 +123,31 @@ export default function TeacherProfilePage(): React.ReactElement {
             </p>
           </div>
 
-          <form onSubmit={handleChangePassword} className="space-y-3.5 max-w-md">
+          <form onSubmit={handleSubmit(handleChangePassword)} className="space-y-3.5 max-w-md">
             <GlassInput
               type="password"
               label="Current Password"
               placeholder="Enter current password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
+              {...register("current_password")}
+              error={errors.current_password?.message}
             />
             <GlassInput
               type="password"
               label="New Password"
               placeholder="Minimum 8 characters"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
+              {...register("new_password")}
+              error={errors.new_password?.message}
             />
             <GlassInput
               type="password"
               label="Confirm New Password"
               placeholder="Re-enter new password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              {...register("confirm_password")}
+              error={errors.confirm_password?.message}
             />
 
             <div className="pt-2 flex justify-start">
-              <GlassButton type="submit" variant="primary" loading={changingPassword} icon={<Lock size={14} />}>
+              <GlassButton type="submit" variant="primary" loading={isSubmitting} icon={<Lock size={14} />}>
                 Update Password
               </GlassButton>
             </div>

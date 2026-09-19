@@ -1,22 +1,23 @@
 import React from "react";
+import { UseFormRegister, Control, FieldErrors, Controller } from "react-hook-form";
 import GlassInput from "@/components/ui/GlassInput";
 import GlassSelect from "@/components/ui/GlassSelect";
 import GlassCard from "@/components/ui/GlassCard";
 import { Briefcase } from "lucide-react";
-import type { TeacherCreate } from "@/types";
+import type { TeacherFormData } from "@/lib/validations/teacher";
 
 interface TeacherFormProfileProps {
-  form: TeacherCreate;
-  errors: Partial<Record<keyof TeacherCreate, string>>;
-  set: (field: keyof TeacherCreate, value: string | number | undefined) => void;
+  register: UseFormRegister<TeacherFormData>;
+  control: Control<TeacherFormData>;
+  errors: FieldErrors<TeacherFormData>;
   deptOptions: { value: string; label: string }[];
   desigOptions: { value: string; label: string }[];
 }
 
 export default function TeacherFormProfile({
-  form,
+  register,
+  control,
   errors,
-  set,
   deptOptions,
   desigOptions,
 }: TeacherFormProfileProps): React.ReactElement {
@@ -34,29 +35,27 @@ export default function TeacherFormProfile({
           <GlassInput
             label="First Name"
             placeholder="e.g. Ravi"
-            value={form.first_name}
-            onChange={(e) => set("first_name", e.target.value)}
-            error={errors.first_name}
+            {...register("first_name")}
+            error={errors.first_name?.message}
           />
           <GlassInput
             label="Last Name"
             placeholder="e.g. Shankar"
-            value={form.last_name}
-            onChange={(e) => set("last_name", e.target.value)}
-            error={errors.last_name}
+            {...register("last_name")}
+            error={errors.last_name?.message}
           />
           <GlassInput
             label="Phone (optional)"
             type="tel"
             placeholder="+91 98765 43210"
-            value={form.phone ?? ""}
-            onChange={(e) => set("phone", e.target.value || undefined)}
+            {...register("phone")}
+            error={errors.phone?.message}
           />
           <GlassInput
             label="Joining Date (optional)"
             type="date"
-            value={form.joining_date ?? ""}
-            onChange={(e) => set("joining_date", e.target.value || undefined)}
+            {...register("joining_date")}
+            error={errors.joining_date?.message}
           />
         </div>
       </GlassCard>
@@ -70,41 +69,58 @@ export default function TeacherFormProfile({
           <p className="text-xs text-muted-foreground mt-0.5">Departmental and role configuration.</p>
         </div>
         <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <GlassSelect
-            label="Department"
-            options={deptOptions}
-            value={form.department_id}
-            onChange={(v) => set("department_id", v)}
-            error={errors.department_id}
+          <Controller
+            control={control}
+            name="department_id"
+            render={({ field }) => (
+              <GlassSelect
+                label="Department"
+                options={deptOptions}
+                value={field.value}
+                onChange={field.onChange}
+                error={errors.department_id?.message}
+              />
+            )}
           />
-          <GlassSelect
-            label="Designation"
-            options={desigOptions}
-            value={form.designation_id}
-            onChange={(v) => set("designation_id", v)}
-            error={errors.designation_id}
+          <Controller
+            control={control}
+            name="designation_id"
+            render={({ field }) => (
+              <GlassSelect
+                label="Designation"
+                options={desigOptions}
+                value={field.value}
+                onChange={field.onChange}
+                error={errors.designation_id?.message}
+              />
+            )}
           />
           <GlassInput
             label="Qualification (optional)"
             placeholder="e.g. Ph.D, M.Tech"
-            value={form.qualification ?? ""}
-            onChange={(e) => set("qualification", e.target.value || undefined)}
+            {...register("qualification")}
+            error={errors.qualification?.message}
           />
           <GlassInput
             label="Specialization (optional)"
             placeholder="e.g. Machine Learning"
-            value={form.specialization ?? ""}
-            onChange={(e) => set("specialization", e.target.value || undefined)}
+            {...register("specialization")}
+            error={errors.specialization?.message}
           />
           <div className="sm:col-span-2">
-            <GlassInput
-              label="Experience (years, optional)"
-              type="number"
-              placeholder="e.g. 5"
-              value={form.experience_years !== undefined ? String(form.experience_years) : ""}
-              onChange={(e) =>
-                set("experience_years", e.target.value ? Number(e.target.value) : undefined)
-              }
+            <Controller
+              control={control}
+              name="experience_years"
+              render={({ field }) => (
+                <GlassInput
+                  label="Experience (years, optional)"
+                  type="number"
+                  placeholder="e.g. 5"
+                  value={field.value !== undefined && field.value !== null ? String(field.value) : ""}
+                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                  error={errors.experience_years?.message}
+                />
+              )}
             />
           </div>
         </div>

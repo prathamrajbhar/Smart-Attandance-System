@@ -1,7 +1,6 @@
 from datetime import datetime
-from typing import Optional
-
-from pydantic import BaseModel, Field, ConfigDict
+from typing import Optional, Literal
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 
 class AttendanceMarkResponse(BaseModel):
@@ -39,7 +38,8 @@ class FlaggedAttendanceResponse(BaseModel):
 
 
 class AttendanceAnalyzeResponse(BaseModel):
-    """Returned by the analyze endpoint — scores only, no record saved yet."""
+    model_config = ConfigDict(from_attributes=True)
+
     face_score: float = Field(..., description="AI Face similarity score (0.0 to 1.0)")
     liveness_score: float = Field(..., description="AI Face liveness score (0.0 to 1.0)")
     background_score: float = Field(..., description="AI Background score (0.0 to 1.0)")
@@ -49,8 +49,12 @@ class AttendanceAnalyzeResponse(BaseModel):
 
 
 class AttendanceReview(BaseModel):
-    status: str = Field(..., pattern="^(Approved|Rejected)$", description="Review decision: 'Approved' or 'Rejected'")
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal["Approved", "Rejected"] = Field(..., description="Review decision: 'Approved' or 'Rejected'")
     remarks: Optional[str] = Field(default="", max_length=250, description="Audit notes/justification from the teacher")
 
-
-
+    @field_validator("remarks", mode="before")
+    @classmethod
+    def strip_remarks(cls, v: Optional[str]) -> str:
+        return v.strip() if isinstance(v, str) else ""

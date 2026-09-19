@@ -2,8 +2,12 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
-import api, { getApiErrorMessage } from "@/lib/api";
+
+import api, { getApiErrorMessage, applyValidationErrorsToForm } from "@/lib/api";
+import { departmentSchema, type DepartmentFormData } from "@/lib/validations/masterData";
 import GlassBreadcrumb from "@/components/ui/GlassBreadcrumb";
 import GlassPageHeader from "@/components/ui/GlassPageHeader";
 import GlassCard from "@/components/ui/GlassCard";
@@ -17,23 +21,29 @@ export default function EditDepartmentPage(): React.ReactElement {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [dept, setDept] = useState<DepartmentResponse | null>(null);
-  const [name, setName] = useState("");
-  const [code, setCode] = useState("");
-  const [head, setHead] = useState("");
-  const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<DepartmentFormData>({
+    resolver: zodResolver(departmentSchema),
+  });
 
   useEffect(() => {
     async function fetch(): Promise<void> {
       try {
         const { data } = await api.get<DepartmentResponse>(`/admin/departments/${id}`);
         setDept(data);
-        setName(data.name);
-        setCode(data.code);
-        setHead(data.head || "");
-        setDescription(data.description || "");
+        reset({
+          name: data.name,
+          code: data.code,
+          head: data.head || "",
+          description: data.description || "",
+        });
       } catch {
         toast.error("Failed to load department");
       } finally {
@@ -41,33 +51,23 @@ export default function EditDepartmentPage(): React.ReactElement {
       }
     }
     fetch();
-  }, [id]);
+  }, [id, reset]);
 
-  function validate(): boolean {
-    const errs: Record<string, string> = {};
-    if (!name.trim()) errs.name = "Department name is required";
-    if (!code.trim()) errs.code = "Department code is required";
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  }
-
-  async function handleSubmit(e: React.FormEvent): Promise<void> {
-    e.preventDefault();
-    if (!validate()) return;
-    setSaving(true);
+  async function onSubmit(formData: DepartmentFormData): Promise<void> {
     try {
       await api.put(`/admin/departments/${id}`, {
-        name,
-        code,
-        head: head || undefined,
-        description: description || undefined,
+        name: formData.name.trim(),
+        code: formData.code.trim().toUpperCase(),
+        head: formData.head ? formData.head.trim() : undefined,
+        description: formData.description ? formData.description.trim() : undefined,
       });
       toast.success("Department updated successfully");
       router.push("/admin/setup/departments");
     } catch (err: unknown) {
-      toast.error(getApiErrorMessage(err, "Update failed"));
-    } finally {
-      setSaving(false);
+      const handled = applyValidationErrorsToForm(err, setError);
+      if (!handled) {
+        toast.error(getApiErrorMessage(err, "Update failed"));
+      }
     }
   }
 
@@ -87,34 +87,32 @@ export default function EditDepartmentPage(): React.ReactElement {
       />
       <GlassPageHeader title="Edit Department" />
       <GlassCard className="max-w-xl">
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form noValidate onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <GlassInput
             label="Department Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            error={errors.name}
+            {...register("name")}
+            error={errors.name?.message}
           />
           <GlassInput
             label="Code"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            error={errors.code}
+            {...register("code")}
+            error={errors.code?.message}
           />
           <GlassInput
             label="Head"
-            value={head}
-            onChange={(e) => setHead(e.target.value)}
+            {...register("head")}
+            error={errors.head?.message}
           />
           <GlassTextarea
             label="Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            {...register("description")}
+            error={errors.description?.message}
           />
           <div className="flex justify-end gap-3 pt-4">
             <GlassButton variant="ghost" type="button" onClick={() => router.back()}>
               Cancel
             </GlassButton>
-            <GlassButton variant="primary" type="submit" loading={saving}>
+            <GlassButton variant="primary" type="submit" loading={isSubmitting}>
               Save Changes
             </GlassButton>
           </div>

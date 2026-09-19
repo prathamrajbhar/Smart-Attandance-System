@@ -13,8 +13,9 @@ from app.schemas.teacher import (
     AcademicClassWithGeofenceResponse, SessionAttendanceResponse,
     ClassStatsResponse, AttendanceManualOverride, SessionWithClassResponse,
     BulkMarkRequest, AbsentStudentItem, DeviceChangeResponse, DeviceChangeApprove,
-    SmartPassVerifyRequest, SmartPassVerifyResponse,
+    SmartPassVerifyRequest, SmartPassVerifyResponse, ClassAttendanceExportItem,
 )
+from app.schemas.common import MessageResponse, BulkActionCountResponse
 from app.schemas.attendance import AttendanceReview, FlaggedAttendanceResponse
 from app.schemas.leave import LeaveRequestResponse, LeaveRequestApprove
 from app.services.session_service import SessionService
@@ -49,15 +50,15 @@ async def start_session(
     return session
 
 
-@router.post("/sessions/{id}/stop", status_code=status.HTTP_200_OK)
+@router.post("/sessions/{id}/stop", response_model=MessageResponse, status_code=status.HTTP_200_OK)
 async def stop_session(
     id: str,
     teacher: Teacher = Depends(get_current_teacher),
     session_service: SessionService = Depends(),
-) -> dict:
+) -> MessageResponse:
     if not await session_service.stop_session(id, teacher.id):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Session not found, already stopped, or unauthorized.")
-    return {"status": "success", "message": "Session closed successfully."}
+    return MessageResponse(status="success", message="Session closed successfully.")
 
 
 @router.get("/attendance/flagged", response_model=list[FlaggedAttendanceResponse])
@@ -111,16 +112,16 @@ async def get_attendance_by_id(id: str, attendance_repo: AttendanceRepository = 
     )
 
 
-@router.put("/attendance/{id}/review", status_code=status.HTTP_200_OK)
+@router.put("/attendance/{id}/review", response_model=MessageResponse, status_code=status.HTTP_200_OK)
 async def review_flagged_attendance(
     id: str,
     review: AttendanceReview,
     teacher: Teacher = Depends(get_current_teacher),
     attendance_service: AttendanceService = Depends(),
-) -> dict:
+) -> MessageResponse:
     if not await attendance_service.review_attendance(attendance_id=id, status=review.status, remarks=review.remarks):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Attendance record not found, is not currently flagged, or review failed.")
-    return {"status": "success", "message": f"Attendance record has been {review.status}."}
+    return MessageResponse(status="success", message=f"Attendance record has been {review.status}.")
 
 
 @router.get("/my-classes", response_model=list[AcademicClassWithGeofenceResponse])
@@ -158,15 +159,15 @@ async def get_class_stats(
     return await teacher_service.get_class_stats(user_id=teacher.userId, class_id=class_id)
 
 
-@router.post("/sessions/{session_id}/override", status_code=status.HTTP_200_OK)
+@router.post("/sessions/{session_id}/override", response_model=MessageResponse, status_code=status.HTTP_200_OK)
 async def manual_override_attendance(
     session_id: str, data: AttendanceManualOverride,
     teacher: Teacher = Depends(get_current_teacher),
     teacher_service: TeacherService = Depends(),
-) -> dict:
+) -> MessageResponse:
     if not await teacher_service.manual_override_attendance(user_id=teacher.userId, session_id=session_id, student_id=data.student_id, status_val=data.status):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to apply attendance manual override.")
-    return {"status": "success", "message": f"Attendance overridden to {data.status}."}
+    return MessageResponse(status="success", message=f"Attendance overridden to {data.status}.")
 
 
 @router.get("/sessions/all", response_model=list[SessionWithClassResponse])
@@ -186,25 +187,26 @@ async def get_absent_students(
     return await teacher_service.get_absent_students(session_id=session_id, user_id=teacher.userId)
 
 
-@router.post("/sessions/{session_id}/mark-bulk", status_code=status.HTTP_200_OK)
+@router.post("/sessions/{session_id}/mark-bulk", response_model=BulkActionCountResponse, status_code=status.HTTP_200_OK)
 async def bulk_mark_attendance(
     session_id: str, data: BulkMarkRequest,
     teacher: Teacher = Depends(get_current_teacher),
     teacher_service: TeacherService = Depends(),
-) -> dict:
+) -> BulkActionCountResponse:
     count = await teacher_service.bulk_mark_attendance(session_id=session_id, user_id=teacher.userId, request=data)
-    return {"status": "success", "count": count}
+    return BulkActionCountResponse(status="success", count=count)
 
 
-@router.get("/classes/{class_id}/export-attendance", response_model=list[dict])
+@router.get("/classes/{class_id}/export-attendance", response_model=list[ClassAttendanceExportItem])
 async def export_class_attendance(
     class_id: str,
     from_date: Optional[datetime] = None,
     to_date: Optional[datetime] = None,
     teacher: Teacher = Depends(get_current_teacher),
     teacher_service: TeacherService = Depends(),
-) -> list[dict]:
-    return await teacher_service.export_class_attendance(class_id=class_id, user_id=teacher.userId, from_date=from_date, to_date=to_date)
+) -> list[ClassAttendanceExportItem]:
+    rows = await teacher_service.export_class_attendance(class_id=class_id, user_id=teacher.userId, from_date=from_date, to_date=to_date)
+    return [ClassAttendanceExportItem.model_validate(r) for r in rows]
 
 
 @router.get("/leaves/pending", response_model=list[LeaveRequestResponse])
@@ -215,16 +217,16 @@ async def get_pending_leaves(
     return [_make_leave_response(leave) for leave in await leave_repo.get_pending_for_teacher(teacher.id)]
 
 
-@router.put("/leaves/{leave_id}/approve", status_code=status.HTTP_200_OK)
+@router.put("/leaves/{leave_id}/approve", response_model=MessageResponse, status_code=status.HTTP_200_OK)
 async def approve_leave(
     leave_id: str, data: LeaveRequestApprove,
     teacher: Teacher = Depends(get_current_teacher),
     leave_service: LeaveService = Depends(),
-) -> dict:
+) -> MessageResponse:
     result = await leave_service.approve_leave(leave_id=leave_id, teacher_id=teacher.id, status=data.status, approver_note=data.approver_note)
     if not result:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Leave request not found.")
-    return {"status": "success", "message": f"Leave request {data.status.lower()} successfully."}
+    return MessageResponse(status="success", message=f"Leave request {data.status.lower()} successfully.")
 
 
 @router.get("/device-changes/pending", response_model=list[DeviceChangeResponse])
@@ -235,16 +237,16 @@ async def get_pending_device_changes(
     return await device_change_service.get_pending_requests(teacher_id=teacher.id)
 
 
-@router.put("/device-changes/{request_id}/approve", status_code=status.HTTP_200_OK)
+@router.put("/device-changes/{request_id}/approve", response_model=MessageResponse, status_code=status.HTTP_200_OK)
 async def approve_device_change(
     request_id: str, data: DeviceChangeApprove,
     teacher: Teacher = Depends(get_current_teacher),
     device_change_service: DeviceChangeService = Depends(),
-) -> dict:
+) -> MessageResponse:
     result = await device_change_service.approve_request(request_id=request_id, teacher_id=teacher.id, new_status=data.status)
     if not result:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device change request not found or not pending.")
-    return {"status": "success", "message": f"Device change request {data.status.lower()} successfully."}
+    return MessageResponse(status="success", message=f"Device change request {data.status.lower()} successfully.")
 
 
 @router.post("/smart-pass/verify", response_model=SmartPassVerifyResponse, status_code=status.HTTP_200_OK)
@@ -258,4 +260,3 @@ async def verify_smart_pass(
         session_id=data.session_id,
         qr_token=data.qr_token,
     )
-

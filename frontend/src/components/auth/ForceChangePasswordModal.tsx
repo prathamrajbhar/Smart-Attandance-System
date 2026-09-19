@@ -1,11 +1,33 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useMemo } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Lock, CheckCircle2, ShieldCheck, Check, X } from "lucide-react";
 import toast from "react-hot-toast";
-import api, { getApiErrorMessage } from "@/lib/api";
+import api, { getApiErrorMessage, applyValidationErrorsToForm } from "@/lib/api";
 import GlassInput from "@/components/ui/GlassInput";
 import GlassButton from "@/components/ui/GlassButton";
+
+const forceChangePasswordSchema = z
+  .object({
+    new_password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .max(128, "Password cannot exceed 128 characters")
+      .regex(/[a-z]/, "Must contain at least one lowercase letter")
+      .regex(/[A-Z]/, "Must contain at least one uppercase letter")
+      .regex(/\d/, "Must contain at least one number (0-9)")
+      .regex(/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/, "Must contain at least one special symbol"),
+    confirm_password: z.string().min(1, "Confirm password is required"),
+  })
+  .refine((data) => data.new_password === data.confirm_password, {
+    message: "Passwords do not match",
+    path: ["confirm_password"],
+  });
+
+type ForceChangePasswordData = z.infer<typeof forceChangePasswordSchema>;
 
 interface ForceChangePasswordModalProps {
   isOpen: boolean;
@@ -16,10 +38,22 @@ export default function ForceChangePasswordModal({
   isOpen,
   onSuccess,
 }: ForceChangePasswordModalProps): React.ReactElement | null {
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ newPassword?: string; confirmPassword?: string }>({});
+  const {
+    register,
+    handleSubmit,
+    control,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<ForceChangePasswordData>({
+    resolver: zodResolver(forceChangePasswordSchema),
+    defaultValues: {
+      new_password: "",
+      confirm_password: "",
+    },
+  });
+
+  const newPassword = useWatch({ control, name: "new_password" }) || "";
+  const confirmPassword = useWatch({ control, name: "confirm_password" }) || "";
 
   const rules = useMemo(() => [
     { label: "At least 8 characters", valid: newPassword.length >= 8 },
@@ -28,44 +62,23 @@ export default function ForceChangePasswordModal({
     { label: "At least one special symbol", valid: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(newPassword) },
   ], [newPassword]);
 
-  const allRulesPassed = useMemo(() => rules.every((r) => r.valid), [rules]);
-  const passwordsMatch = useMemo(() => newPassword.length > 0 && newPassword === confirmPassword, [newPassword, confirmPassword]);
+  const passwordsMatch = useMemo(
+    () => newPassword.length > 0 && newPassword === confirmPassword,
+    [newPassword, confirmPassword]
+  );
 
   if (!isOpen) return null;
 
-  function validate(): boolean {
-    const errs: { newPassword?: string; confirmPassword?: string } = {};
-    if (!newPassword) {
-      errs.newPassword = "New password is required";
-    } else if (!allRulesPassed) {
-      errs.newPassword = "Please satisfy all password security requirements";
-    }
-
-    if (!confirmPassword) {
-      errs.confirmPassword = "Confirm password is required";
-    } else if (!passwordsMatch) {
-      errs.confirmPassword = "Passwords do not match";
-    }
-
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  }
-
-  async function handleSubmit(e: React.FormEvent): Promise<void> {
-    e.preventDefault();
-    if (!validate()) return;
-
-    setLoading(true);
+  async function onSubmit(data: ForceChangePasswordData): Promise<void> {
     try {
       await api.post("/auth/change-password", {
-        new_password: newPassword,
+        new_password: data.new_password,
       });
       toast.success("Password updated successfully!");
       onSuccess();
     } catch (err: unknown) {
+      applyValidationErrorsToForm(err, setError);
       toast.error(getApiErrorMessage(err, "Failed to update password."));
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -82,14 +95,13 @@ export default function ForceChangePasswordModal({
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <GlassInput
             label="New Permanent Password"
             type="password"
             placeholder="Create a strong password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            error={errors.newPassword}
+            {...register("new_password")}
+            error={errors.new_password?.message}
             icon={<Lock size={15} />}
             autoComplete="new-password"
           />
@@ -116,9 +128,8 @@ export default function ForceChangePasswordModal({
             label="Confirm New Password"
             type="password"
             placeholder="Re-enter permanent password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            error={errors.confirmPassword}
+            {...register("confirm_password")}
+            error={errors.confirm_password?.message}
             icon={<Lock size={15} />}
             autoComplete="new-password"
           />
@@ -144,7 +155,7 @@ export default function ForceChangePasswordModal({
               type="submit"
               variant="primary"
               size="lg"
-              loading={loading}
+              loading={isSubmitting}
               className="w-full"
               icon={<CheckCircle2 size={16} />}
             >

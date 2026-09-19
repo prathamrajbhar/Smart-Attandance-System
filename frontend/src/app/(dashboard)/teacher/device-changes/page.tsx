@@ -2,45 +2,37 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { Smartphone, RefreshCw } from "lucide-react";
-import api from "@/lib/api";
+import api, { getApiErrorMessage } from "@/lib/api";
 import DeviceChangeTable from "@/components/teacher/DeviceChangeTable";
 import { toast } from "react-hot-toast";
+import type { DeviceChangeRequest } from "@/types/models";
 
 export default function DeviceChangesPage(): React.ReactElement {
-  const [requests, setRequests] = useState([]);
+  const [requests, setRequests] = useState<DeviceChangeRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const fetchRequests = useCallback(async (): Promise<void> => {
+  const fetchRequests = useCallback(async (isSilent = false): Promise<void> => {
+    if (isSilent) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+
     try {
-      const { data } = await api.get("/teacher/device-changes/pending");
-      setRequests(data);
-    } catch {
-      toast.error("Failed to load device change requests");
+      const { data } = await api.get<DeviceChangeRequest[]>("/teacher/device-changes/pending");
+      setRequests(Array.isArray(data) ? data : []);
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, "Failed to load device change requests"));
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
   useEffect(() => {
-    let isMounted = true;
-    const load = async () => {
-      try {
-        const { data } = await api.get("/teacher/device-changes/pending");
-        if (isMounted) setRequests(data);
-      } catch {
-        if (isMounted) toast.error("Failed to load device change requests");
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-    const timer = setTimeout(() => {
-      void load();
-    }, 0);
-    return () => {
-      isMounted = false;
-      clearTimeout(timer);
-    };
-  }, []);
+    void fetchRequests(false);
+  }, [fetchRequests]);
 
   return (
     <div className="p-6 md:p-8 max-w-[1400px] mx-auto space-y-8 animate-fade-in-up">
@@ -58,14 +50,12 @@ export default function DeviceChangesPage(): React.ReactElement {
           </p>
         </div>
         <button
-          onClick={() => {
-            setLoading(true);
-            void fetchRequests();
-          }}
-          disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-card hover:bg-muted text-foreground rounded-lg transition-colors border border-border shadow-xs"
+          type="button"
+          onClick={() => void fetchRequests(true)}
+          disabled={loading || refreshing}
+          className="flex items-center gap-2 px-4 py-2 bg-card hover:bg-muted text-foreground rounded-lg transition-colors border border-border shadow-xs cursor-pointer disabled:opacity-50"
         >
-          <RefreshCw size={16} className={loading ? "animate-spin text-primary" : "text-primary"} />
+          <RefreshCw size={16} className={refreshing || loading ? "animate-spin text-primary" : "text-primary"} />
           <span className="text-sm font-medium">Refresh</span>
         </button>
       </div>
@@ -76,7 +66,7 @@ export default function DeviceChangesPage(): React.ReactElement {
             <RefreshCw size={32} className="animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <DeviceChangeTable requests={requests} onActionComplete={fetchRequests} />
+          <DeviceChangeTable requests={requests} onActionComplete={() => void fetchRequests(true)} />
         )}
       </div>
     </div>

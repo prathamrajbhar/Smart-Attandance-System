@@ -7,6 +7,7 @@ from app.api.dependencies import get_current_user, reusable_oauth2
 from app.core.config import settings
 from app.core.logging_config import get_logger
 from app.core.security import decode_access_token
+from app.core.url_resolver import resolve_frontend_url
 from app.db.client import db
 from app.db.redis import get_redis
 from app.repositories.student_repo import StudentRepository
@@ -20,7 +21,10 @@ from app.schemas.auth import (
     CompleteOnboardingRequest,
     VerifyTokenResponse,
     ChangePasswordRequest,
+    StudentProfileBrief,
+    TeacherProfileBrief,
 )
+from app.schemas.common import MessageResponse
 from app.schemas.system_config import SystemConfigResponse
 from app.services.auth_service import AuthService
 from app.services.device_change_service import DeviceChangeService
@@ -67,24 +71,26 @@ async def get_me(current_user: User = Depends(get_current_user)) -> UserProfileR
         student = await db.student.find_unique(where={"userId": current_user.id})
         if student:
             embedding = await StudentRepository().get_face_embedding(student.id)
-            student_profile = {
-                "id": student.id,
-                "enrollment_number": student.enrollmentNumber,
-                "first_name": student.firstName,
-                "last_name": student.lastName,
-                "face_registered": embedding is not None and len(embedding) > 0,
-            }
+            student_profile = StudentProfileBrief(
+                id=student.id,
+                enrollment_number=student.enrollmentNumber,
+                first_name=student.firstName,
+                last_name=student.lastName,
+                face_registered=embedding is not None and len(embedding) > 0,
+            )
     elif current_user.role == "TEACHER":
         teacher = await db.teacher.find_unique(where={"userId": current_user.id})
         if teacher:
-            teacher_profile = {
-                "id": teacher.id,
-                "department": teacher.department.name if teacher.department else "",
-                "designation": teacher.designation.name if teacher.designation else "",
-                "employee_id": teacher.employeeId,
-                "first_name": teacher.firstName,
-                "last_name": teacher.lastName,
-            }
+            teacher_profile = TeacherProfileBrief(
+                id=teacher.id,
+                department=teacher.department.name if teacher.department else "",
+                designation=teacher.designation.name if teacher.designation else "",
+                employee_id=teacher.employeeId,
+                first_name=teacher.firstName,
+                last_name=teacher.lastName,
+                department_id=teacher.departmentId,
+                designation_id=teacher.designationId,
+            )
 
     return UserProfileResponse(
         id=current_user.id,
@@ -97,22 +103,22 @@ async def get_me(current_user: User = Depends(get_current_user)) -> UserProfileR
     )
 
 
-@router.post("/change-password", status_code=status.HTTP_200_OK)
+@router.post("/change-password", response_model=MessageResponse, status_code=status.HTTP_200_OK)
 async def change_password(
     data: ChangePasswordRequest,
     current_user: User = Depends(get_current_user),
     auth_service: AuthService = Depends(),
-) -> dict:
+) -> MessageResponse:
     await auth_service.change_password(
         user_id=current_user.id,
         new_password=data.new_password,
         current_password=data.current_password,
     )
-    return {"status": "success", "message": "Password updated successfully."}
+    return MessageResponse(status="success", message="Password updated successfully.")
 
 
-@router.post("/logout", status_code=status.HTTP_200_OK)
-async def logout(token: str = Depends(reusable_oauth2)) -> dict:
+@router.post("/logout", response_model=MessageResponse, status_code=status.HTTP_200_OK)
+async def logout(token: str = Depends(reusable_oauth2)) -> MessageResponse:
     payload = decode_access_token(token)
     if payload:
         exp = payload.get("exp")
@@ -124,43 +130,41 @@ async def logout(token: str = Depends(reusable_oauth2)) -> dict:
                     logger.info("Token revoked: user=%s", payload.get("sub"))
                 except Exception as cache_err:
                     logger.warning("Failed to add token to Redis denylist: %s", cache_err)
-    return {"status": "success", "message": "Successfully logged out."}
+    return MessageResponse(status="success", message="Successfully logged out.")
 
 
-@router.post("/request-device-change", status_code=status.HTTP_200_OK)
+@router.post("/request-device-change", response_model=MessageResponse, status_code=status.HTTP_200_OK)
 async def request_device_change(
     data: DeviceChangeRequestCreate,
     request: Request,
     device_change_service: DeviceChangeService = Depends(),
-) -> dict:
+) -> MessageResponse:
     await _rate_limit(request)
     await device_change_service.request_device_change(data)
-    return {"status": "success", "message": "Device change request submitted successfully."}
+    return MessageResponse(status="success", message="Device change request submitted successfully.")
 
 
-from app.core.url_resolver import resolve_frontend_url
-
-@router.post("/forgot-password", status_code=status.HTTP_200_OK)
+@router.post("/forgot-password", response_model=MessageResponse, status_code=status.HTTP_200_OK)
 async def forgot_password(
     data: ForgotPasswordRequest,
     request: Request,
     auth_service: AuthService = Depends(),
-) -> dict:
+) -> MessageResponse:
     await _rate_limit(request)
     frontend_url = resolve_frontend_url(request)
     await auth_service.request_password_reset(data.email, frontend_url=frontend_url)
-    return {"status": "success", "message": "If the email is registered, a password reset link has been dispatched."}
+    return MessageResponse(status="success", message="If the email is registered, a password reset link has been dispatched.")
 
 
-@router.post("/reset-password", status_code=status.HTTP_200_OK)
+@router.post("/reset-password", response_model=MessageResponse, status_code=status.HTTP_200_OK)
 async def reset_password(
     data: ResetPasswordRequest,
     request: Request,
     auth_service: AuthService = Depends(),
-) -> dict:
+) -> MessageResponse:
     await _rate_limit(request)
     await auth_service.reset_password(token=data.token, new_password=data.new_password)
-    return {"status": "success", "message": "Password reset successfully. You can now login with your new credentials."}
+    return MessageResponse(status="success", message="Password reset successfully. You can now login with your new credentials.")
 
 
 @router.get("/verify-token", response_model=VerifyTokenResponse)
@@ -186,19 +190,17 @@ async def verify_token(
     )
 
 
-@router.post("/complete-onboarding", status_code=status.HTTP_200_OK)
+@router.post("/complete-onboarding", response_model=MessageResponse, status_code=status.HTTP_200_OK)
 async def complete_onboarding(
     data: CompleteOnboardingRequest,
     request: Request,
     auth_service: AuthService = Depends(),
-) -> dict:
+) -> MessageResponse:
     await _rate_limit(request)
     await auth_service.complete_onboarding(token=data.token, password=data.password)
-    return {"status": "success", "message": "Account onboarding completed. You may now login."}
+    return MessageResponse(status="success", message="Account onboarding completed. You may now login.")
 
 
 @router.get("/config", response_model=SystemConfigResponse)
 async def get_public_system_config(config_service: SystemConfigService = Depends()):
     return await config_service.get_config()
-
-

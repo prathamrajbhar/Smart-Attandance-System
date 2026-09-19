@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.9.1",
     "@radix-ui/react-dialog": "^1.1.23",
     "@radix-ui/react-dropdown-menu": "^2.1.24",
     "@radix-ui/react-label": "^2.1.15",
@@ -25,10 +26,12 @@
     "papaparse": "^5.5.3",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "react-hook-form": "^7.88.0",
     "react-hot-toast": "^2.6.0",
     "react-leaflet": "^5.0.0",
     "recharts": "^3.8.1",
     "tailwind-merge": "^3.7.0",
+    "zod": "^3.25.76",
     "zustand": "^5.0.13"
   },
   "devDependencies": {

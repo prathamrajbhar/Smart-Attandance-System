@@ -88,7 +88,7 @@ export default function DesignationsPage(): React.ReactElement {
           </button>
           <button
             onClick={() => setDeleteTarget(String(row.id))}
-            className="glass-btn glass-btn-ghost glass-btn-sm text-slate-300"
+            className="glass-btn glass-btn-ghost glass-btn-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10"
           >
             <Trash2 size={14} />
           </button>

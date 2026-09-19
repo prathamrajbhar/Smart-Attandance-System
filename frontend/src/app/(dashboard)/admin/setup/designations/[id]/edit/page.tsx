@@ -2,8 +2,12 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
-import api, { getApiErrorMessage } from "@/lib/api";
+
+import api, { getApiErrorMessage, applyValidationErrorsToForm } from "@/lib/api";
+import { designationSchema, type DesignationFormData } from "@/lib/validations/masterData";
 import GlassBreadcrumb from "@/components/ui/GlassBreadcrumb";
 import GlassPageHeader from "@/components/ui/GlassPageHeader";
 import GlassCard from "@/components/ui/GlassCard";
@@ -17,21 +21,28 @@ export default function EditDesignationPage(): React.ReactElement {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [desig, setDesig] = useState<DesignationResponse | null>(null);
-  const [name, setName] = useState("");
-  const [code, setCode] = useState("");
-  const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<DesignationFormData>({
+    resolver: zodResolver(designationSchema),
+  });
 
   useEffect(() => {
     async function fetch(): Promise<void> {
       try {
         const { data } = await api.get<DesignationResponse>(`/admin/designations/${id}`);
         setDesig(data);
-        setName(data.name);
-        setCode(data.code);
-        setDescription(data.description || "");
+        reset({
+          name: data.name,
+          code: data.code,
+          description: data.description || "",
+        });
       } catch {
         toast.error("Failed to load designation");
       } finally {
@@ -39,32 +50,22 @@ export default function EditDesignationPage(): React.ReactElement {
       }
     }
     fetch();
-  }, [id]);
+  }, [id, reset]);
 
-  function validate(): boolean {
-    const errs: Record<string, string> = {};
-    if (!name.trim()) errs.name = "Designation name is required";
-    if (!code.trim()) errs.code = "Designation code is required";
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  }
-
-  async function handleSubmit(e: React.FormEvent): Promise<void> {
-    e.preventDefault();
-    if (!validate()) return;
-    setSaving(true);
+  async function onSubmit(formData: DesignationFormData): Promise<void> {
     try {
       await api.put(`/admin/designations/${id}`, {
-        name,
-        code,
-        description: description || undefined,
+        name: formData.name.trim(),
+        code: formData.code.trim().toUpperCase(),
+        description: formData.description ? formData.description.trim() : undefined,
       });
       toast.success("Designation updated successfully");
       router.push("/admin/setup/designations");
     } catch (err: unknown) {
-      toast.error(getApiErrorMessage(err, "Update failed"));
-    } finally {
-      setSaving(false);
+      const handled = applyValidationErrorsToForm(err, setError);
+      if (!handled) {
+        toast.error(getApiErrorMessage(err, "Update failed"));
+      }
     }
   }
 
@@ -84,29 +85,27 @@ export default function EditDesignationPage(): React.ReactElement {
       />
       <GlassPageHeader title="Edit Designation" />
       <GlassCard className="max-w-xl">
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form noValidate onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <GlassInput
             label="Designation Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            error={errors.name}
+            {...register("name")}
+            error={errors.name?.message}
           />
           <GlassInput
             label="Designation Code"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            error={errors.code}
+            {...register("code")}
+            error={errors.code?.message}
           />
           <GlassTextarea
             label="Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            {...register("description")}
+            error={errors.description?.message}
           />
           <div className="flex justify-end gap-3 pt-4">
             <GlassButton variant="ghost" type="button" onClick={() => router.back()}>
               Cancel
             </GlassButton>
-            <GlassButton variant="primary" type="submit" loading={saving}>
+            <GlassButton variant="primary" type="submit" loading={isSubmitting}>
               Save Changes
             </GlassButton>
           </div>

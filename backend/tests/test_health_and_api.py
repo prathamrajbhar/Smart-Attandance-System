@@ -28,3 +28,18 @@ def test_public_health_endpoint():
 def test_invalid_auth_token_rejected():
     response = client.get("/api/v1/auth/me", headers={"Authorization": "Bearer invalid.token.payload"})
     assert response.status_code == 401
+
+
+def test_request_validation_error_envelope():
+    response = client.post("/api/v1/auth/login", json={"invalid_field": "test"})
+    assert response.status_code == 422
+    data = response.json()
+    assert data["success"] is False
+    assert data["error"]["code"] == "VALIDATION_ERROR"
+    assert data["error"]["message"] == "Invalid request payload"
+    assert isinstance(data["error"]["details"], list)
+    assert len(data["error"]["details"]) > 0
+    first_error = data["error"]["details"][0]
+    assert "field" in first_error
+    assert "message" in first_error
+    assert "type" in first_error

@@ -10,7 +10,16 @@ from app.db.client import db
 from app.repositories.leave_repo import LeaveRepository
 
 from app.schemas.attendance import AttendanceMarkResponse, AttendanceAnalyzeResponse
-from app.schemas.student import StudentAttendanceHistoryResponse, StudentClassResponse
+from app.schemas.student import (
+    StudentAttendanceHistoryResponse,
+    StudentClassResponse,
+    FcmTokenRequest,
+    StudentAttendanceNoteRequest,
+    SmartPassResponse,
+    StudentStatsResponse,
+    LeaderboardResponse,
+)
+from app.schemas.common import MessageResponse
 from app.schemas.leave import LeaveRequestResponse, LeaveRequestListResponse
 from app.services.attendance_service import AttendanceService, AttendanceSubmission
 from app.services.student_service import StudentService
@@ -171,12 +180,12 @@ async def confirm_attendance(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err))
 
 
-@router.post("/register-face", status_code=status.HTTP_200_OK)
+@router.post("/register-face", response_model=MessageResponse, status_code=status.HTTP_200_OK)
 async def register_face(
     image: UploadFile = File(...),
     student: Student = Depends(get_current_student),
     attendance_service: AttendanceService = Depends(),
-) -> dict:
+) -> MessageResponse:
     await _rate_limit_student(student.id, max_requests=5, window_seconds=60)
     _validate_image(image)
     image_url, image_bytes = await _save_uploaded_image(image, "registration")
@@ -184,7 +193,7 @@ async def register_face(
         success = await attendance_service.register_face(student.id, image_bytes)
         if not success:
             raise ValueError("Could not extract a valid face from the image.")
-        return {"status": "success", "message": "Face embedding registered successfully."}
+        return MessageResponse(status="success", message="Face embedding registered successfully.")
     except ValueError as err:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err))
     finally:
@@ -207,36 +216,28 @@ async def get_my_classes(
     return await student_service.get_student_classes(student.userId)
 
 
-@router.post("/fcm-token", status_code=status.HTTP_200_OK)
+@router.post("/fcm-token", response_model=MessageResponse, status_code=status.HTTP_200_OK)
 async def register_fcm_token(
-    payload: dict,
+    data: FcmTokenRequest,
     student: Student = Depends(get_current_student),
-) -> dict:
-    token = payload.get("token")
-    if not token:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="FCM token is required.")
-    await db.student.update(where={"id": student.id}, data={"fcmToken": token})
-    return {"status": "success", "message": "FCM token registered."}
+) -> MessageResponse:
+    await db.student.update(where={"id": student.id}, data={"fcmToken": data.token})
+    return MessageResponse(status="success", message="FCM token registered.")
 
 
-@router.post("/attendance/{attendance_id}/note", status_code=status.HTTP_200_OK)
+@router.post("/attendance/{attendance_id}/note", response_model=MessageResponse, status_code=status.HTTP_200_OK)
 async def submit_flagged_note(
     attendance_id: str,
-    payload: dict,
+    data: StudentAttendanceNoteRequest,
     student: Student = Depends(get_current_student),
-) -> dict:
-    note = payload.get("note", "").strip()
-    if not note:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Note cannot be empty.")
-    if len(note) > 500:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Note cannot exceed 500 characters.")
+) -> MessageResponse:
     record = await db.attendance.find_unique(where={"id": attendance_id})
     if not record or record.studentId != student.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attendance record not found.")
     if record.status != "Flagged":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Notes can only be added to flagged records.")
-    await db.attendance.update(where={"id": attendance_id}, data={"studentNote": note})
-    return {"status": "success", "message": "Note submitted successfully."}
+    await db.attendance.update(where={"id": attendance_id}, data={"studentNote": data.note})
+    return MessageResponse(status="success", message="Note submitted successfully.")
 
 
 @router.get("/leaves", response_model=LeaveRequestListResponse)
@@ -293,28 +294,30 @@ async def create_leave_request(
     return _make_leave_response(leave, _student_name(student), student.enrollmentNumber)
 
 
-@router.get("/smart-pass", response_model=dict)
-async def get_smart_pass(student: Student = Depends(get_current_student)) -> dict:
+@router.get("/smart-pass", response_model=SmartPassResponse)
+async def get_smart_pass(student: Student = Depends(get_current_student)) -> SmartPassResponse:
     qr_token = create_access_token(
         subject=student.userId,
         role="STUDENT",
         expires_delta=timedelta(seconds=30),
         extra_data={"student_id": student.id, "enrollment_number": student.enrollmentNumber, "type": "smart_pass"},
     )
-    return {
-        "qr_token": qr_token,
-        "expires_at": (datetime.now(timezone.utc) + timedelta(seconds=30)).isoformat(),
-        "student_name": _student_name(student),
-        "enrollment_number": student.enrollmentNumber,
-    }
+    return SmartPassResponse(
+        qr_token=qr_token,
+        expires_at=(datetime.now(timezone.utc) + timedelta(seconds=30)).isoformat(),
+        student_name=_student_name(student),
+        enrollment_number=student.enrollmentNumber,
+    )
 
 
-@router.get("/stats", response_model=dict)
-async def get_my_stats(student: Student = Depends(get_current_student)) -> dict:
-    return await GamificationService().get_student_stats(student.id)
+@router.get("/stats", response_model=StudentStatsResponse)
+async def get_my_stats(student: Student = Depends(get_current_student)) -> StudentStatsResponse:
+    stats = await GamificationService().get_student_stats(student.id)
+    return StudentStatsResponse.model_validate(stats)
 
 
-@router.get("/leaderboard", response_model=dict)
-async def get_leaderboard(student: Student = Depends(get_current_student)) -> dict:
-    return await GamificationService().get_leaderboard(student.id)
+@router.get("/leaderboard", response_model=LeaderboardResponse)
+async def get_leaderboard(student: Student = Depends(get_current_student)) -> LeaderboardResponse:
+    board = await GamificationService().get_leaderboard(student.id)
+    return LeaderboardResponse.model_validate(board)
 

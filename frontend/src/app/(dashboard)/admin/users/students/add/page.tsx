@@ -2,30 +2,47 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { User, GraduationCap, PlusCircle, X } from "lucide-react";
 import toast from "react-hot-toast";
-import api, { getApiErrorMessage } from "@/lib/api";
+import api, { getApiErrorMessage, applyValidationErrorsToForm } from "@/lib/api";
 import GlassBreadcrumb from "@/components/ui/GlassBreadcrumb";
 import GlassPageHeader from "@/components/ui/GlassPageHeader";
 import GlassCard from "@/components/ui/GlassCard";
 import GlassInput from "@/components/ui/GlassInput";
 import GlassButton from "@/components/ui/GlassButton";
 import StudentFormFields from "./StudentFormFields";
-import type { StudentCreate, DepartmentResponse } from "@/types";
-
-type FormErrors = Partial<Record<keyof StudentCreate, string>>;
+import { studentFormSchema, StudentFormData } from "@/lib/validations/student";
+import type { DepartmentResponse } from "@/types";
 
 export default function AddStudentPage(): React.ReactElement {
   const router = useRouter();
   const [departments, setDepartments] = useState<DepartmentResponse[]>([]);
-  const [form, setForm] = useState<StudentCreate>({
-    email: "",
-    enrollment_number: "",
-    first_name: "",
-    last_name: "",
-  });
-  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
+
+  const {
+    register,
+    control,
+    handleSubmit,
+    setError,
+    formState: { errors },
+  } = useForm<StudentFormData>({
+    resolver: zodResolver(studentFormSchema),
+    defaultValues: {
+      email: "",
+      enrollment_number: "",
+      first_name: "",
+      last_name: "",
+      phone: "",
+      gender: "",
+      date_of_birth: "",
+      semester: undefined,
+      batch: "",
+      department_id: "",
+      send_invite: true,
+    },
+  });
 
   useEffect(() => {
     async function fetchDepartments(): Promise<void> {
@@ -33,36 +50,28 @@ export default function AddStudentPage(): React.ReactElement {
         const { data } = await api.get<DepartmentResponse[]>("/admin/departments");
         setDepartments(data);
       } catch {
-        
+        // Handled silently
       }
     }
     void fetchDepartments();
   }, []);
 
-  function set(field: keyof StudentCreate, value: string | number | undefined): void {
-    setForm((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
-  }
-
-  function validate(): boolean {
-    const errs: FormErrors = {};
-    if (!form.email.trim()) errs.email = "Email is required";
-    if (!form.enrollment_number.trim()) errs.enrollment_number = "Enrollment number is required";
-    if (!form.first_name.trim()) errs.first_name = "First name is required";
-    if (!form.last_name.trim()) errs.last_name = "Last name is required";
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  }
-
-  async function handleSubmit(e: React.FormEvent): Promise<void> {
-    e.preventDefault();
-    if (!validate()) return;
+  async function onSubmit(formData: StudentFormData): Promise<void> {
     setLoading(true);
     try {
-      await api.post("/admin/users/student", form);
+      const payload = {
+        ...formData,
+        phone: formData.phone || undefined,
+        gender: formData.gender || undefined,
+        date_of_birth: formData.date_of_birth ? new Date(formData.date_of_birth).toISOString() : undefined,
+        department_id: formData.department_id || undefined,
+        batch: formData.batch || undefined,
+      };
+      await api.post("/admin/users/student", payload);
       toast.success("Student created and temporary password sent via email");
       router.push("/admin/users/students");
     } catch (err: unknown) {
+      applyValidationErrorsToForm(err, setError);
       toast.error(getApiErrorMessage(err, "Failed to create student"));
     } finally {
       setLoading(false);
@@ -85,7 +94,7 @@ export default function AddStudentPage(): React.ReactElement {
       />
       <GlassPageHeader title="Add Student" description="Create a new student account and profile" />
 
-      <form onSubmit={handleSubmit} className="max-w-4xl space-y-8">
+      <form onSubmit={handleSubmit(onSubmit)} className="max-w-4xl space-y-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-6">
             <GlassCard className="!p-0 overflow-hidden">
@@ -101,16 +110,14 @@ export default function AddStudentPage(): React.ReactElement {
                   label="Email Address"
                   type="email"
                   placeholder="student@university.edu"
-                  value={form.email}
-                  onChange={(e) => set("email", e.target.value)}
-                  error={errors.email}
+                  {...register("email")}
+                  error={errors.email?.message}
                 />
                 <GlassInput
                   label="Enrollment Number"
                   placeholder="e.g. EN2024001"
-                  value={form.enrollment_number}
-                  onChange={(e) => set("enrollment_number", e.target.value)}
-                  error={errors.enrollment_number}
+                  {...register("enrollment_number")}
+                  error={errors.enrollment_number?.message}
                 />
                 <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200/60 text-xs text-blue-800 leading-relaxed">
                   🔒 A secure temporary password will be automatically generated and emailed to this student. They will be prompted to choose a new password upon first login.
@@ -129,9 +136,9 @@ export default function AddStudentPage(): React.ReactElement {
                 <p className="text-xs text-muted-foreground mt-0.5">Personal and academic details.</p>
               </div>
               <StudentFormFields
-                form={form}
+                register={register}
+                control={control}
                 errors={errors}
-                set={set}
                 deptOptions={deptOptions}
               />
             </GlassCard>

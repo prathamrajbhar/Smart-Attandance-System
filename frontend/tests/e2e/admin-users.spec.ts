@@ -85,7 +85,7 @@ test.describe("Module 3: User Management (Students & Faculty)", () => {
   });
 
   test("Add student form validates required fields and dispatches creation payload", async ({ page }) => {
-    let createdPayload: Record<string, unknown> | null = null;
+    let createdPayload: { email?: string; enrollment_number?: string; first_name?: string; last_name?: string } | null = null;
 
     await page.route("http://localhost:8000/api/v1/admin/users/student*", async (route) => {
       if (route.request().method() === "POST") {
@@ -126,8 +126,9 @@ test.describe("Module 3: User Management (Students & Faculty)", () => {
 
     await submitBtn.click();
     await expect(page).toHaveURL(/.*\/admin\/users\/students/);
-    expect(createdPayload?.email).toBe("jordan.miller@university.edu");
-    expect(createdPayload?.enrollment_number).toBe("STU-2026-999");
+    const payload = createdPayload as { email?: string; enrollment_number?: string } | null;
+    expect(payload?.email).toBe("jordan.miller@university.edu");
+    expect(payload?.enrollment_number).toBe("STU-2026-999");
   });
 
   test("Faculty directory renders table, search filter, and action triggers", async ({ page }) => {

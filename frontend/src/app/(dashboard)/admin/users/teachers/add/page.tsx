@@ -2,33 +2,49 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { User, PlusCircle, X } from "lucide-react";
 import toast from "react-hot-toast";
-import api, { getApiErrorMessage } from "@/lib/api";
+import api, { getApiErrorMessage, applyValidationErrorsToForm } from "@/lib/api";
 import GlassBreadcrumb from "@/components/ui/GlassBreadcrumb";
 import GlassPageHeader from "@/components/ui/GlassPageHeader";
 import GlassCard from "@/components/ui/GlassCard";
 import GlassInput from "@/components/ui/GlassInput";
 import GlassButton from "@/components/ui/GlassButton";
 import TeacherFormProfile from "./TeacherFormProfile";
-import type { TeacherCreate, DepartmentResponse, DesignationResponse } from "@/types";
-
-type FormErrors = Partial<Record<keyof TeacherCreate, string>>;
+import { teacherFormSchema, TeacherFormData } from "@/lib/validations/teacher";
+import type { DepartmentResponse, DesignationResponse } from "@/types";
 
 export default function AddTeacherPage(): React.ReactElement {
   const router = useRouter();
   const [departments, setDepartments] = useState<DepartmentResponse[]>([]);
   const [designations, setDesignations] = useState<DesignationResponse[]>([]);
-  const [form, setForm] = useState<TeacherCreate>({
-    email: "",
-    employee_id: "",
-    first_name: "",
-    last_name: "",
-    department_id: "",
-    designation_id: "",
-  });
-  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
+
+  const {
+    register,
+    control,
+    handleSubmit,
+    setError,
+    formState: { errors },
+  } = useForm<TeacherFormData>({
+    resolver: zodResolver(teacherFormSchema),
+    defaultValues: {
+      email: "",
+      employee_id: "",
+      first_name: "",
+      last_name: "",
+      department_id: "",
+      designation_id: "",
+      phone: "",
+      qualification: "",
+      specialization: "",
+      experience_years: undefined,
+      joining_date: "",
+      send_invite: true,
+    },
+  });
 
   useEffect(() => {
     async function fetchMasterData(): Promise<void> {
@@ -46,32 +62,22 @@ export default function AddTeacherPage(): React.ReactElement {
     void fetchMasterData();
   }, []);
 
-  function set(field: keyof TeacherCreate, value: string | number | undefined): void {
-    setForm((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
-  }
-
-  function validate(): boolean {
-    const errs: FormErrors = {};
-    if (!form.email.trim()) errs.email = "Email is required";
-    if (!form.employee_id.trim()) errs.employee_id = "Employee ID is required";
-    if (!form.first_name.trim()) errs.first_name = "First name is required";
-    if (!form.last_name.trim()) errs.last_name = "Last name is required";
-    if (!form.department_id) errs.department_id = "Department is required";
-    if (!form.designation_id) errs.designation_id = "Designation is required";
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  }
-
-  async function handleSubmit(e: React.FormEvent): Promise<void> {
-    e.preventDefault();
-    if (!validate()) return;
+  async function onSubmit(formData: TeacherFormData): Promise<void> {
     setLoading(true);
     try {
-      await api.post("/admin/users/teacher", form);
+      const payload = {
+        ...formData,
+        phone: formData.phone || undefined,
+        qualification: formData.qualification || undefined,
+        specialization: formData.specialization || undefined,
+        experience_years: formData.experience_years !== undefined && formData.experience_years !== null ? Number(formData.experience_years) : undefined,
+        joining_date: formData.joining_date ? new Date(formData.joining_date).toISOString() : undefined,
+      };
+      await api.post("/admin/users/teacher", payload);
       toast.success("Teacher created and temporary password sent via email");
       router.push("/admin/users/teachers");
     } catch (err: unknown) {
+      applyValidationErrorsToForm(err, setError);
       toast.error(getApiErrorMessage(err, "Failed to create teacher"));
     } finally {
       setLoading(false);
@@ -102,7 +108,7 @@ export default function AddTeacherPage(): React.ReactElement {
         description="Create a new teacher account with FK-linked department and designation"
       />
 
-      <form onSubmit={handleSubmit} className="max-w-4xl space-y-8">
+      <form onSubmit={handleSubmit(onSubmit)} className="max-w-4xl space-y-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-6">
             <GlassCard className="!p-0 overflow-hidden">
@@ -118,16 +124,14 @@ export default function AddTeacherPage(): React.ReactElement {
                   label="Email Address"
                   type="email"
                   placeholder="teacher@university.edu"
-                  value={form.email}
-                  onChange={(e) => set("email", e.target.value)}
-                  error={errors.email}
+                  {...register("email")}
+                  error={errors.email?.message}
                 />
                 <GlassInput
                   label="Employee ID"
                   placeholder="e.g. EMP2024001"
-                  value={form.employee_id}
-                  onChange={(e) => set("employee_id", e.target.value)}
-                  error={errors.employee_id}
+                  {...register("employee_id")}
+                  error={errors.employee_id?.message}
                 />
                 <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200/60 text-xs text-blue-800 leading-relaxed">
                   🔒 A secure temporary password will be automatically generated and emailed to this teacher. They will be prompted to choose a new password upon first login.
@@ -138,9 +142,9 @@ export default function AddTeacherPage(): React.ReactElement {
 
           <div className="lg:col-span-2">
             <TeacherFormProfile
-              form={form}
+              register={register}
+              control={control}
               errors={errors}
-              set={set}
               deptOptions={deptOptions}
               desigOptions={desigOptions}
             />

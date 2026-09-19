@@ -1,4 +1,5 @@
 import axios from "axios";
+import { UseFormSetError, FieldValues, Path } from "react-hook-form";
 import { useAuthStore } from "@/store/authStore";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
@@ -42,8 +43,87 @@ api.interceptors.response.use(
   }
 );
 
+export interface ApiValidationErrorDetail {
+  field: string;
+  issue: string;
+}
+
+export interface ApiValidationErrorEnvelope {
+  success: boolean;
+  error: {
+    code: string;
+    message: string;
+    details?: ApiValidationErrorDetail[];
+  };
+}
+
 export function getApiErrorMessage(err: unknown, fallback = "Something went wrong"): string {
-  return (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || fallback;
+  const axiosError = err as {
+    response?: {
+      data?: {
+        detail?: string | Array<{ msg?: string }>;
+        message?: string;
+        error?: {
+          message?: string;
+          details?: ApiValidationErrorDetail[];
+        };
+      };
+    };
+  };
+
+  const responseData = axiosError?.response?.data;
+  if (!responseData) return fallback;
+
+  if (responseData.error?.message) {
+    if (responseData.error.details && responseData.error.details.length > 0) {
+      const firstIssue = responseData.error.details[0];
+      return `${firstIssue.field}: ${firstIssue.issue}`;
+    }
+    return responseData.error.message;
+  }
+
+  if (typeof responseData.detail === "string") {
+    return responseData.detail;
+  }
+
+  if (Array.isArray(responseData.detail) && responseData.detail.length > 0) {
+    return responseData.detail[0]?.msg || fallback;
+  }
+
+  if (responseData.message) {
+    return responseData.message;
+  }
+
+  return fallback;
+}
+
+export function applyValidationErrorsToForm<T extends FieldValues>(
+  err: unknown,
+  setError: UseFormSetError<T>
+): boolean {
+  const axiosError = err as {
+    response?: {
+      data?: {
+        error?: {
+          details?: ApiValidationErrorDetail[];
+        };
+      };
+    };
+  };
+
+  const details = axiosError?.response?.data?.error?.details;
+  if (Array.isArray(details) && details.length > 0) {
+    for (const item of details) {
+      if (item.field && item.issue) {
+        setError(item.field as Path<T>, {
+          type: "server",
+          message: item.issue,
+        });
+      }
+    }
+    return true;
+  }
+  return false;
 }
 
 export default api;

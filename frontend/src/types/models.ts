@@ -76,7 +76,8 @@ export interface ClassResponse {
   name: string;
   subject_name: string;
   subject_code: string;
-  teacherId: string;
+  teacherId?: string;
+  teacher_id?: string;
   classroom_name?: string | null;
   semester?: number | null;
   batch?: string | null;
@@ -138,4 +139,15 @@ export interface DesignationResponse {
   name: string;
   code: string;
   description: string | null;
+}
+
+export interface DeviceChangeRequest {
+  id: string;
+  student_id: string;
+  student_name: string;
+  enrollment_number: string;
+  new_device_uuid: string;
+  reason: string | null;
+  status: string;
+  created_at: string;
 }

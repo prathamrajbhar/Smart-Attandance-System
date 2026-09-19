@@ -3,9 +3,13 @@
 import React, { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Lock, ShieldCheck, AlertCircle, CheckCircle2 } from "lucide-react";
 import toast from "react-hot-toast";
-import api, { getApiErrorMessage } from "@/lib/api";
+
+import api, { getApiErrorMessage, applyValidationErrorsToForm } from "@/lib/api";
+import { onboardingSchema, type OnboardingFormData } from "@/lib/validations/auth";
 import GlassInput from "@/components/ui/GlassInput";
 import GlassButton from "@/components/ui/GlassButton";
 import GlassLoader from "@/components/ui/GlassLoader";
@@ -25,11 +29,20 @@ function OnboardingContent(): React.ReactElement {
 
   const [verifying, setVerifying] = useState(true);
   const [userData, setUserData] = useState<VerifyData | null>(null);
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [submitting, setSubmitting] = useState(false);
   const [completed, setCompleted] = useState(false);
-  const [errors, setErrors] = useState<{ password?: string; confirmPassword?: string }>({});
+
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<OnboardingFormData>({
+    resolver: zodResolver(onboardingSchema),
+    defaultValues: {
+      password: "",
+      confirmPassword: "",
+    },
+  });
 
   useEffect(() => {
     async function checkToken(): Promise<void> {
@@ -39,43 +52,37 @@ function OnboardingContent(): React.ReactElement {
         return;
       }
       try {
-        const { data } = await api.get<VerifyData>(`/auth/verify-token?token=${encodeURIComponent(token)}&token_type=invite`);
+        const { data } = await api.get<VerifyData>(
+          `/auth/verify-token?token=${encodeURIComponent(token)}&token_type=invite`
+        );
         setUserData(data);
       } catch (err) {
-        setUserData({ valid: false, message: getApiErrorMessage(err, "Failed to verify invitation token.") });
+        setUserData({
+          valid: false,
+          message: getApiErrorMessage(err, "Failed to verify invitation token."),
+        });
       } finally {
         setVerifying(false);
       }
     }
-    checkToken();
+    void checkToken();
   }, [token]);
 
-  function validate(): boolean {
-    const errs: { password?: string; confirmPassword?: string } = {};
-    if (!password) errs.password = "Password is required";
-    else if (password.length < 8) errs.password = "Password must be at least 8 characters";
-
-    if (password !== confirmPassword) {
-      errs.confirmPassword = "Passwords do not match";
-    }
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  }
-
-  async function handleSubmit(e: React.FormEvent): Promise<void> {
-    e.preventDefault();
-    if (!validate() || !token) return;
-
-    setSubmitting(true);
+  async function onSubmit(formData: OnboardingFormData): Promise<void> {
+    if (!token) return;
     try {
-      await api.post("/auth/complete-onboarding", { token, password });
+      await api.post("/auth/complete-onboarding", {
+        token,
+        password: formData.password,
+      });
       setCompleted(true);
       toast.success("Account activated successfully!");
       setTimeout(() => router.push("/login"), 2500);
-    } catch (err) {
-      toast.error(getApiErrorMessage(err, "Failed to activate account."));
-    } finally {
-      setSubmitting(false);
+    } catch (err: unknown) {
+      const handled = applyValidationErrorsToForm(err, setError);
+      if (!handled) {
+        toast.error(getApiErrorMessage(err, "Failed to activate account."));
+      }
     }
   }
 
@@ -126,7 +133,11 @@ function OnboardingContent(): React.ReactElement {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-2xl border border-border bg-card p-7 space-y-5 shadow-sm">
+    <form
+      noValidate
+      onSubmit={handleSubmit(onSubmit)}
+      className="rounded-2xl border border-border bg-card p-7 space-y-5 shadow-sm"
+    >
       <div className="space-y-1">
         <h2 className="text-base font-semibold text-foreground">Activate Your Account</h2>
         <p className="text-xs text-muted-foreground">
@@ -139,9 +150,8 @@ function OnboardingContent(): React.ReactElement {
           label="New Password"
           type="password"
           placeholder="••••••••"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          error={errors.password}
+          {...register("password")}
+          error={errors.password?.message}
           icon={<Lock size={15} />}
           autoComplete="new-password"
         />
@@ -150,9 +160,8 @@ function OnboardingContent(): React.ReactElement {
           label="Confirm Password"
           type="password"
           placeholder="••••••••"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          error={errors.confirmPassword}
+          {...register("confirmPassword")}
+          error={errors.confirmPassword?.message}
           icon={<Lock size={15} />}
           autoComplete="new-password"
         />
@@ -163,7 +172,7 @@ function OnboardingContent(): React.ReactElement {
           type="submit"
           variant="primary"
           size="lg"
-          loading={submitting}
+          loading={isSubmitting}
           className="w-full font-medium"
         >
           Activate & Save Password
@@ -187,7 +196,13 @@ export default function OnboardingPage(): React.ReactElement {
           <p className="text-xs text-muted-foreground mt-1">Account Activation</p>
         </div>
 
-        <Suspense fallback={<div className="rounded-2xl border border-border bg-card p-8 text-center"><GlassLoader /></div>}>
+        <Suspense
+          fallback={
+            <div className="rounded-2xl border border-border bg-card p-8 text-center">
+              <GlassLoader />
+            </div>
+          }
+        >
           <OnboardingContent />
         </Suspense>
       </div>

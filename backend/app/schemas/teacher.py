@@ -1,36 +1,54 @@
 from datetime import datetime
 from typing import Optional, Literal
-
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
 
 
 class TeacherCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     email: EmailStr = Field(..., description="Unique email address of the teacher")
-    password: Optional[str] = Field(None, min_length=8, max_length=100, description="Optional account password; auto-generated if omitted")
+    password: Optional[str] = Field(None, min_length=8, max_length=128, description="Optional account password; auto-generated if omitted")
     employee_id: str = Field(..., min_length=3, max_length=30, description="Unique employee identifier e.g. EMP2024001")
     first_name: str = Field(..., min_length=1, max_length=100, description="Teacher first name")
     last_name: str = Field(..., min_length=1, max_length=100, description="Teacher last name")
-    department_id: str = Field(..., description="UUID of the teacher's department")
-    designation_id: str = Field(..., description="UUID of the teacher's designation")
+    department_id: str = Field(..., min_length=1, max_length=64, description="UUID of the teacher's department")
+    designation_id: str = Field(..., min_length=1, max_length=64, description="UUID of the teacher's designation")
     phone: Optional[str] = Field(None, max_length=20, description="Contact phone number")
     qualification: Optional[str] = Field(None, max_length=100, description="Academic qualification e.g. Ph.D, M.Tech")
     specialization: Optional[str] = Field(None, max_length=100, description="Area of specialization e.g. Machine Learning")
-    experience_years: Optional[int] = Field(None, ge=0, description="Years of professional experience")
+    experience_years: Optional[int] = Field(None, ge=0, le=60, description="Years of professional experience")
     joining_date: Optional[datetime] = Field(None, description="Date of joining the institution")
     send_invite: Optional[bool] = Field(default=True, description="Whether to dispatch an invitation email")
 
+    @field_validator("email", mode="before")
+    @classmethod
+    def strip_email(cls, v: str) -> str:
+        return v.strip().lower() if isinstance(v, str) else v
+
+    @field_validator("employee_id", "first_name", "last_name", "phone", "qualification", "specialization", mode="before")
+    @classmethod
+    def strip_text(cls, v: Optional[str]) -> Optional[str]:
+        return v.strip() if isinstance(v, str) else v
+
 
 class TeacherUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     employee_id: Optional[str] = Field(None, min_length=3, max_length=30)
     first_name: Optional[str] = Field(None, min_length=1, max_length=100)
     last_name: Optional[str] = Field(None, min_length=1, max_length=100)
-    department_id: Optional[str] = Field(None)
-    designation_id: Optional[str] = Field(None)
+    department_id: Optional[str] = Field(None, max_length=64)
+    designation_id: Optional[str] = Field(None, max_length=64)
     phone: Optional[str] = Field(None, max_length=20)
     qualification: Optional[str] = Field(None, max_length=100)
     specialization: Optional[str] = Field(None, max_length=100)
-    experience_years: Optional[int] = Field(None, ge=0)
+    experience_years: Optional[int] = Field(None, ge=0, le=60)
     joining_date: Optional[datetime] = Field(None)
+
+    @field_validator("employee_id", "first_name", "last_name", "phone", "qualification", "specialization", mode="before")
+    @classmethod
+    def strip_text(cls, v: Optional[str]) -> Optional[str]:
+        return v.strip() if isinstance(v, str) else v
 
 
 class TeacherResponse(BaseModel):
@@ -54,7 +72,9 @@ class TeacherResponse(BaseModel):
 
 
 class SessionStart(BaseModel):
-    academic_class_id: str = Field(..., description="Target Class UUID for this session")
+    model_config = ConfigDict(extra="forbid")
+
+    academic_class_id: str = Field(..., min_length=1, max_length=64, description="Target Class UUID for this session")
     duration_minutes: int = Field(10, ge=1, le=180, description="Session validity window in minutes")
 
 
@@ -69,9 +89,11 @@ class SessionResponse(BaseModel):
 
 
 class GeofenceUpsert(BaseModel):
-    latitude: float = Field(..., description="GPS Latitude coordinate")
-    longitude: float = Field(..., description="GPS Longitude coordinate")
-    radius_meters: float = Field(..., gt=0.0, description="Geofence boundary radius in meters")
+    model_config = ConfigDict(extra="forbid")
+
+    latitude: float = Field(..., ge=-90.0, le=90.0, description="GPS Latitude coordinate")
+    longitude: float = Field(..., ge=-180.0, le=180.0, description="GPS Longitude coordinate")
+    radius_meters: float = Field(..., gt=0.0, le=5000.0, description="Geofence boundary radius in meters")
 
 
 class GeofenceResponse(BaseModel):
@@ -97,6 +119,8 @@ class AcademicClassWithGeofenceResponse(BaseModel):
 
 
 class StudentRosterItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     student_id: str = Field(..., description="Student UUID")
     enrollment_number: str = Field(..., description="Student enrollment number")
     full_name: str = Field(..., description="Student full name (first + last)")
@@ -107,18 +131,24 @@ class StudentRosterItem(BaseModel):
 
 
 class SessionAttendanceResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     session_id: str = Field(..., description="Session UUID")
     class_name: str = Field(..., description="Class name")
     roster: list[StudentRosterItem] = Field(..., description="Enrolled roster list details")
 
 
 class SessionTrendItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     session_id: str = Field(..., description="Session UUID")
     session_name: str = Field(..., description="Display name of session")
     attendance_percentage: float = Field(..., description="Attendance percentage for session")
 
 
 class ClassStatsResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     class_id: str = Field(..., description="Class UUID")
     total_sessions: int = Field(..., description="Total sessions held for class")
     total_students: int = Field(..., description="Total student count enrolled in class")
@@ -127,8 +157,10 @@ class ClassStatsResponse(BaseModel):
 
 
 class AttendanceManualOverride(BaseModel):
-    student_id: str = Field(..., description="Student UUID to override")
-    status: str = Field(..., description="Target status (Present or Absent)")
+    model_config = ConfigDict(extra="forbid")
+
+    student_id: str = Field(..., min_length=1, max_length=64, description="Student UUID to override")
+    status: Literal["Present", "Absent"] = Field(..., description="Target status (Present or Absent)")
 
 
 class SessionWithClassResponse(BaseModel):
@@ -144,15 +176,21 @@ class SessionWithClassResponse(BaseModel):
 
 
 class BulkAttendanceRecord(BaseModel):
-    student_id: str = Field(..., description="Student UUID")
+    model_config = ConfigDict(extra="forbid")
+
+    student_id: str = Field(..., min_length=1, max_length=64, description="Student UUID")
     status: Literal["Present", "Absent"] = Field(..., description="Attendance status to set")
 
 
 class BulkMarkRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     records: list[BulkAttendanceRecord] = Field(..., min_length=1, description="List of student attendance records")
 
 
 class AbsentStudentItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     student_id: str = Field(..., description="Student UUID")
     enrollment_number: str = Field(..., description="Student enrollment number")
     full_name: str = Field(..., description="Student full name")
@@ -160,6 +198,8 @@ class AbsentStudentItem(BaseModel):
 
 
 class DeviceChangeResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str = Field(..., description="Device Change Request UUID")
     student_id: str = Field(..., description="Student UUID")
     student_name: str = Field(..., description="Student full name")
@@ -173,15 +213,21 @@ class DeviceChangeResponse(BaseModel):
 
 
 class DeviceChangeApprove(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     status: Literal["APPROVED", "REJECTED"] = Field(..., description="Approval status decision")
 
 
 class SmartPassVerifyRequest(BaseModel):
-    qr_token: str = Field(..., description="Rotating 30-second JWT token from student Smart Pass")
-    session_id: str = Field(..., description="Active session UUID")
+    model_config = ConfigDict(extra="forbid")
+
+    qr_token: str = Field(..., min_length=1, description="Rotating 30-second JWT token from student Smart Pass")
+    session_id: str = Field(..., min_length=1, max_length=64, description="Active session UUID")
 
 
 class SmartPassVerifyResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     status: str = Field(..., description="Status (success, already_marked, error)")
     student_id: str = Field(..., description="Student UUID")
     student_name: str = Field(..., description="Full name of student")
@@ -190,3 +236,17 @@ class SmartPassVerifyResponse(BaseModel):
     session_id: str = Field(..., description="Session UUID")
     message: str = Field(..., description="User feedback message")
 
+
+class ClassAttendanceExportItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    enrollment_number: str
+    first_name: str
+    last_name: str
+    email: str
+    session_date: str
+    class_name: str
+    subject: str
+    status: str
+    final_ai_score: float
+    remarks: str

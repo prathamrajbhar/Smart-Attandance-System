@@ -1,21 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
-import { CheckCircle2, XCircle, Smartphone, AlertCircle } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { CheckCircle2, XCircle, Smartphone, AlertCircle, Loader2 } from "lucide-react";
 import GlassTable, { TableColumn } from "@/components/ui/GlassTable";
 import api, { getApiErrorMessage } from "@/lib/api";
 import { toast } from "react-hot-toast";
-
-interface DeviceChangeRequest {
-  id: string;
-  student_id: string;
-  student_name: string;
-  enrollment_number: string;
-  new_device_uuid: string;
-  reason: string | null;
-  status: string;
-  created_at: string;
-}
+import type { DeviceChangeRequest } from "@/types/models";
 
 interface DeviceChangeTableProps {
   requests: DeviceChangeRequest[];
@@ -23,7 +13,12 @@ interface DeviceChangeTableProps {
 }
 
 export default function DeviceChangeTable({ requests, onActionComplete }: DeviceChangeTableProps): React.ReactElement {
-  const [processing, setProcessing] = useState<string | null>(null);
+  const [localRequests, setLocalRequests] = useState<DeviceChangeRequest[]>(requests);
+  const [processing, setProcessing] = useState<{ id: string; action: "APPROVED" | "REJECTED" } | null>(null);
+
+  useEffect(() => {
+    setLocalRequests(requests);
+  }, [requests]);
 
   const formatDate = (dateStr: string): string => {
     try {
@@ -45,9 +40,10 @@ export default function DeviceChangeTable({ requests, onActionComplete }: Device
 
   const handleAction = async (id: string, status: "APPROVED" | "REJECTED"): Promise<void> => {
     try {
-      setProcessing(id);
+      setProcessing({ id, action: status });
       await api.put(`/teacher/device-changes/${id}/approve`, { status });
       toast.success(`Request ${status.toLowerCase()} successfully`);
+      setLocalRequests((prev) => prev.filter((r) => r.id !== id));
       onActionComplete();
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Action failed"));
@@ -79,7 +75,7 @@ export default function DeviceChangeTable({ requests, onActionComplete }: Device
             </span>
           </div>
           {req.reason && (
-            <div className="flex items-center gap-1 mt-1 text-xs text-amber-800 bg-amber-50 border border-amber-200 w-fit px-2 py-0.5 rounded">
+            <div className="flex items-center gap-1 mt-1 text-xs text-amber-700 dark:text-amber-300 bg-amber-500/10 border border-amber-500/20 w-fit px-2 py-0.5 rounded">
               <AlertCircle size={10} />
               <span className="truncate max-w-[200px]">{req.reason}</span>
             </div>
@@ -100,30 +96,36 @@ export default function DeviceChangeTable({ requests, onActionComplete }: Device
     {
       key: "actions",
       header: "Actions",
-      render: (req) => (
-        <div className="flex items-center justify-end gap-1.5">
-          <button
-            onClick={() => handleAction(req.id, "REJECTED")}
-            disabled={processing !== null}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-md border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-50 transition-colors text-xs font-medium"
-          >
-            <XCircle size={14} />
-            Reject
-          </button>
-          <button
-            onClick={() => handleAction(req.id, "APPROVED")}
-            disabled={processing !== null}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-md border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 transition-colors text-xs font-medium"
-          >
-            <CheckCircle2 size={14} />
-            Approve
-          </button>
-        </div>
-      ),
+      render: (req) => {
+        const isRowProcessing = processing?.id === req.id;
+        const isApproving = isRowProcessing && processing?.action === "APPROVED";
+        const isRejecting = isRowProcessing && processing?.action === "REJECTED";
+
+        return (
+          <div className="flex items-center justify-end gap-2">
+            <button
+              onClick={() => void handleAction(req.id, "REJECTED")}
+              disabled={isRowProcessing}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/20 active:scale-95 disabled:opacity-50 transition-all text-xs font-medium cursor-pointer"
+            >
+              {isRejecting ? <Loader2 size={13} className="animate-spin" /> : <XCircle size={13} />}
+              {isRejecting ? "Rejecting..." : "Reject"}
+            </button>
+            <button
+              onClick={() => void handleAction(req.id, "APPROVED")}
+              disabled={isRowProcessing}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 active:scale-95 disabled:opacity-50 transition-all text-xs font-medium cursor-pointer"
+            >
+              {isApproving ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
+              {isApproving ? "Approving..." : "Approve"}
+            </button>
+          </div>
+        );
+      },
     },
   ];
 
-  if (requests.length === 0) {
+  if (localRequests.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-12 text-center border border-border rounded-xl bg-card">
         <div className="w-12 h-12 rounded-full bg-secondary text-muted-foreground flex items-center justify-center mb-3">
@@ -137,5 +139,11 @@ export default function DeviceChangeTable({ requests, onActionComplete }: Device
     );
   }
 
-  return <GlassTable columns={columns} data={requests as (DeviceChangeRequest & Record<string, unknown>)[]} />;
+  return (
+    <GlassTable
+      columns={columns}
+      data={localRequests as (DeviceChangeRequest & Record<string, unknown>)[]}
+      rowKey={(req) => req.id}
+    />
+  );
 }

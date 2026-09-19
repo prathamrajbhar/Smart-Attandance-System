@@ -3,6 +3,7 @@
 import React from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import GlassCombobox from "@/components/ui/GlassCombobox";
 
 export interface SelectOption {
   value: string;
@@ -15,9 +16,12 @@ export interface GlassSelectProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  searchPlaceholder?: string;
   error?: string;
   id?: string;
   disabled?: boolean;
+  searchable?: boolean;
+  className?: string;
 }
 
 export default function GlassSelect({
@@ -26,10 +30,32 @@ export default function GlassSelect({
   value,
   onChange,
   placeholder = "Select...",
+  searchPlaceholder = "Search...",
   error,
   id,
   disabled = false,
+  searchable,
+  className = "",
 }: GlassSelectProps): React.ReactElement {
+  const isSearchable = searchable === true || (searchable !== false && options.length > 9);
+
+  if (isSearchable) {
+    return (
+      <GlassCombobox
+        label={label}
+        options={options}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        searchPlaceholder={searchPlaceholder}
+        error={error}
+        id={id}
+        disabled={disabled}
+        className={className}
+      />
+    );
+  }
+
   const selectId = id || (label ? label.toLowerCase().replace(/\s+/g, "-") : undefined);
 
   return (
@@ -50,7 +76,8 @@ export default function GlassSelect({
             "text-foreground",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent",
             "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-slate-50",
-            error && "border-destructive focus-visible:ring-destructive"
+            error && "border-destructive focus-visible:ring-destructive",
+            className
           )}
         >
           <option value="" disabled className="text-muted-foreground">

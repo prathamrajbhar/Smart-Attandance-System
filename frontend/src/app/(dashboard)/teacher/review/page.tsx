@@ -41,11 +41,16 @@ export default function ReviewQueuePage(): React.ReactElement {
     { key: "class_name", header: "Class" },
     { key: "final_ai_score", header: "AI Score", render: (r) => {
       const score = Number(r.final_ai_score);
-      return <span className={`font-mono text-sm ${score < 0.5 ? "text-slate-300" : "text-slate-300"}`}>{(score * 100).toFixed(1)}%</span>;
+      const colorClass = score >= 0.7
+        ? "text-emerald-600 dark:text-emerald-400 font-semibold"
+        : score >= 0.4
+        ? "text-amber-600 dark:text-amber-400 font-semibold"
+        : "text-rose-600 dark:text-rose-400 font-semibold";
+      return <span className={`font-mono text-sm ${colorClass}`}>{(score * 100).toFixed(1)}%</span>;
     }},
-    { key: "created_at", header: "Date", render: (r) => <span className="text-xs text-slate-400">{new Date(String(r.created_at)).toLocaleDateString()}</span> },
+    { key: "created_at", header: "Date", render: (r) => <span className="text-xs text-foreground/80 font-medium">{new Date(String(r.created_at)).toLocaleDateString()}</span> },
     { key: "actions", header: "", render: (row) => (
-      <button onClick={() => router.push(`/teacher/review/${row.id}`)} className="glass-btn glass-btn-ghost glass-btn-sm"><Eye size={14} /> Review</button>
+      <button onClick={() => router.push(`/teacher/review/${row.id}`)} className="glass-btn glass-btn-ghost glass-btn-sm text-foreground hover:text-primary transition-colors flex items-center gap-1.5 font-medium"><Eye size={14} className="text-muted-foreground" /> Review</button>
     )},
   ];
 

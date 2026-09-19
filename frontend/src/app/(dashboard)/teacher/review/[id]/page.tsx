@@ -20,10 +20,10 @@ function ScoreGauge({ label, score, color }: { label: string; score: number; col
   return (
     <div className="flex flex-col items-center gap-2">
       <svg width="100" height="100" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r={r} fill="none" stroke="#e2e8f0" strokeWidth="8" />
+        <circle cx="50" cy="50" r={r} fill="none" className="stroke-slate-200 dark:stroke-slate-800" strokeWidth="8" />
         <circle cx="50" cy="50" r={r} fill="none" stroke={color} strokeWidth="8" strokeLinecap="round"
           strokeDasharray={c} strokeDashoffset={offset} className="score-ring" transform="rotate(-90 50 50)" />
-        <text x="50" y="50" textAnchor="middle" dominantBaseline="central" fill="#0f172a" fontSize="16" fontWeight="700">{pct.toFixed(0)}%</text>
+        <text x="50" y="50" textAnchor="middle" dominantBaseline="central" fill="currentColor" className="fill-foreground font-bold font-mono" fontSize="16">{pct.toFixed(0)}%</text>
       </svg>
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
     </div>

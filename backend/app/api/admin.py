@@ -11,9 +11,11 @@ from app.schemas.teacher import TeacherCreate, TeacherResponse, TeacherUpdate
 from app.schemas.admin import (
     ClassCreate, ClassUpdate, ClassResponse, AssignTeacherRequest, EnrollRequest,
     DepartmentCreate, DepartmentUpdate, DepartmentResponse,
-    AuditLogResponse, AdminStatsResponse,
+    AuditLogResponse, AdminStatsResponse, EnrollStudentsResponse,
     StudentBulkCreateRequest, TeacherBulkCreateRequest, ClassBulkCreateRequest, BulkImportResponse,
+    AbsenteeAnomalyItem,
 )
+from app.schemas.common import MessageResponse
 from app.schemas.master_data import (
     SubjectCreate, SubjectUpdate, SubjectResponse,
     ClassroomCreate, ClassroomUpdate, ClassroomResponse,
@@ -129,11 +131,11 @@ async def assign_teacher(class_id: str, data: AssignTeacherRequest, request: Req
     return await admin_service.assign_teacher(class_id=class_id, teacher_id=data.teacher_id, actor=current_user.email, ip=_get_client_ip(request))
 
 
-@router.post("/classes/{class_id}/enroll", status_code=status.HTTP_200_OK)
+@router.post("/classes/{class_id}/enroll", response_model=EnrollStudentsResponse, status_code=status.HTTP_200_OK)
 @_handle_value_err
-async def enroll_students(class_id: str, data: EnrollRequest, request: Request, current_user: User = Depends(get_current_user), admin_service: AdminService = Depends()) -> dict:
+async def enroll_students(class_id: str, data: EnrollRequest, request: Request, current_user: User = Depends(get_current_user), admin_service: AdminService = Depends()) -> EnrollStudentsResponse:
     enrolled_count = await admin_service.enroll_students(class_id=class_id, student_ids=data.student_ids, actor=current_user.email, ip=_get_client_ip(request))
-    return {"status": "success", "enrolled_count": enrolled_count}
+    return EnrollStudentsResponse(enrolled_count=enrolled_count, class_id=class_id, message=f"Successfully enrolled {enrolled_count} students")
 
 
 @router.get("/users/students", response_model=PaginatedResponse[StudentResponse], dependencies=[Depends(rate_limiter(requests_limit=120, window_seconds=60))])
@@ -211,14 +213,14 @@ async def update_teacher(id: str, data: TeacherUpdate, request: Request, current
     return await admin_service.update_teacher(id, data.model_dump(exclude_unset=True), actor=current_user.email, ip=_get_client_ip(request))
 
 
-@router.post("/users/{user_id}/reset-password", status_code=status.HTTP_200_OK)
-@router.put("/users/{user_id}/reset-password", status_code=status.HTTP_200_OK)
+@router.post("/users/{user_id}/reset-password", response_model=MessageResponse, status_code=status.HTTP_200_OK)
+@router.put("/users/{user_id}/reset-password", response_model=MessageResponse, status_code=status.HTTP_200_OK)
 async def trigger_user_password_reset(
     user_id: str,
     request: Request,
     current_user: User = Depends(get_current_user),
     admin_service: AdminService = Depends(),
-) -> dict:
+) -> MessageResponse:
     try:
         from app.core.url_resolver import resolve_frontend_url
         frontend_url = resolve_frontend_url(request)
@@ -228,10 +230,10 @@ async def trigger_user_password_reset(
             ip=_get_client_ip(request),
             frontend_url=frontend_url,
         )
-        return {
-            "status": "success",
-            "message": "Password reset instructions dispatched to the user's registered email address.",
-        }
+        return MessageResponse(
+            status="success",
+            message="Password reset instructions dispatched to the user's registered email address.",
+        )
     except ValueError as err:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
     except Exception as err:
@@ -301,11 +303,11 @@ async def update_department(id: str, data: DepartmentUpdate, admin_service: Admi
     return await admin_service.update_department(id, data.model_dump(exclude_unset=True))
 
 
-@router.delete("/departments/{id}")
-async def delete_department(id: str, request: Request, current_user: User = Depends(get_current_user), admin_service: AdminService = Depends()):
+@router.delete("/departments/{id}", response_model=MessageResponse)
+async def delete_department(id: str, request: Request, current_user: User = Depends(get_current_user), admin_service: AdminService = Depends()) -> MessageResponse:
     try:
         await admin_service.delete_department(id, actor=current_user.email, ip=_get_client_ip(request))
-        return {"status": "success"}
+        return MessageResponse(status="success", message="Department deleted successfully")
     except ValueError as err:
         raise HTTPException(status_code=400, detail=str(err))
     except Exception:
@@ -338,11 +340,11 @@ async def update_subject(id: str, data: SubjectUpdate, admin_service: AdminServi
     return await admin_service.update_subject(id, data.model_dump(exclude_unset=True))
 
 
-@router.delete("/subjects/{id}")
-async def delete_subject(id: str, request: Request, current_user: User = Depends(get_current_user), admin_service: AdminService = Depends()):
+@router.delete("/subjects/{id}", response_model=MessageResponse)
+async def delete_subject(id: str, request: Request, current_user: User = Depends(get_current_user), admin_service: AdminService = Depends()) -> MessageResponse:
     try:
         await admin_service.delete_subject(id, actor=current_user.email, ip=_get_client_ip(request))
-        return {"status": "success"}
+        return MessageResponse(status="success", message="Subject deleted successfully")
     except ValueError as err:
         raise HTTPException(status_code=400, detail=str(err))
     except Exception:
@@ -375,11 +377,11 @@ async def update_classroom(id: str, data: ClassroomUpdate, admin_service: AdminS
     return await admin_service.update_classroom(id, data.model_dump(exclude_unset=True))
 
 
-@router.delete("/classrooms/{id}")
-async def delete_classroom(id: str, request: Request, current_user: User = Depends(get_current_user), admin_service: AdminService = Depends()):
+@router.delete("/classrooms/{id}", response_model=MessageResponse)
+async def delete_classroom(id: str, request: Request, current_user: User = Depends(get_current_user), admin_service: AdminService = Depends()) -> MessageResponse:
     try:
         await admin_service.delete_classroom(id, actor=current_user.email, ip=_get_client_ip(request))
-        return {"status": "success"}
+        return MessageResponse(status="success", message="Classroom deleted successfully")
     except ValueError as err:
         raise HTTPException(status_code=400, detail=str(err))
     except Exception:
@@ -412,11 +414,11 @@ async def update_designation(id: str, data: DesignationUpdate, admin_service: Ad
     return await admin_service.update_designation(id, data.model_dump(exclude_unset=True))
 
 
-@router.delete("/designations/{id}")
-async def delete_designation(id: str, request: Request, current_user: User = Depends(get_current_user), admin_service: AdminService = Depends()):
+@router.delete("/designations/{id}", response_model=MessageResponse)
+async def delete_designation(id: str, request: Request, current_user: User = Depends(get_current_user), admin_service: AdminService = Depends()) -> MessageResponse:
     try:
         await admin_service.delete_designation(id, actor=current_user.email, ip=_get_client_ip(request))
-        return {"status": "success"}
+        return MessageResponse(status="success", message="Designation deleted successfully")
     except ValueError as err:
         raise HTTPException(status_code=400, detail=str(err))
     except Exception:
@@ -456,11 +458,11 @@ async def get_admin_stats(admin_service: AdminService = Depends()):
     return await admin_service.get_stats()
 
 
-@router.post("/scan-absentees", status_code=status.HTTP_200_OK)
+@router.post("/scan-absentees", response_model=list[AbsenteeAnomalyItem], status_code=status.HTTP_200_OK)
 async def scan_absentee_anomalies(
     contamination: float = 0.10,
     attendance_repo: AttendanceRepository = Depends(),
-) -> list[dict]:
+) -> list[AbsenteeAnomalyItem]:
     records = await attendance_repo.get_all_absences()
     if not records or len(records) < 5:
         return []
@@ -484,7 +486,7 @@ async def scan_absentee_anomalies(
             s_info = student_map.get(s_id, {})
             item["student_name"] = s_info.get("student_name", "Unknown Student")
             item["enrollment_number"] = s_info.get("enrollment_number", "N/A")
-        return flagged
+        return [AbsenteeAnomalyItem.model_validate(item) for item in flagged]
     except Exception as err:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Outlier pattern extraction failed: {str(err)}")
 

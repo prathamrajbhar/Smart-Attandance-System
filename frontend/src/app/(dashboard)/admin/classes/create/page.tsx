@@ -2,18 +2,20 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { BookOpen, Users, PlusCircle, X, Settings2 } from "lucide-react";
 import toast from "react-hot-toast";
-import api, { getApiErrorMessage } from "@/lib/api";
+
+import api, { getApiErrorMessage, applyValidationErrorsToForm } from "@/lib/api";
+import { classFormSchema, type ClassFormData } from "@/lib/validations/admin";
 import GlassBreadcrumb from "@/components/ui/GlassBreadcrumb";
 import GlassPageHeader from "@/components/ui/GlassPageHeader";
 import GlassCard from "@/components/ui/GlassCard";
 import GlassInput from "@/components/ui/GlassInput";
 import GlassSelect from "@/components/ui/GlassSelect";
 import GlassButton from "@/components/ui/GlassButton";
-import type { TeacherResponse, SubjectResponse, ClassroomResponse, ClassCreate } from "@/types";
-
-type FormErrors = Partial<Record<keyof ClassCreate, string>>;
+import type { TeacherResponse, SubjectResponse, ClassroomResponse } from "@/types";
 
 const SEMESTER_OPTIONS = Array.from({ length: 8 }, (_, i) => ({
   value: String(i + 1),
@@ -25,9 +27,23 @@ export default function CreateClassPage(): React.ReactElement {
   const [teachers, setTeachers] = useState<TeacherResponse[]>([]);
   const [subjects, setSubjects] = useState<SubjectResponse[]>([]);
   const [classrooms, setClassrooms] = useState<ClassroomResponse[]>([]);
-  const [form, setForm] = useState<ClassCreate>({ name: "", subject_id: "", teacher_id: "" });
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [loading, setLoading] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<ClassFormData>({
+    resolver: zodResolver(classFormSchema),
+    defaultValues: {
+      name: "",
+      subject_id: "",
+      teacher_id: "",
+      classroom_id: "",
+      batch: "",
+    },
+  });
 
   useEffect(() => {
     async function fetchMasterData(): Promise<void> {
@@ -50,32 +66,24 @@ export default function CreateClassPage(): React.ReactElement {
     void fetchMasterData();
   }, []);
 
-  function set(field: keyof ClassCreate, value: string | number | undefined): void {
-    setForm((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
-  }
-
-  function validate(): boolean {
-    const errs: FormErrors = {};
-    if (!form.name.trim()) errs.name = "Class name is required";
-    if (!form.teacher_id) errs.teacher_id = "Teacher is required";
-    if (!form.subject_id) errs.subject_id = "Subject is required";
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  }
-
-  async function handleSubmit(e: React.FormEvent): Promise<void> {
-    e.preventDefault();
-    if (!validate()) return;
-    setLoading(true);
+  async function onSubmit(formData: ClassFormData): Promise<void> {
     try {
-      await api.post("/admin/classes", form);
+      await api.post("/admin/classes", {
+        name: formData.name.trim(),
+        subject_id: formData.subject_id,
+        teacher_id: formData.teacher_id,
+        classroom_id: formData.classroom_id || undefined,
+        semester: formData.semester,
+        batch: formData.batch ? formData.batch.trim() : undefined,
+        max_students: formData.max_students,
+      });
       toast.success("Class created successfully");
       router.push("/admin/classes");
     } catch (err: unknown) {
-      toast.error(getApiErrorMessage(err, "Failed to create class"));
-    } finally {
-      setLoading(false);
+      const handled = applyValidationErrorsToForm(err, setError);
+      if (!handled) {
+        toast.error(getApiErrorMessage(err, "Failed to create class"));
+      }
     }
   }
 
@@ -100,7 +108,7 @@ export default function CreateClassPage(): React.ReactElement {
       <GlassBreadcrumb items={[{ label: "Admin", href: "/admin/dashboard" }, { label: "Classes", href: "/admin/classes" }, { label: "Create" }]} />
       <GlassPageHeader title="Create Class" description="Set up a new academic class with linked faculty and room" />
 
-      <form onSubmit={handleSubmit} className="max-w-4xl space-y-6">
+      <form noValidate onSubmit={handleSubmit(onSubmit)} className="max-w-4xl space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-5">
             <GlassCard padding="md" className="bg-card">
@@ -111,9 +119,8 @@ export default function CreateClassPage(): React.ReactElement {
               <GlassInput
                 label="Class Name"
                 placeholder="e.g. CS-101-A"
-                value={form.name}
-                onChange={(e) => set("name", e.target.value)}
-                error={errors.name}
+                {...register("name")}
+                error={errors.name?.message}
               />
             </GlassCard>
             
@@ -126,8 +133,8 @@ export default function CreateClassPage(): React.ReactElement {
                 label="Max Students (optional)"
                 type="number"
                 placeholder="e.g. 60"
-                value={form.max_students !== undefined ? String(form.max_students) : ""}
-                onChange={(e) => set("max_students", e.target.value ? Number(e.target.value) : undefined)}
+                {...register("max_students")}
+                error={errors.max_students?.message}
               />
             </GlassCard>
           </div>
@@ -140,38 +147,64 @@ export default function CreateClassPage(): React.ReactElement {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2">
-                  <GlassSelect
-                    label="Teacher"
-                    options={teacherOptions}
-                    value={form.teacher_id}
-                    onChange={(v) => set("teacher_id", v)}
-                    error={errors.teacher_id}
+                  <Controller
+                    control={control}
+                    name="teacher_id"
+                    render={({ field }) => (
+                      <GlassSelect
+                        label="Teacher"
+                        options={teacherOptions}
+                        value={field.value}
+                        onChange={field.onChange}
+                        error={errors.teacher_id?.message}
+                      />
+                    )}
                   />
                 </div>
-                <GlassSelect
-                  label="Subject"
-                  options={subjectOptions}
-                  value={form.subject_id}
-                  onChange={(v) => set("subject_id", v)}
-                  error={errors.subject_id}
+                <Controller
+                  control={control}
+                  name="subject_id"
+                  render={({ field }) => (
+                    <GlassSelect
+                      label="Subject"
+                      options={subjectOptions}
+                      value={field.value}
+                      onChange={field.onChange}
+                      error={errors.subject_id?.message}
+                    />
+                  )}
                 />
-                <GlassSelect
-                  label="Classroom (optional)"
-                  options={classroomOptions}
-                  value={form.classroom_id ?? ""}
-                  onChange={(v) => set("classroom_id", v || undefined)}
+                <Controller
+                  control={control}
+                  name="classroom_id"
+                  render={({ field }) => (
+                    <GlassSelect
+                      label="Classroom (optional)"
+                      options={classroomOptions}
+                      value={field.value ?? ""}
+                      onChange={(v) => field.onChange(v || undefined)}
+                      error={errors.classroom_id?.message}
+                    />
+                  )}
                 />
-                <GlassSelect
-                  label="Semester"
-                  options={[{ value: "", label: "— Select —" }, ...SEMESTER_OPTIONS]}
-                  value={form.semester ? String(form.semester) : ""}
-                  onChange={(v) => set("semester", v ? Number(v) : undefined)}
+                <Controller
+                  control={control}
+                  name="semester"
+                  render={({ field }) => (
+                    <GlassSelect
+                      label="Semester"
+                      options={[{ value: "", label: "— Select —" }, ...SEMESTER_OPTIONS]}
+                      value={field.value ? String(field.value) : ""}
+                      onChange={(v) => field.onChange(v ? Number(v) : undefined)}
+                      error={errors.semester?.message}
+                    />
+                  )}
                 />
                 <GlassInput
                   label="Batch"
                   placeholder="e.g. 2022-2026"
-                  value={form.batch ?? ""}
-                  onChange={(e) => set("batch", e.target.value || undefined)}
+                  {...register("batch")}
+                  error={errors.batch?.message}
                 />
               </div>
             </GlassCard>
@@ -182,7 +215,7 @@ export default function CreateClassPage(): React.ReactElement {
           <GlassButton variant="ghost" type="button" onClick={() => router.back()} icon={<X size={14} />}>
             Cancel
           </GlassButton>
-          <GlassButton variant="primary" type="submit" loading={loading} icon={<PlusCircle size={14} />}>
+          <GlassButton variant="primary" type="submit" loading={isSubmitting} icon={<PlusCircle size={14} />}>
             Create Class
           </GlassButton>
         </div>

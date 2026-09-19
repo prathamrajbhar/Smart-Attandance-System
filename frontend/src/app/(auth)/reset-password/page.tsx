@@ -2,13 +2,17 @@
 
 import React, { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Lock, KeyRound } from "lucide-react";
 import toast from "react-hot-toast";
-import api, { getApiErrorMessage } from "@/lib/api";
+
+import api, { getApiErrorMessage, applyValidationErrorsToForm } from "@/lib/api";
+import { resetPasswordSchema, type ResetPasswordFormData } from "@/lib/validations/auth";
 import GlassInput from "@/components/ui/GlassInput";
 import GlassButton from "@/components/ui/GlassButton";
 import GlassLoader from "@/components/ui/GlassLoader";
-import PasswordRequirementsChecklist, { usePasswordRules } from "@/components/auth/PasswordRequirementsChecklist";
+import PasswordRequirementsChecklist from "@/components/auth/PasswordRequirementsChecklist";
 import ResetPasswordStatusCard from "@/components/auth/ResetPasswordStatusCard";
 
 interface VerifyData {
@@ -26,13 +30,23 @@ function ResetPasswordContent(): React.ReactElement {
 
   const [verifying, setVerifying] = useState(true);
   const [tokenData, setTokenData] = useState<VerifyData | null>(null);
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [submitting, setSubmitting] = useState(false);
   const [completed, setCompleted] = useState(false);
-  const [errors, setErrors] = useState<{ password?: string; confirmPassword?: string }>({});
 
-  const { allPassed } = usePasswordRules(password);
+  const {
+    register,
+    handleSubmit,
+    setError,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<ResetPasswordFormData>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      password: "",
+      confirmPassword: "",
+    },
+  });
+
+  const passwordValue = watch("password") || "";
 
   useEffect(() => {
     async function checkToken(): Promise<void> {
@@ -42,10 +56,15 @@ function ResetPasswordContent(): React.ReactElement {
         return;
       }
       try {
-        const { data } = await api.get<VerifyData>(`/auth/verify-token?token=${encodeURIComponent(token)}&token_type=reset`);
+        const { data } = await api.get<VerifyData>(
+          `/auth/verify-token?token=${encodeURIComponent(token)}&token_type=reset`
+        );
         setTokenData(data);
       } catch (err) {
-        setTokenData({ valid: false, message: getApiErrorMessage(err, "Failed to verify reset token.") });
+        setTokenData({
+          valid: false,
+          message: getApiErrorMessage(err, "Failed to verify reset token."),
+        });
       } finally {
         setVerifying(false);
       }
@@ -53,37 +72,21 @@ function ResetPasswordContent(): React.ReactElement {
     void checkToken();
   }, [token]);
 
-  function validate(): boolean {
-    const errs: { password?: string; confirmPassword?: string } = {};
-    if (!password) {
-      errs.password = "New password is required";
-    } else if (!allPassed) {
-      errs.password = "Please satisfy all password security requirements";
-    }
-
-    if (!confirmPassword) {
-      errs.confirmPassword = "Confirm password is required";
-    } else if (password !== confirmPassword) {
-      errs.confirmPassword = "Passwords do not match";
-    }
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  }
-
-  async function handleSubmit(e: React.FormEvent): Promise<void> {
-    e.preventDefault();
-    if (!validate() || !token) return;
-
-    setSubmitting(true);
+  async function onSubmit(formData: ResetPasswordFormData): Promise<void> {
+    if (!token) return;
     try {
-      await api.post("/auth/reset-password", { token, new_password: password });
+      await api.post("/auth/reset-password", {
+        token,
+        new_password: formData.password,
+      });
       setCompleted(true);
       toast.success("Password has been reset successfully!");
       setTimeout(() => router.push("/login"), 2500);
-    } catch (err) {
-      toast.error(getApiErrorMessage(err, "Failed to reset password."));
-    } finally {
-      setSubmitting(false);
+    } catch (err: unknown) {
+      const handled = applyValidationErrorsToForm(err, setError);
+      if (!handled) {
+        toast.error(getApiErrorMessage(err, "Failed to reset password."));
+      }
     }
   }
 
@@ -104,11 +107,17 @@ function ResetPasswordContent(): React.ReactElement {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-2xl border border-border bg-card p-7 space-y-4 shadow-sm">
+    <form
+      noValidate
+      onSubmit={handleSubmit(onSubmit)}
+      className="rounded-2xl border border-border bg-card p-7 space-y-4 shadow-sm"
+    >
       <div className="space-y-1">
         <h2 className="text-base font-semibold text-foreground">Choose New Password</h2>
         <p className="text-xs text-muted-foreground">
-          {tokenData.name ? `Resetting password for ${tokenData.name} (${tokenData.email})` : `Resetting password for ${tokenData.email}`}
+          {tokenData.name
+            ? `Resetting password for ${tokenData.name} (${tokenData.email})`
+            : `Resetting password for ${tokenData.email}`}
         </p>
       </div>
 
@@ -117,22 +126,20 @@ function ResetPasswordContent(): React.ReactElement {
           label="New Password"
           type="password"
           placeholder="••••••••"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          error={errors.password}
+          {...register("password")}
+          error={errors.password?.message}
           icon={<Lock size={15} />}
           autoComplete="new-password"
         />
 
-        <PasswordRequirementsChecklist password={password} />
+        <PasswordRequirementsChecklist password={passwordValue} />
 
         <GlassInput
           label="Confirm New Password"
           type="password"
           placeholder="••••••••"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          error={errors.confirmPassword}
+          {...register("confirmPassword")}
+          error={errors.confirmPassword?.message}
           icon={<Lock size={15} />}
           autoComplete="new-password"
         />
@@ -143,7 +150,7 @@ function ResetPasswordContent(): React.ReactElement {
           type="submit"
           variant="primary"
           size="lg"
-          loading={submitting}
+          loading={isSubmitting}
           className="w-full font-medium"
         >
           Update Password
@@ -167,7 +174,13 @@ export default function ResetPasswordPage(): React.ReactElement {
           <p className="text-xs text-muted-foreground mt-1">Set Your New Password</p>
         </div>
 
-        <Suspense fallback={<div className="rounded-2xl border border-border bg-card p-8 text-center"><GlassLoader /></div>}>
+        <Suspense
+          fallback={
+            <div className="rounded-2xl border border-border bg-card p-8 text-center">
+              <GlassLoader />
+            </div>
+          }
+        >
           <ResetPasswordContent />
         </Suspense>
       </div>

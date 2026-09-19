@@ -3,9 +3,13 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Mail, Lock, Shield } from "lucide-react";
 import toast from "react-hot-toast";
-import api, { getApiErrorMessage } from "@/lib/api";
+
+import api, { getApiErrorMessage, applyValidationErrorsToForm } from "@/lib/api";
+import { loginSchema, type LoginFormData } from "@/lib/validations/auth";
 import { useAuthStore } from "@/store/authStore";
 import GlassInput from "@/components/ui/GlassInput";
 import GlassButton from "@/components/ui/GlassButton";
@@ -15,37 +19,34 @@ import type { TokenResponse, UserProfile } from "@/types";
 export default function LoginPage(): React.ReactElement {
   const router = useRouter();
   const { login, setUser } = useAuthStore();
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [pendingProfile, setPendingProfile] = useState<UserProfile | null>(null);
 
-  function validate(): boolean {
-    const errs: { email?: string; password?: string } = {};
-    if (!email.trim()) errs.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.email = "Invalid email format";
-    if (!password) errs.password = "Password is required";
-    else if (password.length < 8) errs.password = "Minimum 8 characters";
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  }
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
   function handleSuccessRedirect(profile: UserProfile): void {
     const destination = profile.role === "ADMIN" ? "/admin/dashboard" : "/teacher/classes";
     router.push(destination);
   }
 
-  async function handleSubmit(e: React.FormEvent): Promise<void> {
-    e.preventDefault();
-    if (!validate()) return;
-
-    setLoading(true);
-    const cleanEmail = email.trim().toLowerCase();
+  async function onSubmit(formData: LoginFormData): Promise<void> {
+    const cleanEmail = formData.email.trim().toLowerCase();
     try {
-      const { data: tokenData } = await api.post<TokenResponse>("/auth/login", { email: cleanEmail, password });
+      const { data: tokenData } = await api.post<TokenResponse>("/auth/login", {
+        email: cleanEmail,
+        password: formData.password,
+      });
       const { data: profile } = await api.get<UserProfile>("/auth/me", {
         headers: { Authorization: `Bearer ${tokenData.access_token}` },
       });
@@ -61,9 +62,10 @@ export default function LoginPage(): React.ReactElement {
       toast.success("Welcome back!");
       handleSuccessRedirect(profile);
     } catch (err: unknown) {
-      toast.error(getApiErrorMessage(err, "Login failed. Please check your credentials."));
-    } finally {
-      setLoading(false);
+      const handled = applyValidationErrorsToForm(err, setError);
+      if (!handled) {
+        toast.error(getApiErrorMessage(err, "Login failed. Please check your credentials."));
+      }
     }
   }
 
@@ -82,10 +84,16 @@ export default function LoginPage(): React.ReactElement {
           </p>
         </div>
 
-        <form noValidate onSubmit={handleSubmit} className="rounded-2xl border border-border bg-card p-7 shadow-sm space-y-5">
+        <form
+          noValidate
+          onSubmit={handleSubmit(onSubmit)}
+          className="rounded-2xl border border-border bg-card p-7 shadow-sm space-y-5"
+        >
           <div className="space-y-1">
             <h2 className="text-base font-semibold text-foreground">Sign In</h2>
-            <p className="text-xs text-muted-foreground">Access your administrator or faculty account</p>
+            <p className="text-xs text-muted-foreground">
+              Access your administrator or faculty account
+            </p>
           </div>
 
           <div className="space-y-3.5">
@@ -93,9 +101,8 @@ export default function LoginPage(): React.ReactElement {
               label="Email Address"
               type="email"
               placeholder="name@university.edu"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              error={errors.email}
+              {...register("email")}
+              error={errors.email?.message}
               icon={<Mail size={15} />}
               autoComplete="email"
             />
@@ -105,9 +112,8 @@ export default function LoginPage(): React.ReactElement {
                 label="Password"
                 type="password"
                 placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                error={errors.password}
+                {...register("password")}
+                error={errors.password?.message}
                 icon={<Lock size={15} />}
                 autoComplete="current-password"
               />
@@ -127,7 +133,7 @@ export default function LoginPage(): React.ReactElement {
               type="submit"
               variant="primary"
               size="lg"
-              loading={loading}
+              loading={isSubmitting}
               className="w-full font-medium"
             >
               Sign In to Dashboard

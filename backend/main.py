@@ -1,24 +1,23 @@
 import os
-import sentry_sdk
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-os.environ.setdefault('TF_USE_LEGACY_KERAS', '1')
-
-sentry_sdk.init(
-    dsn=os.getenv("SENTRY_DSN", "https://9e62f4cdab9492bcc05c312bddeb6918@o4512113532010496.ingest.us.sentry.io/4512113546297344"),
-    enable_logs=True,
-    send_default_pii=True,
-    traces_sample_rate=1.0,
-    profile_session_sample_rate=1.0,
-    profile_lifecycle="trace",
-)
+try:
+    import sentry_sdk
+    sentry_sdk.init(
+        dsn=os.getenv("SENTRY_DSN", "https://9e62f4cdab9492bcc05c312bddeb6918@o4512113532010496.ingest.us.sentry.io/4512113546297344"),
+        enable_logs=True,
+        send_default_pii=True,
+        traces_sample_rate=1.0,
+        profile_session_sample_rate=1.0,
+        profile_lifecycle="trace",
+    )
+except ImportError:
+    pass
 
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -85,6 +84,33 @@ app.include_router(ws_module.router, prefix=settings.API_V1_STR)
 async def trigger_sentry_debug():
     division_by_zero = 1 / 0
     return {"division_by_zero": division_by_zero}
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    details = []
+    for err in exc.errors():
+        loc = err.get("loc", ())
+        field_parts = [str(part) for part in loc if str(part) not in ("body", "query", "path", "header", "cookie")]
+        field_name = ".".join(field_parts) if field_parts else "payload"
+        details.append({
+            "field": field_name,
+            "message": err.get("msg", "Invalid value"),
+            "issue": err.get("msg", "Invalid value"),
+            "type": err.get("type", "value_error"),
+        })
+    logger.warning("Validation error on %s %s: %s", request.method, request.url.path, details)
+    return JSONResponse(
+        status_code=422,
+        content={
+            "success": False,
+            "error": {
+                "code": "VALIDATION_ERROR",
+                "message": "Invalid request payload",
+                "details": details,
+            },
+        },
+    )
 
 
 @app.exception_handler(Exception)

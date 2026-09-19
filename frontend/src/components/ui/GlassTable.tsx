@@ -22,8 +22,8 @@ export interface GlassTableProps<T> {
   sortBy?: string;
   sortOrder?: "asc" | "desc";
   onSortChange?: (key: string) => void;
+  rowKey?: (row: T) => string;
 }
-
 
 function sortByColumn<T extends Record<string, unknown>>(a: T, b: T, key: string, asc: boolean): number {
   const aVal = a[key];
@@ -46,6 +46,7 @@ export default function GlassTable<T extends Record<string, unknown>>({
   sortBy,
   sortOrder = "asc",
   onSortChange,
+  rowKey,
 }: GlassTableProps<T>): React.ReactElement {
   const [page, setPage] = useState(0);
   const [internalSortKey, setInternalSortKey] = useState<string | null>(null);
@@ -131,22 +132,25 @@ export default function GlassTable<T extends Record<string, unknown>>({
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {paginated.map((row, i) => (
-              <tr
-                key={i}
-                onClick={onRowClick ? () => onRowClick(row) : undefined}
-                className={cn(
-                  "transition-colors hover:bg-muted/50",
-                  onRowClick && "cursor-pointer"
-                )}
-              >
+            {paginated.map((row, i) => {
+              const rowId = rowKey ? rowKey(row) : (row.id != null ? String(row.id) : String(i));
+              return (
+                <tr
+                  key={rowId}
+                  onClick={onRowClick ? () => onRowClick(row) : undefined}
+                  className={cn(
+                    "transition-colors hover:bg-muted/50",
+                    onRowClick && "cursor-pointer"
+                  )}
+                >
                 {columns.map((col) => (
                   <td key={col.key} className="p-4 text-sm text-foreground align-middle">
                     {col.render ? col.render(row) : (row[col.key] as React.ReactNode) ?? "—"}
                   </td>
                 ))}
-              </tr>
-            ))}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

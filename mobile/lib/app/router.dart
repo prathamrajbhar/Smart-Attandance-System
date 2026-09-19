@@ -5,6 +5,7 @@ import 'package:smart_attendance_app/app/theme.dart';
 import 'package:smart_attendance_app/domain/enums/auth_state.dart';
 import 'package:smart_attendance_app/domain/models/attendance.dart';
 import 'package:smart_attendance_app/features/auth/providers/auth_provider.dart';
+import 'package:smart_attendance_app/features/auth/screens/force_change_password_screen.dart';
 import 'package:smart_attendance_app/features/auth/screens/login_screen.dart';
 import 'package:smart_attendance_app/features/auth/screens/splash_screen.dart';
 import 'package:smart_attendance_app/features/registration/screens/face_registration_screen.dart';
@@ -57,21 +58,31 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (path == '/splash') {
         if (status == AuthStatus.loading) return null;
         if (status == AuthStatus.unauthenticated) return '/login';
+        if (status == AuthStatus.passwordChangeRequired) return '/change-password';
         if (status == AuthStatus.registrationRequired) return '/register-face';
         if (status == AuthStatus.authenticated) return '/home';
         return null;
       }
       if (path == '/login') {
+        if (status == AuthStatus.passwordChangeRequired) return '/change-password';
         if (status == AuthStatus.authenticated) return '/home';
         if (status == AuthStatus.registrationRequired) return '/register-face';
         return null;
       }
+      if (path == '/change-password') {
+        if (status == AuthStatus.authenticated) return '/home';
+        if (status == AuthStatus.registrationRequired) return '/register-face';
+        if (status == AuthStatus.unauthenticated) return '/login';
+        return null;
+      }
       if (path == '/register-face') {
+        if (status == AuthStatus.passwordChangeRequired) return '/change-password';
         if (status == AuthStatus.authenticated) return '/home';
         if (status == AuthStatus.unauthenticated) return '/login';
         return null;
       }
       if (status == AuthStatus.unauthenticated) return '/login';
+      if (status == AuthStatus.passwordChangeRequired) return '/change-password';
       if (status == AuthStatus.registrationRequired) return '/register-face';
       return null;
     },
@@ -79,6 +90,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       // --- Auth flow (no bottom nav) ---
       GoRoute(path: '/splash', builder: (_, __) => const SplashScreen()),
       GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
+      GoRoute(
+        path: '/change-password',
+        builder: (_, __) => const ForceChangePasswordScreen(),
+      ),
       GoRoute(
         path: '/register-face',
         builder: (_, __) => const FaceRegistrationScreen(),

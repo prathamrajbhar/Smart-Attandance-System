@@ -19,6 +19,7 @@ from app.schemas.auth import (
     ResetPasswordRequest,
     CompleteOnboardingRequest,
     VerifyTokenResponse,
+    ChangePasswordRequest,
 )
 from app.schemas.student import StudentCreate, StudentResponse
 from app.schemas.teacher import TeacherCreate, TeacherResponse
@@ -108,10 +109,24 @@ async def get_me(current_user: User = Depends(get_current_user)) -> UserProfileR
         email=current_user.email,
         role=current_user.role,
         is_active=current_user.isActive,
+        must_change_password=getattr(current_user, "mustChangePassword", False),
         student_profile=student_profile,
         teacher_profile=teacher_profile,
     )
 
+
+@router.post("/change-password", status_code=status.HTTP_200_OK)
+async def change_password(
+    data: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    auth_service: AuthService = Depends(),
+) -> dict:
+    await auth_service.change_password(
+        user_id=current_user.id,
+        current_password=data.current_password,
+        new_password=data.new_password,
+    )
+    return {"status": "success", "message": "Password updated successfully."}
 
 
 @router.post("/logout", status_code=status.HTTP_200_OK)

@@ -66,26 +66,31 @@ class EmailService:
         to_email: str,
         recipient_name: str,
         role: str,
-        invite_token: str,
+        invite_token: str = "",
         identifier_label: Optional[str] = None,
         identifier_value: Optional[str] = None,
+        temp_password: Optional[str] = None,
     ) -> bool:
-        invite_url = f"{settings.FRONTEND_URL}/onboarding?token={invite_token}"
+        invite_url = f"{settings.FRONTEND_URL}/onboarding?token={invite_token}" if invite_token else f"{settings.FRONTEND_URL}/login"
+        login_url = f"{settings.FRONTEND_URL}/login"
         role_display = "Student" if role == "STUDENT" else ("Teacher" if role == "TEACHER" else "Administrator")
         return await self.send_email(
             to_email=to_email,
-            subject=f"Welcome to {settings.PROJECT_NAME} - Complete Your Account Setup",
+            subject=f"Welcome to {settings.PROJECT_NAME} - Your Account Credentials",
             template_name="user_invite.html",
             context={
                 "recipient_name": recipient_name,
                 "role_title": role_display,
                 "email": to_email,
                 "invite_url": invite_url,
+                "login_url": login_url,
+                "temp_password": temp_password,
                 "expire_hours": settings.INVITATION_TOKEN_EXPIRE_HOURS,
                 "identifier_label": identifier_label,
                 "identifier_value": identifier_value,
             },
         )
+
 
     async def send_password_reset_email(self, to_email: str, recipient_name: str, reset_token: str) -> bool:
         reset_url = f"{settings.FRONTEND_URL}/reset-password?token={reset_token}"

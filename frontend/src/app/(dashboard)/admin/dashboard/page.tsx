@@ -3,26 +3,38 @@
 import React, { useEffect, useState } from "react";
 import { 
   Users, GraduationCap, BookOpen, ShieldCheck, Activity, Cpu, 
-  ArrowUpRight, Clock, RefreshCw, Radio
+  ArrowUpRight, RefreshCw 
 } from "lucide-react";
 import Link from "next/link";
 import api from "@/lib/api";
 import GlassStatCard from "@/components/ui/GlassStatCard";
 import GlassLoader from "@/components/ui/GlassLoader";
-import GlassCard from "@/components/ui/GlassCard";
-import GlassBadge from "@/components/ui/GlassBadge";
-import type { AdminStatsResponse } from "@/types";
+import SystemNodesCard from "@/components/admin/SystemNodesCard";
+import SystemEventsCard from "@/components/admin/SystemEventsCard";
+import type { AdminStatsResponse, SystemHealthResponse, AuditLogResponse, SystemConfigResponse } from "@/types";
 
 export default function AdminDashboardPage(): React.ReactElement {
   const [stats, setStats] = useState<AdminStatsResponse | null>(null);
+  const [health, setHealth] = useState<SystemHealthResponse | null>(null);
+  const [auditEvents, setAuditEvents] = useState<AuditLogResponse[]>([]);
+  const [config, setConfig] = useState<SystemConfigResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [greeting, setGreeting] = useState("Welcome");
 
-  async function fetchStats(): Promise<void> {
+  async function fetchDashboardData(): Promise<void> {
     try {
-      const { data } = await api.get<AdminStatsResponse>("/admin/stats");
-      setStats(data);
+      const [statsRes, healthRes, auditRes, configRes] = await Promise.allSettled([
+        api.get<AdminStatsResponse>("/admin/stats"),
+        api.get<SystemHealthResponse>("/health"),
+        api.get<AuditLogResponse[]>("/admin/audit"),
+        api.get<SystemConfigResponse>("/admin/config"),
+      ]);
+
+      if (statsRes.status === "fulfilled") setStats(statsRes.value.data);
+      if (healthRes.status === "fulfilled") setHealth(healthRes.value.data);
+      if (auditRes.status === "fulfilled") setAuditEvents(auditRes.value.data);
+      if (configRes.status === "fulfilled") setConfig(configRes.value.data);
     } catch {
       setStats({ studentCount: 0, teacherCount: 0, classCount: 0 });
     } finally {
@@ -33,7 +45,7 @@ export default function AdminDashboardPage(): React.ReactElement {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      void fetchStats();
+      void fetchDashboardData();
       const hour = new Date().getHours();
       if (hour < 12) setGreeting("Good morning");
       else if (hour < 17) setGreeting("Good afternoon");
@@ -44,34 +56,20 @@ export default function AdminDashboardPage(): React.ReactElement {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchStats();
+    await fetchDashboardData();
   };
 
   if (loading) return <GlassLoader text="Loading system metrics..." />;
-
-  const systemNodes = [
-    { name: "Face Recognition Composite", status: "Online", accuracy: "99.8% Conf.", latency: "84ms", icon: <Cpu size={16} className="text-emerald-400" />, active: true },
-    { name: "Liveness Verification Classifier", status: "Active", accuracy: "99.6% Conf.", latency: "142ms", icon: <ShieldCheck size={16} className="text-emerald-400" />, active: true },
-    { name: "Geofence Spatial Services", status: "Active", accuracy: "±2m precision", latency: "18ms", icon: <Activity size={16} className="text-emerald-400" />, active: true },
-  ];
-
-  const recentEvents = [
-    { action: "AI Scanner verification completed", detail: "Class CS-401 (96% overall liveness validation)", time: "2 mins ago", type: "success" },
-    { action: "Geofence border configured", detail: "Classroom B-204 radius optimized to 40 meters", time: "45 mins ago", type: "info" },
-    { action: "New instructor registered securely", detail: "User teacher@university.edu initialized", time: "2 hours ago", type: "success" },
-    { action: "Database spatial nodes optimized", detail: "Prisma client optimized with spatial index updates", time: "1 day ago", type: "neutral" },
-  ];
 
   const quickActions = [
     { label: "Configure Verifications", href: "/admin/setup/verification-settings", detail: "Toggle verification modes", icon: <ShieldCheck size={18} className="text-emerald-400" /> },
     { label: "Audit Activity Log", href: "/admin/audit", detail: "Inspect node transactions", icon: <Activity size={18} className="text-emerald-400" /> },
     { label: "Configure Classes", href: "/admin/classes", detail: "Manage schedules & enrollments", icon: <BookOpen size={18} className="text-emerald-400" /> },
-    { label: "Execute AI Scanner", href: "/admin/scanner", detail: "Run manual camera check-in", icon: <Cpu size={18} className="text-emerald-400" /> },
+    { label: "Execute AI Scanner", href: "/admin/scanner", detail: "Scan absentee anomalies", icon: <Cpu size={18} className="text-emerald-400" /> },
   ];
 
   return (
     <div className="animate-fade-in-up space-y-6 md:space-y-8">
-      
       {/* Banner */}
       <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-br from-white/[0.02] to-transparent p-6 shadow-xl">
         <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-emerald-500/5 blur-3xl -z-10 pointer-events-none" />
@@ -83,7 +81,7 @@ export default function AdminDashboardPage(): React.ReactElement {
             </div>
             <h1 className="text-2xl md:text-3xl font-extrabold text-slate-100 tracking-tight font-[Outfit]">{greeting}, Admin</h1>
             <p className="text-sm font-semibold text-slate-400 mt-1 max-w-2xl">
-              All core services and verification nodes are operating nominally.
+              System status is {health?.status === "healthy" ? "Operating Nominally" : "Partially Degraded"} with active vector indexes.
             </p>
           </div>
           <button 
@@ -97,7 +95,7 @@ export default function AdminDashboardPage(): React.ReactElement {
         </div>
       </div>
 
-      {/* Quick Actions (Moved to Top for Accessibility) */}
+      {/* Quick Actions */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {quickActions.map((action) => (
           <Link
@@ -147,80 +145,11 @@ export default function AdminDashboardPage(): React.ReactElement {
         />
       </div>
 
-      {/* System Status & Activity Feed */}
+      {/* Dynamic System Status & Activity Feed */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* System Nodes */}
-        <GlassCard className="relative overflow-hidden flex flex-col justify-between" padding="none">
-          <div className="p-5 border-b border-white/[0.05] flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Radio size={16} className="text-emerald-400" />
-              <h3 className="text-sm font-extrabold text-slate-200 tracking-wide font-[Outfit] uppercase">Verification Nodes</h3>
-            </div>
-            <GlassBadge variant="success" className="font-bold py-0.5 px-2 text-[10px]">All Active</GlassBadge>
-          </div>
-          <div className="p-5 space-y-3">
-            {systemNodes.map((node) => (
-              <div key={node.name} className="flex items-center justify-between gap-3 p-3.5 rounded-xl bg-white/[0.01] border border-white/[0.04] hover:bg-white/[0.02] transition-all duration-300">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-white/5 border border-white/10 text-slate-300">
-                    {node.icon}
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-200 leading-normal">{node.name}</p>
-                    <p className="text-[10px] text-slate-500 font-semibold tracking-wide mt-0.5">{node.accuracy} • Latency: {node.latency}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-glow-green" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </GlassCard>
-
-        {/* Live Activity Log */}
-        <GlassCard className="relative overflow-hidden" padding="none">
-          <div className="p-5 border-b border-white/[0.05] flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Clock size={16} className="text-emerald-400" />
-              <h3 className="text-sm font-extrabold text-slate-200 tracking-wide font-[Outfit] uppercase">System Events</h3>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block" />
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Listening</span>
-            </div>
-          </div>
-          
-          <div className="p-5 space-y-4 relative">
-            <div className="absolute left-[33px] top-[25px] bottom-[25px] w-px bg-white/[0.06] pointer-events-none" />
-
-            {recentEvents.map((evt, i) => (
-              <div key={i} className="flex gap-4 relative z-10 group">
-                <div className="flex items-center justify-center shrink-0">
-                  <div className={`w-3.5 h-3.5 rounded-full border-2 ${
-                    evt.type === "success" ? "bg-emerald-500/20 border-emerald-500/50" :
-                    evt.type === "info" ? "bg-cyan-500/20 border-cyan-500/50" : "bg-slate-700/20 border-slate-500/50"
-                  } flex items-center justify-center`}>
-                    <div className={`w-1 h-1 rounded-full ${
-                      evt.type === "success" ? "bg-emerald-400" :
-                      evt.type === "info" ? "bg-cyan-400" : "bg-slate-400"
-                    }`} />
-                  </div>
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-xs font-bold text-slate-200 group-hover:text-slate-100 transition-colors duration-200">{evt.action}</p>
-                    <span className="text-[10px] font-semibold text-slate-500 shrink-0 mt-0.5">{evt.time}</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 mt-1 leading-normal font-medium">{evt.detail}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </GlassCard>
+        <SystemNodesCard health={health} config={config} />
+        <SystemEventsCard events={auditEvents} />
       </div>
-
     </div>
   );
 }

@@ -8,6 +8,7 @@ export interface TokenResponse {
   access_token: string;
   token_type: string;
   role: "STUDENT" | "TEACHER" | "ADMIN";
+  must_change_password?: boolean;
 }
 
 export interface UserProfile {
@@ -15,6 +16,7 @@ export interface UserProfile {
   email: string;
   role: "STUDENT" | "TEACHER" | "ADMIN";
   is_active: boolean;
+  must_change_password?: boolean;
   student_profile: { id: string; enrollment_number: string } | null;
   teacher_profile: {
     id: string;
@@ -28,7 +30,7 @@ export interface UserProfile {
 
 export interface StudentCreate {
   email: string;
-  password: string;
+  password?: string;
   enrollment_number: string;
   first_name: string;
   last_name: string;
@@ -58,7 +60,7 @@ export interface StudentResponse {
 
 export interface TeacherCreate {
   email: string;
-  password: string;
+  password?: string;
   employee_id: string;
   first_name: string;
   last_name: string;
@@ -328,3 +330,41 @@ export interface AnomalyResult {
   enrollment_number?: string;
   [key: string]: unknown;
 }
+
+export interface ServiceHealthItem {
+  status: "healthy" | "degraded" | "unhealthy";
+  latency_ms: number;
+  details?: Record<string, unknown>;
+}
+
+export interface SystemHealthResponse {
+  status: "healthy" | "degraded" | "unhealthy";
+  app_name: string;
+  environment: string;
+  version: string;
+  timestamp: string;
+  services: {
+    database: ServiceHealthItem;
+    redis: ServiceHealthItem;
+    storage: ServiceHealthItem;
+  };
+}
+
+export interface SystemConfigResponse {
+  id: string;
+  isFaceRecognitionEnabled: boolean;
+  isGpsVerificationEnabled: boolean;
+  isAiBackgroundValidationEnabled: boolean;
+  updatedAt: string;
+}
+
+export interface SmartPassVerifyResponse {
+  status: "success" | "already_marked" | "error";
+  student_id: string;
+  student_name: string;
+  enrollment_number: string;
+  attendance_status: string;
+  session_id: string;
+  message: string;
+}
+

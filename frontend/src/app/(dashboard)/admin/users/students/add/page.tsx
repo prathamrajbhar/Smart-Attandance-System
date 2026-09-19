@@ -32,7 +32,6 @@ export default function AddStudentPage(): React.ReactElement {
   const [departments, setDepartments] = useState<DepartmentResponse[]>([]);
   const [form, setForm] = useState<StudentCreate>({
     email: "",
-    password: "",
     enrollment_number: "",
     first_name: "",
     last_name: "",
@@ -60,7 +59,6 @@ export default function AddStudentPage(): React.ReactElement {
   function validate(): boolean {
     const errs: FormErrors = {};
     if (!form.email.trim()) errs.email = "Email is required";
-    if (!form.password || form.password.length < 8) errs.password = "Minimum 8 characters";
     if (!form.enrollment_number.trim()) errs.enrollment_number = "Enrollment number is required";
     if (!form.first_name.trim()) errs.first_name = "First name is required";
     if (!form.last_name.trim()) errs.last_name = "Last name is required";
@@ -74,7 +72,7 @@ export default function AddStudentPage(): React.ReactElement {
     setLoading(true);
     try {
       await api.post("/admin/users/student", form);
-      toast.success("Student created successfully");
+      toast.success("Student created and temporary password sent via email");
       router.push("/admin/users/students");
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to create student"));
@@ -121,20 +119,15 @@ export default function AddStudentPage(): React.ReactElement {
                   error={errors.email}
                 />
                 <GlassInput
-                  label="Password"
-                  type="password"
-                  placeholder="Minimum 8 characters"
-                  value={form.password}
-                  onChange={(e) => set("password", e.target.value)}
-                  error={errors.password}
-                />
-                <GlassInput
                   label="Enrollment Number"
                   placeholder="e.g. EN2024001"
                   value={form.enrollment_number}
                   onChange={(e) => set("enrollment_number", e.target.value)}
                   error={errors.enrollment_number}
                 />
+                <div className="p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-300 leading-relaxed">
+                  🔒 A secure temporary password will be automatically generated and emailed to this student. They will be prompted to choose a new password upon first login.
+                </div>
               </div>
             </GlassCard>
           </div>

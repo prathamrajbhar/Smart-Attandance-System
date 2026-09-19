@@ -21,7 +21,6 @@ export default function AddTeacherPage(): React.ReactElement {
   const [designations, setDesignations] = useState<DesignationResponse[]>([]);
   const [form, setForm] = useState<TeacherCreate>({
     email: "",
-    password: "",
     employee_id: "",
     first_name: "",
     last_name: "",
@@ -55,7 +54,6 @@ export default function AddTeacherPage(): React.ReactElement {
   function validate(): boolean {
     const errs: FormErrors = {};
     if (!form.email.trim()) errs.email = "Email is required";
-    if (!form.password || form.password.length < 8) errs.password = "Minimum 8 characters";
     if (!form.employee_id.trim()) errs.employee_id = "Employee ID is required";
     if (!form.first_name.trim()) errs.first_name = "First name is required";
     if (!form.last_name.trim()) errs.last_name = "Last name is required";
@@ -71,7 +69,7 @@ export default function AddTeacherPage(): React.ReactElement {
     setLoading(true);
     try {
       await api.post("/admin/users/teacher", form);
-      toast.success("Teacher created successfully");
+      toast.success("Teacher created and temporary password sent via email");
       router.push("/admin/users/teachers");
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to create teacher"));
@@ -126,20 +124,15 @@ export default function AddTeacherPage(): React.ReactElement {
                   error={errors.email}
                 />
                 <GlassInput
-                  label="Password"
-                  type="password"
-                  placeholder="Minimum 8 characters"
-                  value={form.password}
-                  onChange={(e) => set("password", e.target.value)}
-                  error={errors.password}
-                />
-                <GlassInput
                   label="Employee ID"
                   placeholder="e.g. EMP2024001"
                   value={form.employee_id}
                   onChange={(e) => set("employee_id", e.target.value)}
                   error={errors.employee_id}
                 />
+                <div className="p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-300 leading-relaxed">
+                  🔒 A secure temporary password will be automatically generated and emailed to this teacher. They will be prompted to choose a new password upon first login.
+                </div>
               </div>
             </GlassCard>
           </div>

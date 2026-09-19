@@ -9,16 +9,19 @@ import api, { getApiErrorMessage } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import GlassInput from "@/components/ui/GlassInput";
 import GlassButton from "@/components/ui/GlassButton";
+import ForceChangePasswordModal from "@/components/auth/ForceChangePasswordModal";
 import type { TokenResponse, UserProfile } from "@/types";
 
 export default function LoginPage(): React.ReactElement {
   const router = useRouter();
-  const { login } = useAuthStore();
+  const { login, setUser } = useAuthStore();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [pendingProfile, setPendingProfile] = useState<UserProfile | null>(null);
 
   function validate(): boolean {
     const errs: { email?: string; password?: string } = {};
@@ -28,6 +31,11 @@ export default function LoginPage(): React.ReactElement {
     else if (password.length < 8) errs.password = "Minimum 8 characters";
     setErrors(errs);
     return Object.keys(errs).length === 0;
+  }
+
+  function handleSuccessRedirect(profile: UserProfile): void {
+    const destination = profile.role === "ADMIN" ? "/admin/dashboard" : "/teacher/classes";
+    router.push(destination);
   }
 
   async function handleSubmit(e: React.FormEvent): Promise<void> {
@@ -42,10 +50,15 @@ export default function LoginPage(): React.ReactElement {
       });
 
       login(tokenData.access_token, profile);
-      toast.success("Welcome back!");
 
-      const destination = tokenData.role === "ADMIN" ? "/admin/dashboard" : "/teacher/classes";
-      router.push(destination);
+      if (tokenData.must_change_password || profile.must_change_password) {
+        setPendingProfile(profile);
+        setShowPasswordModal(true);
+        return;
+      }
+
+      toast.success("Welcome back!");
+      handleSuccessRedirect(profile);
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Login failed. Please check your credentials."));
     } finally {
@@ -129,6 +142,18 @@ export default function LoginPage(): React.ReactElement {
           Enterprise Security Verification Suite
         </p>
       </div>
+
+      <ForceChangePasswordModal
+        isOpen={showPasswordModal}
+        temporaryPassword={password}
+        onSuccess={() => {
+          setShowPasswordModal(false);
+          if (pendingProfile) {
+            setUser({ ...pendingProfile, must_change_password: false });
+            handleSuccessRedirect(pendingProfile);
+          }
+        }}
+      />
     </div>
   );
 }

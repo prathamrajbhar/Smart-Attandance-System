@@ -14,11 +14,13 @@ void main() {
         'access_token': 'jwt_test_token_123',
         'token_type': 'bearer',
         'role': 'STUDENT',
+        'must_change_password': true,
       };
       final tokenResp = TokenResponse.fromJson(json);
       expect(tokenResp.accessToken, 'jwt_test_token_123');
       expect(tokenResp.tokenType, 'bearer');
       expect(tokenResp.role, 'STUDENT');
+      expect(tokenResp.mustChangePassword, isTrue);
     });
 
     test('UserProfile & StudentProfile serialization roundtrip', () {

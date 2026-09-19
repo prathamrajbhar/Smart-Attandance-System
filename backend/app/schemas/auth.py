@@ -13,6 +13,7 @@ class Token(BaseModel):
     access_token: str = Field(..., description="Signed JWT access token")
     token_type: str = Field("bearer", description="Token protocol type")
     role: str = Field(..., description="Role of the authenticated user (STUDENT, TEACHER, ADMIN)")
+    must_change_password: bool = Field(default=False, description="Flag indicating user must set a new password on first login")
 
 
 class UserProfileResponse(BaseModel):
@@ -20,8 +21,14 @@ class UserProfileResponse(BaseModel):
     email: EmailStr = Field(..., description="Email address of the user")
     role: str = Field(..., description="Assigned role of the user")
     is_active: bool = Field(..., description="System status flag")
+    must_change_password: bool = Field(default=False, description="Flag indicating user must set a new password")
     student_profile: Optional[dict] = Field(None, description="Detailed student profile if role is STUDENT")
     teacher_profile: Optional[dict] = Field(None, description="Detailed teacher profile if role is TEACHER")
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(..., min_length=1, description="Current or temporary password")
+    new_password: str = Field(..., min_length=8, max_length=100, description="New secure password")
 
 
 class DeviceChangeRequestCreate(BaseModel):

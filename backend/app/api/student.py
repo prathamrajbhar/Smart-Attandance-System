@@ -22,8 +22,31 @@ router = APIRouter(prefix="/student", tags=["Student Features"])
 
 from app.services.s3_service import s3_service
 
+from app.core.config import settings
+from app.db.redis import get_redis
+
 _MAX_IMAGE_SIZE = 5 * 1024 * 1024
 _VALID_IMAGE_TYPES = {"image/jpeg", "image/png", "image/jpg"}
+
+
+async def _rate_limit_student(student_id: str, max_requests: int = 15, window_seconds: int = 60) -> None:
+    if settings.ENVIRONMENT == "development":
+        return
+    key = f"ratelimit:student:{student_id}"
+    try:
+        r = get_redis()
+        count = await r.incr(key)
+        if count == 1:
+            await r.expire(key, window_seconds)
+        if count > max_requests:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Too many requests. Please wait a moment before trying again."
+            )
+    except HTTPException:
+        raise
+    except Exception:
+        pass
 
 
 async def _save_uploaded_image(upload_file: UploadFile, folder: str) -> tuple[str, bytes]:
@@ -79,6 +102,7 @@ async def mark_attendance(
     student: Student = Depends(get_current_student),
     attendance_service: AttendanceService = Depends(),
 ) -> AttendanceMarkResponse:
+    await _rate_limit_student(student.id, max_requests=10, window_seconds=60)
     image_url = None
     if image:
         _validate_image(image)
@@ -111,6 +135,7 @@ async def analyze_attendance(
     Returns scores and a short-lived review_token (5 min) that the student
     can use to confirm submission via POST /attendance/confirm.
     """
+    await _rate_limit_student(student.id, max_requests=10, window_seconds=60)
     image_url = None
     if image:
         _validate_image(image)
@@ -152,6 +177,7 @@ async def register_face(
     student: Student = Depends(get_current_student),
     attendance_service: AttendanceService = Depends(),
 ) -> dict:
+    await _rate_limit_student(student.id, max_requests=5, window_seconds=60)
     _validate_image(image)
     image_url, image_bytes = await _save_uploaded_image(image, "registration")
     try:

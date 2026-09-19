@@ -6,7 +6,7 @@ from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 class StudentCreate(BaseModel):
     email: EmailStr = Field(..., description="Unique email address of the student")
-    password: str = Field(..., min_length=8, max_length=100, description="Secure account password")
+    password: Optional[str] = Field(None, min_length=8, max_length=100, description="Optional account password; auto-generated if omitted")
     enrollment_number: str = Field(..., min_length=5, max_length=30, description="University Enrollment Number")
     first_name: str = Field(..., min_length=1, max_length=100, description="Student first name")
     last_name: str = Field(..., min_length=1, max_length=100, description="Student last name")

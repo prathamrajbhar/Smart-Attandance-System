@@ -44,3 +44,19 @@ def decode_access_token(token: str) -> dict[str, Any] | None:
     except jwt.PyJWTError:
         return None
 
+
+def generate_temporary_password(length: int = 12) -> str:
+    import secrets
+    import string
+    alphabet = string.ascii_letters + string.digits + "!@#$%&*"
+    password = [
+        secrets.choice(string.ascii_uppercase),
+        secrets.choice(string.ascii_lowercase),
+        secrets.choice(string.digits),
+        secrets.choice("!@#$%&*"),
+    ]
+    password += [secrets.choice(alphabet) for _ in range(length - 4)]
+    secrets.SystemRandom().shuffle(password)
+    return "".join(password)
+
+

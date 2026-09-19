@@ -33,18 +33,29 @@ class AdminService:
             "actor": actor,
             "target": target,
             "description": description,
-            "ip": ip,
+            "ipAddress": ip,
         })
 
     # --- Students ---
 
     async def create_student(self, data: StudentCreate, actor: str = "system", ip: Optional[str] = None) -> StudentResponse:
+        from app.core.security import generate_temporary_password
+
         if data.department_id:
             if not await db.department.find_unique(where={"id": data.department_id}):
                 raise ValueError("Department not found.")
 
+        plain_password = data.password
+        must_change = False
+        if not plain_password:
+            plain_password = generate_temporary_password()
+            must_change = True
+
         user = await db.user.create(data={
-            "email": data.email, "hashedPassword": hash_password(data.password), "role": "STUDENT",
+            "email": data.email,
+            "hashedPassword": hash_password(plain_password),
+            "role": "STUDENT",
+            "mustChangePassword": must_change,
         })
         student = await db.student.create(
             data={k: v for k, v in {
@@ -72,6 +83,7 @@ class AdminService:
                     invite_token=token,
                     identifier_label="Enrollment Number",
                     identifier_value=data.enrollment_number,
+                    temp_password=plain_password if must_change else None,
                 )
             except Exception as e:
                 logger.warning("Failed to send student invitation email: %s", e)
@@ -93,7 +105,7 @@ class AdminService:
                 email=s.user.email if s.user else "", first_name=s.firstName,
                 last_name=s.lastName, phone=s.phone, gender=s.gender,
                 date_of_birth=s.dateOfBirth, department_id=s.departmentId,
-                department_name=s.department.name if s.department else None,
+                department_name=s.department.name if student.department else None if (student := s) else None,
                 semester=s.semester, batch=s.batch,
             )
             for s in students
@@ -120,13 +132,24 @@ class AdminService:
     # --- Teachers ---
 
     async def create_teacher(self, data: TeacherCreate, actor: str = "system", ip: Optional[str] = None) -> TeacherResponse:
+        from app.core.security import generate_temporary_password
+
         if not await db.department.find_unique(where={"id": data.department_id}):
             raise ValueError(f"Department with id '{data.department_id}' not found.")
         if not await db.designation.find_unique(where={"id": data.designation_id}):
             raise ValueError(f"Designation with id '{data.designation_id}' not found.")
 
+        plain_password = data.password
+        must_change = False
+        if not plain_password:
+            plain_password = generate_temporary_password()
+            must_change = True
+
         user = await db.user.create(data={
-            "email": data.email, "hashedPassword": hash_password(data.password), "role": "TEACHER",
+            "email": data.email,
+            "hashedPassword": hash_password(plain_password),
+            "role": "TEACHER",
+            "mustChangePassword": must_change,
         })
         teacher = await db.teacher.create(
             data={k: v for k, v in {
@@ -156,6 +179,7 @@ class AdminService:
                     invite_token=token,
                     identifier_label="Employee ID",
                     identifier_value=data.employee_id,
+                    temp_password=plain_password if must_change else None,
                 )
             except Exception as e:
                 logger.warning("Failed to send teacher invitation email: %s", e)
@@ -163,6 +187,7 @@ class AdminService:
         return TeacherResponse(
             id=teacher.id, user_id=user.id, email=user.email, employee_id=teacher.employeeId,
             first_name=teacher.firstName, last_name=teacher.lastName,
+
             department_id=teacher.departmentId, designation_id=teacher.designationId,
             department=teacher.department.name, designation=teacher.designation.name,
             phone=teacher.phone, qualification=teacher.qualification,

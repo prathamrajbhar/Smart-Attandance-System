@@ -1,12 +1,12 @@
 {% extends "base_email.html" %}
 
 {% block content %}
-  <h2 class="email-heading">Account Invitation</h2>
+  <h2 class="email-heading">Welcome to {{ system_name }}</h2>
   <p>Hello {{ recipient_name }},</p>
-  <p>You have been registered as a <strong>{{ role_title }}</strong> on the {{ system_name }}. To complete your account setup and define your password, click the button below:</p>
+  <p>Your account has been registered as a <strong>{{ role_title }}</strong> on the {{ system_name }}.</p>
 
   <div class="btn-container">
-    <a href="{{ invite_url }}" class="btn-primary" target="_blank">Activate Account</a>
+    <a href="{{ login_url or invite_url }}" class="btn-primary" target="_blank">Log In to Your Account</a>
   </div>
 
   <table class="data-table">
@@ -20,14 +20,21 @@
       <td class="data-value">{{ identifier_value }}</td>
     </tr>
     {% endif %}
+    {% if temp_password %}
     <tr>
-      <td class="data-label">Link Expiry</td>
-      <td class="data-value">{{ expire_hours }} hours</td>
+      <td class="data-label">Temporary Password</td>
+      <td class="data-value font-mono"><strong style="color: #10b981; font-size: 16px;">{{ temp_password }}</strong></td>
     </tr>
+    <tr>
+      <td class="data-label">Security Note</td>
+      <td class="data-value">You will be prompted to set a new password upon first login.</td>
+    </tr>
+    {% endif %}
   </table>
 
   <div class="fallback-link">
     If the button above does not work, copy and paste this URL into your browser:<br>
-    <a href="{{ invite_url }}">{{ invite_url }}</a>
+    <a href="{{ login_url or invite_url }}">{{ login_url or invite_url }}</a>
   </div>
 {% endblock %}
+

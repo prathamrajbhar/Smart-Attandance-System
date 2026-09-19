@@ -51,7 +51,24 @@ class AuthService:
                     )
 
         token = create_access_token(subject=user.id, role=user.role)
-        return Token(access_token=token, token_type="bearer", role=user.role)
+        return Token(
+            access_token=token,
+            token_type="bearer",
+            role=user.role,
+            must_change_password=getattr(user, "mustChangePassword", False),
+        )
+
+    async def change_password(self, user_id: str, current_password: str, new_password: str) -> bool:
+        user = await self.user_repo.get_by_id(user_id)
+        if not user or not verify_password(current_password, user.hashedPassword):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect.")
+
+        hashed = hash_password(new_password)
+        await db.user.update(
+            where={"id": user_id},
+            data={"hashedPassword": hashed, "mustChangePassword": False},
+        )
+        return True
 
     async def register_student(self, data: StudentCreate) -> Optional[StudentResponse]:
         if await self.user_repo.get_by_email(data.email):

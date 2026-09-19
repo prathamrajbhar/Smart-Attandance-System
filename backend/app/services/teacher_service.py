@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 
 from fastapi import HTTPException, status
@@ -268,3 +268,123 @@ class TeacherService:
             )
             for s in sessions
         ]
+
+    async def verify_smart_pass(self, user_id: str, session_id: str, qr_token: str):
+        from app.core.security import decode_access_token
+        from app.services.gamification_service import GamificationService
+        from app.api.ws import manager
+        from app.schemas.teacher import SmartPassVerifyResponse
+
+        payload = decode_access_token(qr_token)
+        if not payload or payload.get("type") != "smart_pass":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired Smart Pass QR token. Please refresh the QR code on the student app."
+            )
+
+        student_id = payload.get("student_id")
+        user_sub = payload.get("sub")
+
+        student = None
+        if student_id:
+            student = await db.student.find_unique(where={"id": student_id}, include={"user": True})
+        elif user_sub:
+            student = await db.student.find_unique(where={"userId": user_sub}, include={"user": True})
+
+        if not student:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student profile matching QR pass not found.")
+
+        teacher = await self.get_teacher_by_user_id(user_id)
+        session = await self._get_session_with_auth(session_id, teacher.id)
+
+        now = datetime.now(timezone.utc)
+        sess_end = session.endTime.replace(tzinfo=timezone.utc) if session.endTime.tzinfo is None else session.endTime
+        if not session.isActive or sess_end <= now:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Session is closed or has expired.")
+
+        enrollment = await db.enrollment.find_first(
+            where={"studentId": student.id, "academicClassId": session.academicClassId}
+        )
+        if not enrollment:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Student {student.enrollmentNumber} is not enrolled in {session.academicClass.name}."
+            )
+
+        student_full_name = self._resolve_full_name(student.firstName, student.lastName)
+        existing = await db.attendance.find_first(
+            where={"studentId": student.id, "sessionId": session_id}
+        )
+
+        if existing and existing.status == "Present":
+            return SmartPassVerifyResponse(
+                status="already_marked",
+                student_id=student.id,
+                student_name=student_full_name,
+                enrollment_number=student.enrollmentNumber,
+                attendance_status="Present",
+                session_id=session_id,
+                message=f"Attendance already marked Present for {student_full_name} ({student.enrollmentNumber})."
+            )
+
+        if existing:
+            await db.attendance.update(
+                where={"id": existing.id},
+                data={
+                    "status": "Present",
+                    "finalAiScore": 1.0,
+                    "remarks": "Verified via Smart Pass QR",
+                }
+            )
+        else:
+            await db.attendance.create(data={
+                "studentId": student.id,
+                "sessionId": session_id,
+                "status": "Present",
+                "faceScore": 1.0,
+                "livenessScore": 1.0,
+                "backgroundScore": 1.0,
+                "finalAiScore": 1.0,
+                "gpsLatitude": 0.0,
+                "gpsLongitude": 0.0,
+                "remarks": "Verified via Smart Pass QR",
+            })
+
+        try:
+            await GamificationService().recalculate_student_streak(student.id)
+        except Exception as e:
+            from app.core.logging_config import get_logger
+            get_logger("app.teacher").warning("Streak calculation failed: %s", e)
+
+        try:
+            msg = {"type": "attendance_updated", "session_id": session_id, "status": "Present", "student_id": student.id}
+            await manager.send_personal_message(msg, student_id=student.id)
+            await manager.broadcast_to_teachers(msg)
+        except Exception:
+            pass
+
+        # Create audit log
+        try:
+            actor_email = user_id
+            if teacher and teacher.user and teacher.user.email:
+                actor_email = teacher.user.email
+            await db.auditlog.create(data={
+                "eventType": "SMART_PASS_VERIFY",
+                "severity": "INFO",
+                "actor": actor_email,
+                "target": f"student:{student.enrollmentNumber}",
+                "description": f"Verified student {student_full_name} ({student.enrollmentNumber}) via Smart Pass QR for session {session_id}",
+            })
+        except Exception:
+            pass
+
+        return SmartPassVerifyResponse(
+            status="success",
+            student_id=student.id,
+            student_name=student_full_name,
+            enrollment_number=student.enrollmentNumber,
+            attendance_status="Present",
+            session_id=session_id,
+            message=f"Successfully verified {student_full_name} ({student.enrollmentNumber})."
+        )
+

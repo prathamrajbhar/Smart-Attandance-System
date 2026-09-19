@@ -32,6 +32,9 @@ class AuthRepository {
         _hive = hive;
 
   AuthStatus _computeAuthStatus(UserProfile profile) {
+    if (profile.mustChangePassword) {
+      return AuthStatus.passwordChangeRequired;
+    }
     final needsRegistration =
         profile.studentProfile == null || !profile.hasFaceRegistered;
     return needsRegistration
@@ -67,6 +70,22 @@ class AuthRepository {
     }
   }
 
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      await _authApi.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+      final profile = await _authApi.getProfile();
+      await _hive.cacheProfile(profile);
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
   Future<({UserProfile? profile, AuthStatus status})> checkAuthState() async {
     final token = await _storage.getToken();
     if (token == null) {
@@ -86,7 +105,7 @@ class AuthRepository {
       
       final cached = _hive.getCachedProfile();
       if (cached != null) {
-        return (profile: cached, status: AuthStatus.authenticated);
+        return (profile: cached, status: _computeAuthStatus(cached));
       }
       return (profile: null, status: AuthStatus.unauthenticated);
     }

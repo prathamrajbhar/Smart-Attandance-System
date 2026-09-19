@@ -34,4 +34,16 @@ class AuthApi {
     await _dio.post<void>('/auth/logout');
   }
 
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    await _dio.post<Map<String, dynamic>>(
+      '/auth/change-password',
+      data: {
+        'current_password': currentPassword,
+        'new_password': newPassword,
+      },
+    );
+  }
 }

@@ -6,7 +6,7 @@ from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 class TeacherCreate(BaseModel):
     email: EmailStr = Field(..., description="Unique email address of the teacher")
-    password: str = Field(..., min_length=8, max_length=100, description="Secure account password")
+    password: Optional[str] = Field(None, min_length=8, max_length=100, description="Optional account password; auto-generated if omitted")
     employee_id: str = Field(..., min_length=3, max_length=30, description="Unique employee identifier e.g. EMP2024001")
     first_name: str = Field(..., min_length=1, max_length=100, description="Teacher first name")
     last_name: str = Field(..., min_length=1, max_length=100, description="Teacher last name")
@@ -174,4 +174,19 @@ class DeviceChangeResponse(BaseModel):
 
 class DeviceChangeApprove(BaseModel):
     status: Literal["APPROVED", "REJECTED"] = Field(..., description="Approval status decision")
+
+
+class SmartPassVerifyRequest(BaseModel):
+    qr_token: str = Field(..., description="Rotating 30-second JWT token from student Smart Pass")
+    session_id: str = Field(..., description="Active session UUID")
+
+
+class SmartPassVerifyResponse(BaseModel):
+    status: str = Field(..., description="Status (success, already_marked, error)")
+    student_id: str = Field(..., description="Student UUID")
+    student_name: str = Field(..., description="Full name of student")
+    enrollment_number: str = Field(..., description="Student enrollment number")
+    attendance_status: str = Field(..., description="Resulting attendance status (e.g. Present)")
+    session_id: str = Field(..., description="Session UUID")
+    message: str = Field(..., description="User feedback message")
 

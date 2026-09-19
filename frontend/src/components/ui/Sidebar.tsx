@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, GraduationCap, BookOpen, Building2, ScanSearch,
   ScrollText, Radio, ClipboardCheck, BarChart3, Shield, Sliders, ChevronDown, ChevronRight,
-  FileText, Smartphone
+  FileText, Smartphone, User
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import api from "@/lib/api";
@@ -46,6 +46,7 @@ const teacherLinks: NavItem[] = [
 const teacherReportLinks: NavItem[] = [
   { label: "Class Analytics", href: "/teacher/analytics", icon: <BarChart3 size={18} /> },
   { label: "Attendance History", href: "/teacher/history", icon: <ScrollText size={18} /> },
+  { label: "Profile & Security", href: "/teacher/profile", icon: <User size={18} /> },
 ];
 
 interface SidebarProps {

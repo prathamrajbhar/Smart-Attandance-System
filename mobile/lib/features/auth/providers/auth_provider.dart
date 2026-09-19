@@ -95,6 +95,41 @@ class AuthNotifier extends StateNotifier<AuthStateData> {
     state = state.copyWith(status: AuthStatus.authenticated);
   }
 
+  Future<bool> changePassword(String currentPassword, String newPassword) async {
+    state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
+    try {
+      await _repo.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+      final result = await _repo.checkAuthState();
+      state = AuthStateData(status: result.status, user: result.profile);
+      return true;
+    } on AppException catch (e) {
+      AppLogger.error('Change password failed: $e');
+      state = state.copyWith(
+        status: AuthStatus.passwordChangeRequired,
+        errorMessage: e.message,
+      );
+      return false;
+    } on DioException catch (e) {
+      AppLogger.error('Change password failed: $e');
+      final mapped = mapDioError(e);
+      state = state.copyWith(
+        status: AuthStatus.passwordChangeRequired,
+        errorMessage: mapped.message,
+      );
+      return false;
+    } catch (e) {
+      AppLogger.error('Change password error: $e');
+      state = state.copyWith(
+        status: AuthStatus.passwordChangeRequired,
+        errorMessage: 'Failed to update password. Please try again.',
+      );
+      return false;
+    }
+  }
+
   Future<void> logout() async {
     await _repo.logout();
     state = const AuthStateData(status: AuthStatus.unauthenticated);

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { RefreshCw, ClipboardList } from "lucide-react";
+import { RefreshCw, ClipboardList, QrCode, Download } from "lucide-react";
 import toast from "react-hot-toast";
 import api, { getApiErrorMessage } from "@/lib/api";
 import { getWebSocket } from "@/lib/websocket";
@@ -14,7 +14,9 @@ import GlassButton from "@/components/ui/GlassButton";
 import GlassStatCard from "@/components/ui/GlassStatCard";
 import GlassLoader from "@/components/ui/GlassLoader";
 import GlassConfirmDialog from "@/components/ui/GlassConfirmDialog";
-import type { SessionAttendanceResponse, StudentRosterItem, BulkMarkRequest } from "@/types";
+import SmartPassScannerModal from "@/components/scanner/SmartPassScannerModal";
+import { exportRosterToCSV } from "@/utils/exportUtils";
+import type { SessionAttendanceResponse, StudentRosterItem, BulkMarkRequest, SmartPassVerifyResponse } from "@/types";
 
 export default function SessionRosterPage(): React.ReactElement {
   const { id } = useParams<{ id: string }>();
@@ -23,13 +25,12 @@ export default function SessionRosterPage(): React.ReactElement {
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
   const [showConfirmBulk, setShowConfirmBulk] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchRoster = useCallback(async (): Promise<void> => {
     try {
-      const { data } = await api.get<SessionAttendanceResponse>(
-        `/teacher/sessions/${id}/attendance`
-      );
+      const { data } = await api.get<SessionAttendanceResponse>(`/teacher/sessions/${id}/attendance`);
       setRoster(data);
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to load roster"));
@@ -42,10 +43,9 @@ export default function SessionRosterPage(): React.ReactElement {
     void (async () => {
       await fetchRoster();
     })();
-    
+
     const ws = getWebSocket();
     ws.connect();
-    
     const unsubscribe = ws.on("attendance_updated", () => {
       void fetchRoster();
     });
@@ -53,6 +53,7 @@ export default function SessionRosterPage(): React.ReactElement {
     intervalRef.current = setInterval(() => {
       void fetchRoster();
     }, 5000);
+
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
       unsubscribe();
@@ -69,24 +70,10 @@ export default function SessionRosterPage(): React.ReactElement {
     }
   }
 
-  async function handleMarkAllPresent(): Promise<void> {
-    if (!roster) return;
-    const targets = roster.roster.filter(
-      (r) => r.status === "Absent" && r.marked_at === null
-    );
-    if (targets.length === 0) {
-      toast("No unmarked absent students to mark present.", { icon: "ℹ️" });
-      return;
-    }
-    setShowConfirmBulk(true);
-  }
-
   async function handleBulkMarkConfirm(): Promise<void> {
     if (!roster) return;
     setShowConfirmBulk(false);
-    const targets = roster.roster.filter(
-      (r) => r.status === "Absent" && r.marked_at === null
-    );
+    const targets = roster.roster.filter((r) => r.status === "Absent" && r.marked_at === null);
     setMarkingAll(true);
     try {
       const payload: BulkMarkRequest = {
@@ -121,9 +108,7 @@ export default function SessionRosterPage(): React.ReactElement {
     {
       key: "status",
       header: "Status",
-      render: (r) => (
-        <GlassBadge variant={statusToBadgeVariant(String(r.status))}>{String(r.status)}</GlassBadge>
-      ),
+      render: (r) => <GlassBadge variant={statusToBadgeVariant(String(r.status))}>{String(r.status)}</GlassBadge>,
     },
     {
       key: "final_score",
@@ -177,7 +162,21 @@ export default function SessionRosterPage(): React.ReactElement {
       <GlassPageHeader
         title={`Live Roster — ${roster.class_name}`}
         actions={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <GlassButton
+              variant="primary"
+              icon={<QrCode size={14} />}
+              onClick={() => setShowScanner(true)}
+            >
+              Smart Pass Scanner
+            </GlassButton>
+            <GlassButton
+              variant="secondary"
+              icon={<Download size={14} />}
+              onClick={() => exportRosterToCSV(roster.class_name, roster.roster)}
+            >
+              Export CSV
+            </GlassButton>
             <GlassButton
               variant="ghost"
               icon={<ClipboardList size={14} />}
@@ -188,9 +187,9 @@ export default function SessionRosterPage(): React.ReactElement {
             <GlassButton
               variant="ghost"
               loading={markingAll}
-              onClick={() => void handleMarkAllPresent()}
+              onClick={() => setShowConfirmBulk(true)}
             >
-              Mark All Absent → Present
+              Mark Absent → Present
             </GlassButton>
             <GlassButton
               variant="ghost"
@@ -215,10 +214,20 @@ export default function SessionRosterPage(): React.ReactElement {
         emptyMessage="No students in roster"
         pageSize={20}
       />
+
+      <SmartPassScannerModal
+        isOpen={showScanner}
+        onClose={() => setShowScanner(false)}
+        sessionId={id}
+        onSuccess={(_res: SmartPassVerifyResponse) => {
+          void fetchRoster();
+        }}
+      />
+
       <GlassConfirmDialog
         isOpen={showConfirmBulk}
         title="Mark All Absent as Present"
-        message={`Mark all unmarked absent students as Present?`}
+        message="Mark all unmarked absent students as Present?"
         confirmLabel="Mark All"
         variant="primary"
         onConfirm={handleBulkMarkConfirm}

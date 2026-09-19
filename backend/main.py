@@ -17,6 +17,7 @@ from app.core.logging_config import setup_logging, get_logger
 from app.db.client import connect_db, disconnect_db
 from app.db.redis import connect_redis, disconnect_redis
 from app.services.s3_service import s3_service
+from app.services.scheduler import session_scheduler
 from app.api import auth, student, teacher, admin, logs, health, ws as ws_module
 from app.middleware.request_logging import RequestLoggingMiddleware
 
@@ -31,9 +32,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await connect_redis()
     s3_service.ensure_bucket_exists()
     ws_module.manager.start_heartbeat()
+    session_scheduler.start()
     logger.info("Server ready")
     yield
     logger.info("Shutting down...")
+    session_scheduler.stop()
     ws_module.manager.stop_heartbeat()
     await disconnect_db()
     await disconnect_redis()

@@ -3,17 +3,20 @@ class TokenResponse {
   final String accessToken;
   final String tokenType;
   final String role;
+  final bool mustChangePassword;
 
   const TokenResponse({
     required this.accessToken,
     required this.tokenType,
     required this.role,
+    this.mustChangePassword = false,
   });
 
   factory TokenResponse.fromJson(Map<String, dynamic> json) => TokenResponse(
         accessToken: json['access_token'] as String,
         tokenType: json['token_type'] as String,
         role: json['role'] as String,
+        mustChangePassword: json['must_change_password'] as bool? ?? false,
       );
 }
 
@@ -54,6 +57,7 @@ class UserProfile {
   final String email;
   final String role;
   final bool isActive;
+  final bool mustChangePassword;
   final StudentProfile? studentProfile;
 
   const UserProfile({
@@ -61,6 +65,7 @@ class UserProfile {
     required this.email,
     required this.role,
     required this.isActive,
+    this.mustChangePassword = false,
     this.studentProfile,
   });
 
@@ -73,6 +78,7 @@ class UserProfile {
       email: json['email'] as String,
       role: json['role'] as String,
       isActive: json['is_active'] as bool,
+      mustChangePassword: json['must_change_password'] as bool? ?? false,
       studentProfile:
           studentJson != null ? StudentProfile.fromJson(studentJson) : null,
     );
@@ -83,6 +89,7 @@ class UserProfile {
         'email': email,
         'role': role,
         'is_active': isActive,
+        'must_change_password': mustChangePassword,
         'student_profile': studentProfile?.toJson(),
       };
 }

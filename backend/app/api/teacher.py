@@ -12,7 +12,8 @@ from app.schemas.teacher import (
     SessionResponse, SessionStart, GeofenceUpsert, GeofenceResponse,
     AcademicClassWithGeofenceResponse, SessionAttendanceResponse,
     ClassStatsResponse, AttendanceManualOverride, SessionWithClassResponse,
-    BulkMarkRequest, AbsentStudentItem, DeviceChangeResponse, DeviceChangeApprove
+    BulkMarkRequest, AbsentStudentItem, DeviceChangeResponse, DeviceChangeApprove,
+    SmartPassVerifyRequest, SmartPassVerifyResponse,
 )
 from app.schemas.attendance import AttendanceReview, FlaggedAttendanceResponse
 from app.schemas.leave import LeaveRequestResponse, LeaveRequestApprove
@@ -244,4 +245,17 @@ async def approve_device_change(
     if not result:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device change request not found or not pending.")
     return {"status": "success", "message": f"Device change request {data.status.lower()} successfully."}
+
+
+@router.post("/smart-pass/verify", response_model=SmartPassVerifyResponse, status_code=status.HTTP_200_OK)
+async def verify_smart_pass(
+    data: SmartPassVerifyRequest,
+    teacher: Teacher = Depends(get_current_teacher),
+    teacher_service: TeacherService = Depends(),
+) -> SmartPassVerifyResponse:
+    return await teacher_service.verify_smart_pass(
+        user_id=teacher.userId,
+        session_id=data.session_id,
+        qr_token=data.qr_token,
+    )
 

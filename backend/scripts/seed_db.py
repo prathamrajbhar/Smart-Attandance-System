@@ -54,6 +54,29 @@ T = TypeVar("T")
 def _hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt(rounds=12)).decode()
 
+
+def _pick(seq: list[T]) -> T:
+    return random.choice(seq)
+
+
+def _pick_n(seq: list[T], n: int) -> list[T]:
+    return random.sample(seq, min(n, len(seq)))
+
+
+def _weighted_choice(seq: list[T], weights: list[float]) -> T:
+    return random.choices(seq, weights=weights, k=1)[0]
+
+
+def _to_datetime(d: date) -> datetime:
+    return datetime(d.year, d.month, d.day, tzinfo=timezone.utc)
+
+
+def jitter_gps(lat: float, lng: float, delta: float = 0.002) -> tuple[float, float]:
+    return (
+        round(lat + random.uniform(-delta, delta), 6),
+        round(lng + random.uniform(-delta, delta), 6),
+    )
+
 # ==============================================================================
 # REALISTIC INDIAN DATA POOLS
 # ==============================================================================

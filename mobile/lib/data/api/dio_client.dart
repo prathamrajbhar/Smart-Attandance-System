@@ -1,5 +1,7 @@
 
+import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_attendance_app/core/constants.dart';
 import 'package:smart_attendance_app/core/exceptions.dart';
@@ -15,6 +17,34 @@ final dioProvider = Provider<Dio>((ref) {
     receiveTimeout: const Duration(milliseconds: kReceiveTimeout),
     headers: {'Accept': 'application/json'},
   ));
+
+  dio.httpClientAdapter = IOHttpClientAdapter(
+    createHttpClient: () {
+      final client = HttpClient();
+      client.badCertificateCallback = (X509Certificate cert, String host, int port) {
+        final configuredUri = Uri.tryParse(kApiBaseUrl);
+        final targetHost = configuredUri?.host.toLowerCase() ?? '';
+        final reqHost = host.toLowerCase();
+
+        if (targetHost.isNotEmpty) {
+          if (reqHost == targetHost) return true;
+          final domainParts = targetHost.split('.');
+          if (domainParts.length >= 2) {
+            final parentDomain = domainParts.sublist(domainParts.length - 2).join('.');
+            if (reqHost.endsWith(parentDomain)) return true;
+          }
+        }
+        if (reqHost == 'localhost' ||
+            reqHost == '10.0.2.2' ||
+            reqHost.startsWith('127.0.0.1') ||
+            reqHost.startsWith('192.168.')) {
+          return true;
+        }
+        return false;
+      };
+      return client;
+    },
+  );
 
   final storage = ref.read(secureStorageProvider);
 

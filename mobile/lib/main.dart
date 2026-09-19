@@ -1,13 +1,11 @@
-
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smart_attendance_app/app/router.dart';
-import 'package:smart_attendance_app/app/theme.dart';
-import 'package:smart_attendance_app/core/attendance_constants.dart';
-import 'package:smart_attendance_app/data/api/student_api.dart';
+import 'package:smart_attendance_app/app/app.dart';
+import 'package:smart_attendance_app/core/constants.dart';
 import 'package:smart_attendance_app/data/local/hive_service.dart';
 import 'package:smart_attendance_app/data/local/offline_sync_service.dart';
 import 'package:smart_attendance_app/data/local/notification_service.dart';
@@ -15,10 +13,35 @@ import 'package:smart_attendance_app/utils/logger.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:smart_attendance_app/data/repositories/config_repository.dart';
-import 'package:smart_attendance_app/domain/enums/auth_state.dart';
-import 'package:smart_attendance_app/features/auth/providers/auth_provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+class AppHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback = (X509Certificate cert, String host, int port) {
+        final configuredUri = Uri.tryParse(kApiBaseUrl);
+        final targetHost = configuredUri?.host.toLowerCase() ?? '';
+        final reqHost = host.toLowerCase();
+
+        if (targetHost.isNotEmpty) {
+          if (reqHost == targetHost) return true;
+          final domainParts = targetHost.split('.');
+          if (domainParts.length >= 2) {
+            final parentDomain = domainParts.sublist(domainParts.length - 2).join('.');
+            if (reqHost.endsWith(parentDomain)) return true;
+          }
+        }
+        if (reqHost == 'localhost' ||
+            reqHost == '10.0.2.2' ||
+            reqHost.startsWith('127.0.0.1') ||
+            reqHost.startsWith('192.168.')) {
+          return true;
+        }
+        return false;
+      };
+  }
+}
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -28,16 +51,9 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await notificationService.addNotification(
     title: message.notification?.title ?? 'Notification',
     body: message.notification?.body ?? '',
-    severity: _inferSeverity(message.data),
+    severity: inferNotificationSeverity(message.data),
     source: 'push',
   );
-}
-
-String _inferSeverity(Map<String, dynamic> data) {
-  final type = data['type'] as String?;
-  if (type == 'low_attendance' || type == 'anomaly') return kSeverityDanger;
-  if (type == 'warning') return kSeverityWarning;
-  return kSeverityInfo;
 }
 
 @pragma('vm:entry-point')
@@ -45,13 +61,14 @@ void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
     try {
       WidgetsFlutterBinding.ensureInitialized();
+      HttpOverrides.global = AppHttpOverrides();
       try {
         await dotenv.load(fileName: ".env");
       } catch (_) {}
-      
+
       final hiveService = HiveService();
       await hiveService.initialize();
-      
+
       final notificationService = NotificationService();
       await notificationService.initialize();
 
@@ -61,7 +78,7 @@ void callbackDispatcher() {
           notificationServiceProvider.overrideWithValue(notificationService),
         ],
       );
-      
+
       final syncService = container.read(offlineSyncServiceProvider);
       await syncService.syncQueue();
       return Future.value(true);
@@ -75,6 +92,8 @@ void callbackDispatcher() {
 Future<void> main() async {
   await runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
+    HttpOverrides.global = AppHttpOverrides();
+
     try {
       await dotenv.load(fileName: ".env");
     } catch (e) {
@@ -88,7 +107,6 @@ Future<void> main() async {
         context: {'stack': details.stack?.toString()},
       );
       if (kReleaseMode) {
-        
         Zone.current.handleUncaughtError(
           details.exception,
           details.stack ?? StackTrace.current,
@@ -115,24 +133,18 @@ Future<void> main() async {
 
     try {
       await Firebase.initializeApp();
-      
       FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-      
       await FirebaseMessaging.instance.requestPermission();
     } catch (e) {
       AppLogger.error('Firebase init failed: $e');
-    } 
+    }
 
-    Workmanager().initialize(
-      callbackDispatcher,
-    );
+    Workmanager().initialize(callbackDispatcher);
     Workmanager().registerPeriodicTask(
       "offline-sync-task",
       "syncQueue",
       frequency: const Duration(minutes: 15),
-      constraints: Constraints(
-        networkType: NetworkType.connected,
-      ),
+      constraints: Constraints(networkType: NetworkType.connected),
     );
 
     runApp(
@@ -145,146 +157,9 @@ Future<void> main() async {
       ),
     );
   }, (error, stackTrace) {
-    
     AppLogger.error(
       'Unhandled zoned error: $error',
       context: {'stack': stackTrace.toString()},
     );
   });
-}
-
-class SmartAttendanceApp extends ConsumerStatefulWidget {
-  const SmartAttendanceApp({super.key});
-
-  @override
-  ConsumerState<SmartAttendanceApp> createState() => _SmartAttendanceAppState();
-}
-
-class _SmartAttendanceAppState extends ConsumerState<SmartAttendanceApp> {
-  String? _pendingRoute;
-
-  @override
-  void initState() {
-    super.initState();
-    
-    ref.read(offlineSyncServiceProvider).startListening();
-    
-    Future.microtask(() => ref.read(configRepositoryProvider).fetchAndCacheConfig());
-    
-    _initializeFcm();
-  }
-
-  Future<void> _handleNotificationClick(RemoteMessage message) async {
-    final data = message.data;
-    final route = data['route'] as String?;
-    final attendanceId = data['attendance_id'] as String?;
-    if (route != null) {
-      String targetRoute = route;
-      if (route == '/flagged_detail' || route.startsWith('/flagged')) {
-        if (attendanceId != null) {
-          targetRoute = '/flagged/$attendanceId';
-        }
-      }
-      final authStatus = ref.read(authProvider).status;
-      if (authStatus == AuthStatus.authenticated) {
-        ref.read(routerProvider).push(targetRoute);
-      } else {
-        _pendingRoute = targetRoute;
-      }
-    }
-  }
-
-  Future<void> _syncFcmToken() async {
-    try {
-      final token = await FirebaseMessaging.instance.getToken();
-      if (token != null) {
-        await ref.read(studentApiProvider).registerFcmToken(token);
-      }
-    } catch (e) {
-      AppLogger.error('FCM token sync on auth failed: $e');
-    }
-  }
-
-  Future<void> _initializeFcm() async {
-    try {
-      final authStatus = ref.read(authProvider).status;
-      if (authStatus == AuthStatus.authenticated) {
-        final token = await FirebaseMessaging.instance.getToken();
-        if (token != null) {
-          try {
-            await ref.read(studentApiProvider).registerFcmToken(token);
-          } catch (e) {
-            AppLogger.error('FCM token registration failed: $e');
-          }
-        }
-      }
-
-      FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
-        try {
-          final currentAuthStatus = ref.read(authProvider).status;
-          if (currentAuthStatus == AuthStatus.authenticated) {
-            await ref.read(studentApiProvider).registerFcmToken(newToken);
-          }
-        } catch (e) {
-          AppLogger.error('FCM token refresh registration failed: $e');
-        } 
-      });
-
-      FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-        final notifService = ref.read(notificationServiceProvider);
-        await notifService.addNotification(
-          title: message.notification?.title ?? 'Notification',
-          body: message.notification?.body ?? '',
-          severity: _inferSeverity(message.data),
-          source: 'push',
-        );
-        
-        await ref.read(notificationsProvider.notifier).load();
-      });
-
-      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-        _handleNotificationClick(message);
-      });
-
-      final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
-      if (initialMessage != null) {
-        _handleNotificationClick(initialMessage);
-      }
-    } catch (e) {
-      AppLogger.error('FCM listener setup failed: $e');
-    }
-  }
-
-  @override
-  void dispose() {
-    ref.read(offlineSyncServiceProvider).dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    ref.listen<AuthStateData>(authProvider, (previous, next) {
-      if (next.status == AuthStatus.authenticated) {
-        if (previous?.status != AuthStatus.authenticated) {
-          _syncFcmToken();
-        }
-        if (_pendingRoute != null) {
-          final route = _pendingRoute!;
-          _pendingRoute = null;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            ref.read(routerProvider).push(route);
-          });
-        }
-      }
-    });
-
-    final router = ref.watch(routerProvider);
-
-    return MaterialApp.router(
-      title: 'Smart Attendance',
-      debugShowCheckedModeBanner: false,
-      theme: buildSasTheme(),
-      routerConfig: router,
-    );
-  }
 }

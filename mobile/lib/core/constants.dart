@@ -6,8 +6,7 @@ String get kApiBaseUrl {
   final envUrl = dotenv.isInitialized ? dotenv.env['API_BASE_URL'] : null;
   if (envUrl != null && envUrl.trim().isNotEmpty) return envUrl.trim();
   const defineUrl = String.fromEnvironment('API_BASE_URL', defaultValue: '');
-  if (defineUrl.trim().isNotEmpty) return defineUrl.trim();
-  return 'https://smart_attandance_system.bytemap.in/api/v1';
+  return defineUrl.trim();
 }
 
 const String kHiveBoxProfile = 'sas_profile';

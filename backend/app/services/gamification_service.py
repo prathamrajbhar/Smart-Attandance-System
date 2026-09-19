@@ -26,14 +26,14 @@ class GamificationService:
         from app.db.client import db
         enrollments = await db.enrollment.find_many(where={"studentId": student_id})
         class_ids = [e.academicClassId for e in enrollments]
-        
+
         if not class_ids:
             await self.student_repo.update_streak(student_id, 0, student.highestStreak or 0)
             await self._update_redis_score(student_id, 0, student.highestStreak or 0)
             return {"current_streak": 0, "highest_streak": student.highestStreak or 0}
 
         now = datetime.now(timezone.utc)
-        
+
         # Get all sessions that have already started
         sessions = await db.session.find_many(
             where={
@@ -45,7 +45,7 @@ class GamificationService:
 
         attendance = await db.attendance.find_many(where={"studentId": student_id})
         attendance_map = {a.sessionId: a for a in attendance}
-        
+
         leaves = await db.leaverequest.find_many(where={"studentId": student_id, "status": "APPROVED"})
 
         def is_on_leave(session_start: datetime) -> bool:
@@ -63,7 +63,7 @@ class GamificationService:
             s_end = s.endTime.replace(tzinfo=timezone.utc) if s.endTime.tzinfo is None else s.endTime
             is_active = s.isActive and s_end > now
             has_checked_in = s.id in attendance_map and attendance_map[s.id].status in ("Present", "Approved")
-            
+
             if is_active and not has_checked_in:
                 continue
             valid_sessions.append(s)
@@ -167,7 +167,7 @@ class GamificationService:
         """Fetch the leaderboard from Redis, falling back to DB if empty."""
         redis = self._get_redis_client()
         cache_key = "leaderboard:points"
-        
+
         try:
             if redis and not await redis.exists(cache_key):
                 await self._rebuild_leaderboard_cache(redis, cache_key)
@@ -219,7 +219,7 @@ class GamificationService:
             from app.db.client import db
             top_students = await db.student.find_many(where={"id": {"in": top_ids}})
             students_map = {s.id: s for s in top_students}
-            
+
             leaderboard_data = []
             for s_id, score in top_members:
                 s = students_map.get(s_id)
@@ -263,9 +263,9 @@ class GamificationService:
                 present_count = sum(1 for r in s.attendance if r.status in ("Present", "Approved"))
                 points = present_count * 50 + (s.highestStreak or 0) * 100 + (s.currentStreak or 0) * 20
                 student_list.append((s, points))
-            
+
             student_list.sort(key=lambda x: x[1], reverse=True)
-            
+
             leaderboard_data = []
             for s, points in student_list[:10]:
                 name = f"{s.firstName or ''} {s.lastName or ''}".strip() or "Student"
@@ -275,7 +275,7 @@ class GamificationService:
                     "points": points,
                     "current_streak": s.currentStreak or 0,
                 })
-            
+
             user_rank = None
             user_points = 0
             for index, (s, points) in enumerate(student_list):

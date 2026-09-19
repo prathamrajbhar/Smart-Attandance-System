@@ -243,10 +243,10 @@ class TeacherService:
             include={"academicClass": {"include": {"subject": True}}},
             order={"endTime": "desc"},
         )
-        
+
         from datetime import datetime, timezone
         now = datetime.now(timezone.utc)
-        
+
         # Proactively deactivate expired sessions in DB
         expired_ids = [s.id for s in sessions if s.isActive and (s.endTime.replace(tzinfo=timezone.utc) if s.endTime.tzinfo is None else s.endTime) <= now]
         if expired_ids:

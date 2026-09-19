@@ -140,7 +140,7 @@ class AttendanceService:
             ai_results = await self.ai_orchestrator.analyze_attendance(submission.image_path, face_embedding)
         else:
             ai_results = {"face_score": 1.0, "liveness_score": 1.0, "background_score": 1.0}
-            
+
         active_scores: list[float] = []
         is_verified = True
 
@@ -293,7 +293,7 @@ class AttendanceService:
             ai_results = await self.ai_orchestrator.analyze_attendance(submission.image_path, face_embedding)
         else:
             ai_results = {"face_score": 1.0, "liveness_score": 1.0, "background_score": 1.0}
-            
+
         active_scores: list[float] = []
         is_verified = True
 

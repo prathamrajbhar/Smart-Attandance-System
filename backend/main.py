@@ -8,14 +8,14 @@ os.environ.setdefault('TF_USE_LEGACY_KERAS', '1')
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 from app.core.logging_config import setup_logging, get_logger
-from app.db.client import connect_db, disconnect_db, db
-from app.db.redis import connect_redis, disconnect_redis, get_redis
+from app.db.client import connect_db, disconnect_db
+from app.db.redis import connect_redis, disconnect_redis
 from app.services.s3_service import s3_service
 from app.api import auth, student, teacher, admin, logs, health, ws as ws_module
 from app.middleware.request_logging import RequestLoggingMiddleware
@@ -70,6 +70,6 @@ app.include_router(ws_module.router, prefix=settings.API_V1_STR)
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    logger.critical("Unhandled exception: %s %s — %s", request.method, request.url.path, exc, exc_info=True)
+    logger.critical("Unhandled exception: %s %s — %s", request.method, request.url.path, str(exc))
     return JSONResponse(status_code=500, content={"detail": "Something went wrong"})
 

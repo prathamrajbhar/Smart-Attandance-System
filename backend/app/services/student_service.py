@@ -25,10 +25,10 @@ class StudentService:
                 }
             },
         )
-        
+
         from datetime import datetime, timezone
         now = datetime.now(timezone.utc)
-        
+
         # Proactively deactivate expired sessions to sync database state
         expired_session_ids = []
         for e in enrollments:
@@ -36,7 +36,7 @@ class StudentService:
                 s_end = s.endTime.replace(tzinfo=timezone.utc) if s.endTime.tzinfo is None else s.endTime
                 if s.isActive and s_end <= now:
                     expired_session_ids.append(s.id)
-                    
+
         if expired_session_ids:
             await db.session.update_many(
                 where={"id": {"in": expired_session_ids}},
@@ -46,11 +46,11 @@ class StudentService:
         res = []
         for e in enrollments:
             valid_sessions = [
-                s for s in e.academicClass.sessions 
+                s for s in e.academicClass.sessions
                 if s.isActive and s.id not in expired_session_ids
             ]
             active_s = valid_sessions[0] if valid_sessions else None
-            
+
             res.append(StudentClassResponse(
                 class_id=e.academicClass.id,
                 class_name=e.academicClass.name,

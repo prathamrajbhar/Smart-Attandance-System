@@ -32,7 +32,7 @@ def _run_isolation_forest(attendance_records: List[Dict[str, Any]], contaminatio
         features = profile.drop(columns=['student_id'])
         model = IsolationForest(n_estimators=100, contamination=contamination, random_state=42)
         model.fit(features)
-        
+
         profile['pred'] = model.predict(features)
         profile['anomaly_score'] = -model.decision_function(features)
 

@@ -343,7 +343,7 @@ async def scan_absentee_anomalies(
     records = await attendance_repo.get_all_absences()
     if not records or len(records) < 5:
         return []
-    
+
     student_map = {}
     for r in records:
         if r.student:

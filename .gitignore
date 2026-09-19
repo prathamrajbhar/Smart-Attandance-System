@@ -41,3 +41,4 @@ credentials.txt
 *-credentials.json
 firebase-credentials*.json
 google-services*.json
+.vercel

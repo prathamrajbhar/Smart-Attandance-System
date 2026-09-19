@@ -60,12 +60,12 @@ class SessionService:
         # 3. Get enrollments and existing attendance
         from app.db.client import db
         from app.services.gamification_service import GamificationService
-        
+
         enrollments = await db.enrollment.find_many(
             where={"academicClassId": session.academicClassId},
             include={"student": {"include": {"leaveRequests": True}}}
         )
-        
+
         attendance_records = await db.attendance.find_many(where={"sessionId": session_id})
         submitted_student_ids = {a.studentId for a in attendance_records}
 
@@ -90,7 +90,7 @@ class SessionService:
             # Create the record
             status_val = "Excused" if on_leave else "Absent"
             remarks_val = "Excused via approved leave request" if on_leave else "Session ended without student submission"
-            
+
             try:
                 await db.attendance.create(data={
                     "studentId": student.id,

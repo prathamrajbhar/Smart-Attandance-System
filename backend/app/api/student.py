@@ -1,13 +1,9 @@
-import os
-import uuid
-import shutil
 from datetime import datetime, timezone, date, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
 from prisma.models import Student
 
 from app.api.dependencies import get_current_student
-from app.core.config import settings
 from app.core.logging_config import get_logger
 from app.core.security import create_access_token
 from app.db.client import db

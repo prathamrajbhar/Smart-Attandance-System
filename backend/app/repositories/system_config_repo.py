@@ -25,7 +25,7 @@ class SystemConfigRepository:
         is_ai_background_validation_enabled: bool | None = None,
     ) -> SystemConfiguration:
         config = await self.get_config()
-        
+
         update_data = {}
         if is_face_recognition_enabled is not None:
             update_data["isFaceRecognitionEnabled"] = is_face_recognition_enabled
@@ -33,7 +33,7 @@ class SystemConfigRepository:
             update_data["isGpsVerificationEnabled"] = is_gps_verification_enabled
         if is_ai_background_validation_enabled is not None:
             update_data["isAiBackgroundValidationEnabled"] = is_ai_background_validation_enabled
-            
+
         return await db.systemconfiguration.update(
             where={"id": config.id},
             data=update_data,

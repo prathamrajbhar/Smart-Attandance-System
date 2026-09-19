@@ -1,9 +1,18 @@
 import os
+import sentry_sdk
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 os.environ.setdefault('TF_USE_LEGACY_KERAS', '1')
+
+sentry_sdk.init(
+    dsn=os.getenv("SENTRY_DSN", "https://9e62f4cdab9492bcc05c312bddeb6918@o4512113532010496.ingest.us.sentry.io/4512113546297344"),
+    send_default_pii=True,
+    traces_sample_rate=1.0,
+    profile_session_sample_rate=1.0,
+    profile_lifecycle="trace",
+)
 
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
@@ -69,6 +78,12 @@ app.include_router(teacher.router, prefix=settings.API_V1_STR)
 app.include_router(admin.router, prefix=settings.API_V1_STR)
 app.include_router(logs.router, prefix=settings.API_V1_STR)
 app.include_router(ws_module.router, prefix=settings.API_V1_STR)
+
+
+@app.get("/sentry-debug")
+async def trigger_sentry_debug():
+    division_by_zero = 1 / 0
+    return {"division_by_zero": division_by_zero}
 
 
 @app.exception_handler(Exception)

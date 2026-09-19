@@ -220,7 +220,14 @@ async def trigger_user_password_reset(
     admin_service: AdminService = Depends(),
 ) -> dict:
     try:
-        await admin_service.trigger_password_reset(user_id, actor=current_user.email, ip=_get_client_ip(request))
+        from app.core.url_resolver import resolve_frontend_url
+        frontend_url = resolve_frontend_url(request)
+        await admin_service.trigger_password_reset(
+            user_id,
+            actor=current_user.email,
+            ip=_get_client_ip(request),
+            frontend_url=frontend_url,
+        )
         return {
             "status": "success",
             "message": "Password reset instructions dispatched to the user's registered email address.",

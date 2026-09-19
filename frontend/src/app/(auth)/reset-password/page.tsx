@@ -2,17 +2,20 @@
 
 import React, { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
-import { Lock, KeyRound, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Lock, KeyRound } from "lucide-react";
 import toast from "react-hot-toast";
 import api, { getApiErrorMessage } from "@/lib/api";
 import GlassInput from "@/components/ui/GlassInput";
 import GlassButton from "@/components/ui/GlassButton";
 import GlassLoader from "@/components/ui/GlassLoader";
+import PasswordRequirementsChecklist, { usePasswordRules } from "@/components/auth/PasswordRequirementsChecklist";
+import ResetPasswordStatusCard from "@/components/auth/ResetPasswordStatusCard";
 
 interface VerifyData {
   valid: boolean;
   email?: string;
+  role?: string;
+  name?: string;
   message?: string;
 }
 
@@ -28,6 +31,8 @@ function ResetPasswordContent(): React.ReactElement {
   const [submitting, setSubmitting] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [errors, setErrors] = useState<{ password?: string; confirmPassword?: string }>({});
+
+  const { allPassed } = usePasswordRules(password);
 
   useEffect(() => {
     async function checkToken(): Promise<void> {
@@ -45,15 +50,20 @@ function ResetPasswordContent(): React.ReactElement {
         setVerifying(false);
       }
     }
-    checkToken();
+    void checkToken();
   }, [token]);
 
   function validate(): boolean {
     const errs: { password?: string; confirmPassword?: string } = {};
-    if (!password) errs.password = "New password is required";
-    else if (password.length < 8) errs.password = "Password must be at least 8 characters";
+    if (!password) {
+      errs.password = "New password is required";
+    } else if (!allPassed) {
+      errs.password = "Please satisfy all password security requirements";
+    }
 
-    if (password !== confirmPassword) {
+    if (!confirmPassword) {
+      errs.confirmPassword = "Confirm password is required";
+    } else if (password !== confirmPassword) {
       errs.confirmPassword = "Passwords do not match";
     }
     setErrors(errs);
@@ -86,53 +96,23 @@ function ResetPasswordContent(): React.ReactElement {
   }
 
   if (!tokenData?.valid) {
-    return (
-      <div className="rounded-2xl border border-border bg-card p-7 text-center space-y-5 shadow-sm">
-        <div className="inline-flex p-3 rounded-full bg-red-50 border border-red-200 text-red-600">
-          <AlertCircle size={32} />
-        </div>
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">Invalid or Expired Link</h2>
-          <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
-            {tokenData?.message || "This password reset link has expired or has already been used."}
-          </p>
-        </div>
-        <Link href="/forgot-password" className="inline-block">
-          <GlassButton variant="secondary" size="sm">Request New Link</GlassButton>
-        </Link>
-      </div>
-    );
+    return <ResetPasswordStatusCard status="invalid" message={tokenData?.message} />;
   }
 
   if (completed) {
-    return (
-      <div className="rounded-2xl border border-border bg-card p-7 text-center space-y-5 shadow-sm">
-        <div className="inline-flex p-3 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600">
-          <CheckCircle2 size={32} />
-        </div>
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">Password Updated!</h2>
-          <p className="text-xs text-muted-foreground mt-1.5">
-            Your new password is now active. Redirecting to sign in...
-          </p>
-        </div>
-        <Link href="/login" className="inline-block">
-          <GlassButton variant="primary" size="sm">Go to Login</GlassButton>
-        </Link>
-      </div>
-    );
+    return <ResetPasswordStatusCard status="completed" />;
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-2xl border border-border bg-card p-7 space-y-5 shadow-sm">
+    <form onSubmit={handleSubmit} className="rounded-2xl border border-border bg-card p-7 space-y-4 shadow-sm">
       <div className="space-y-1">
         <h2 className="text-base font-semibold text-foreground">Choose New Password</h2>
         <p className="text-xs text-muted-foreground">
-          Resetting password for <strong className="text-foreground">{tokenData.email}</strong>
+          {tokenData.name ? `Resetting password for ${tokenData.name} (${tokenData.email})` : `Resetting password for ${tokenData.email}`}
         </p>
       </div>
 
-      <div className="space-y-3.5">
+      <div className="space-y-3">
         <GlassInput
           label="New Password"
           type="password"
@@ -143,6 +123,8 @@ function ResetPasswordContent(): React.ReactElement {
           icon={<Lock size={15} />}
           autoComplete="new-password"
         />
+
+        <PasswordRequirementsChecklist password={password} />
 
         <GlassInput
           label="Confirm New Password"

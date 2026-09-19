@@ -138,6 +138,8 @@ async def request_device_change(
     return {"status": "success", "message": "Device change request submitted successfully."}
 
 
+from app.core.url_resolver import resolve_frontend_url
+
 @router.post("/forgot-password", status_code=status.HTTP_200_OK)
 async def forgot_password(
     data: ForgotPasswordRequest,
@@ -145,7 +147,8 @@ async def forgot_password(
     auth_service: AuthService = Depends(),
 ) -> dict:
     await _rate_limit(request)
-    await auth_service.request_password_reset(data.email)
+    frontend_url = resolve_frontend_url(request)
+    await auth_service.request_password_reset(data.email, frontend_url=frontend_url)
     return {"status": "success", "message": "If the email is registered, a password reset link has been dispatched."}
 
 

@@ -7,6 +7,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from app.core.config import settings
 from app.core.logging_config import get_logger
+from app.core.url_resolver import resolve_frontend_url
 
 logger = get_logger("app.services.email")
 
@@ -20,8 +21,18 @@ _jinja_env = Environment(
 
 class EmailService:
     @staticmethod
-    async def send_email(to_email: str, subject: str, template_name: str, context: Dict[str, Any]) -> bool:
-        if not settings.SMTP_HOST or not settings.SMTP_USER or not settings.SMTP_PASSWORD:
+    async def send_email(
+        to_email: str,
+        subject: str,
+        template_name: str,
+        context: Dict[str, Any],
+        frontend_url: Optional[str] = None,
+    ) -> bool:
+        active_frontend_url = frontend_url or resolve_frontend_url()
+        smtp_user = (settings.SMTP_USER or "").strip()
+        smtp_password = (settings.SMTP_PASSWORD or "").strip()
+
+        if not settings.SMTP_HOST or not smtp_user or not smtp_password:
             logger.warning("SMTP not configured. Skipping email to %s (subject: %s)", to_email, subject)
             return False
 
@@ -29,7 +40,7 @@ class EmailService:
             template = _jinja_env.get_template(template_name)
             merged_context = {
                 "system_name": settings.PROJECT_NAME,
-                "frontend_url": settings.FRONTEND_URL,
+                "frontend_url": active_frontend_url,
                 "subject": subject,
                 **context,
             }
@@ -41,18 +52,22 @@ class EmailService:
             message["Subject"] = subject
 
             # Plaintext fallback
-            plain_fallback = f"{subject}\n\nPlease view this email in an HTML-compatible client.\n{settings.FRONTEND_URL}"
+            plain_fallback = f"{subject}\n\nPlease view this email in an HTML-compatible client.\n{active_frontend_url}"
             message.attach(MIMEText(plain_fallback, "plain", "utf-8"))
             message.attach(MIMEText(html_content, "html", "utf-8"))
+
+            is_ssl_port = settings.SMTP_PORT == 465
+            use_ssl = is_ssl_port or settings.SMTP_SSL
+            start_tls = settings.SMTP_TLS and not use_ssl
 
             await aiosmtplib.send(
                 message,
                 hostname=settings.SMTP_HOST,
                 port=settings.SMTP_PORT,
-                username=settings.SMTP_USER,
-                password=settings.SMTP_PASSWORD,
-                start_tls=settings.SMTP_TLS,
-                use_tls=settings.SMTP_SSL,
+                username=smtp_user,
+                password=smtp_password,
+                start_tls=start_tls,
+                use_tls=use_ssl,
                 timeout=15.0,
             )
             logger.info("Email sent successfully: recipient=%s subject='%s'", to_email, subject)
@@ -70,14 +85,21 @@ class EmailService:
         identifier_label: Optional[str] = None,
         identifier_value: Optional[str] = None,
         temp_password: Optional[str] = None,
+        frontend_url: Optional[str] = None,
     ) -> bool:
-        invite_url = f"{settings.FRONTEND_URL}/onboarding?token={invite_token}" if invite_token else f"{settings.FRONTEND_URL}/login"
-        login_url = f"{settings.FRONTEND_URL}/login"
+        base_url = frontend_url or resolve_frontend_url()
+        invite_url = f"{base_url}/onboarding?token={invite_token}" if invite_token else f"{base_url}/login"
+        login_url = f"{base_url}/login"
         role_display = "Student" if role == "STUDENT" else ("Teacher" if role == "TEACHER" else "Administrator")
+
+        if settings.ENVIRONMENT != "production":
+            logger.info("DEV MODE - Invitation link for %s: %s (temp password: %s)", to_email, invite_url, temp_password)
+
         return await self.send_email(
             to_email=to_email,
             subject=f"Welcome to {settings.PROJECT_NAME} - Your Account Credentials",
             template_name="user_invite.html",
+            frontend_url=base_url,
             context={
                 "recipient_name": recipient_name,
                 "role_title": role_display,
@@ -91,13 +113,24 @@ class EmailService:
             },
         )
 
+    async def send_password_reset_email(
+        self,
+        to_email: str,
+        recipient_name: str,
+        reset_token: str,
+        frontend_url: Optional[str] = None,
+    ) -> bool:
+        base_url = frontend_url or resolve_frontend_url()
+        reset_url = f"{base_url}/reset-password?token={reset_token}"
 
-    async def send_password_reset_email(self, to_email: str, recipient_name: str, reset_token: str) -> bool:
-        reset_url = f"{settings.FRONTEND_URL}/reset-password?token={reset_token}"
+        if settings.ENVIRONMENT != "production":
+            logger.info("DEV MODE - Password reset link for %s: %s", to_email, reset_url)
+
         return await self.send_email(
             to_email=to_email,
             subject=f"Reset Your Password - {settings.PROJECT_NAME}",
             template_name="password_reset.html",
+            frontend_url=base_url,
             context={
                 "recipient_name": recipient_name,
                 "email": to_email,

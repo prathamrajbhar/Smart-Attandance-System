@@ -125,8 +125,9 @@ class AuthService:
         logger.info("Onboarding completed successfully: user_id=%s email=%s", user_id, data.get("email"))
         return True
 
-    async def request_password_reset(self, email: str) -> bool:
-        user = await self.user_repo.get_by_email(email)
+    async def request_password_reset(self, email: str, frontend_url: Optional[str] = None) -> bool:
+        clean_email = email.strip().lower()
+        user = await self.user_repo.get_by_email(clean_email)
         if not user:
             # Avoid leaking user existence, return True
             return True
@@ -140,14 +141,21 @@ class AuthService:
             tc = await db.teacher.find_unique(where={"userId": user.id})
             if tc and tc.firstName:
                 name = f"{tc.firstName} {tc.lastName or ''}".strip()
+        elif user.role == "ADMIN":
+            name = "Administrator"
 
         token = secrets.token_urlsafe(32)
         ttl = settings.RESET_TOKEN_EXPIRE_MINUTES * 60
-        payload = {"user_id": user.id, "email": user.email}
+        payload = {"user_id": user.id, "email": user.email, "role": user.role, "name": name}
         redis = get_redis()
         await redis.setex(f"reset:{token}", ttl, json.dumps(payload))
 
-        await email_service.send_password_reset_email(to_email=user.email, recipient_name=name, reset_token=token)
+        await email_service.send_password_reset_email(
+            to_email=user.email,
+            recipient_name=name,
+            reset_token=token,
+            frontend_url=frontend_url,
+        )
         return True
 
     async def verify_reset_token(self, token: str) -> Optional[Dict[str, Any]]:
@@ -166,7 +174,7 @@ class AuthService:
         hashed = hash_password(new_password)
         await db.user.update(
             where={"id": user_id},
-            data={"hashedPassword": hashed},
+            data={"hashedPassword": hashed, "mustChangePassword": False},
         )
         redis = get_redis()
         await redis.delete(f"reset:{token}")

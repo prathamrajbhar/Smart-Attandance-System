@@ -43,8 +43,9 @@ export default function LoginPage(): React.ReactElement {
     if (!validate()) return;
 
     setLoading(true);
+    const cleanEmail = email.trim().toLowerCase();
     try {
-      const { data: tokenData } = await api.post<TokenResponse>("/auth/login", { email, password });
+      const { data: tokenData } = await api.post<TokenResponse>("/auth/login", { email: cleanEmail, password });
       const { data: profile } = await api.get<UserProfile>("/auth/me", {
         headers: { Authorization: `Bearer ${tokenData.access_token}` },
       });

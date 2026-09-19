@@ -97,9 +97,50 @@ class AdminService:
             semester=student.semester, batch=student.batch,
         )
 
-    async def get_all_students(self) -> List[StudentResponse]:
-        students = await db.student.find_many(include={"user": True, "department": True})
-        return [
+    async def get_all_students(
+        self,
+        page: int = 1,
+        page_size: int = 10,
+        sort_by: Optional[str] = None,
+        sort_order: str = "asc",
+        q: Optional[str] = None,
+        department_id: Optional[str] = None,
+    ) -> dict:
+        where: dict = {}
+        if department_id and department_id != "all":
+            where["departmentId"] = department_id
+
+        if q and q.strip():
+            query_str = q.strip()
+            where["OR"] = [
+                {"firstName": {"contains": query_str, "mode": "insensitive"}},
+                {"lastName": {"contains": query_str, "mode": "insensitive"}},
+                {"enrollmentNumber": {"contains": query_str, "mode": "insensitive"}},
+                {"user": {"is": {"email": {"contains": query_str, "mode": "insensitive"}}}},
+            ]
+
+        # Whitelist safe order columns
+        allowed_sorts = {
+            "first_name": "firstName",
+            "last_name": "lastName",
+            "enrollment_number": "enrollmentNumber",
+            "created_at": "createdAt",
+            "semester": "semester",
+        }
+        order_col = allowed_sorts.get(sort_by, "createdAt")
+        order_dir = "desc" if sort_order.lower() == "desc" else "asc"
+        order = {order_col: order_dir}
+
+        total_items = await db.student.count(where=where)
+        skip = (page - 1) * page_size
+        students = await db.student.find_many(
+            where=where,
+            include={"user": True, "department": True},
+            skip=skip,
+            take=page_size,
+            order=order,
+        )
+        items = [
             StudentResponse(
                 id=s.id, user_id=s.userId, enrollment_number=s.enrollmentNumber,
                 email=s.user.email if s.user else "", first_name=s.firstName,
@@ -110,6 +151,17 @@ class AdminService:
             )
             for s in students
         ]
+        total_pages = max(1, (total_items + page_size - 1) // page_size) if total_items > 0 else 1
+        return {
+            "items": items,
+            "page": page,
+            "page_size": page_size,
+            "total_items": total_items,
+            "total_pages": total_pages,
+            "has_next": page < total_pages,
+            "has_prev": page > 1,
+        }
+
 
     async def update_student(self, id: str, data: dict, actor: str = "system", ip: Optional[str] = None) -> StudentResponse:
         mapping = {
@@ -195,9 +247,50 @@ class AdminService:
             joining_date=teacher.joiningDate,
         )
 
-    async def get_all_teachers(self) -> List[TeacherResponse]:
-        teachers = await db.teacher.find_many(include={"user": True, "department": True, "designation": True})
-        return [
+    async def get_all_teachers(
+        self,
+        page: int = 1,
+        page_size: int = 10,
+        sort_by: Optional[str] = None,
+        sort_order: str = "asc",
+        q: Optional[str] = None,
+        department_id: Optional[str] = None,
+    ) -> dict:
+        where: dict = {}
+        if department_id and department_id != "all":
+            where["departmentId"] = department_id
+
+        if q and q.strip():
+            query_str = q.strip()
+            where["OR"] = [
+                {"firstName": {"contains": query_str, "mode": "insensitive"}},
+                {"lastName": {"contains": query_str, "mode": "insensitive"}},
+                {"employeeId": {"contains": query_str, "mode": "insensitive"}},
+                {"user": {"is": {"email": {"contains": query_str, "mode": "insensitive"}}}},
+            ]
+
+        # Whitelist safe order columns
+        allowed_sorts = {
+            "first_name": "firstName",
+            "last_name": "lastName",
+            "employee_id": "employeeId",
+            "created_at": "createdAt",
+            "experience_years": "experienceYears",
+        }
+        order_col = allowed_sorts.get(sort_by, "createdAt")
+        order_dir = "desc" if sort_order.lower() == "desc" else "asc"
+        order = {order_col: order_dir}
+
+        total_items = await db.teacher.count(where=where)
+        skip = (page - 1) * page_size
+        teachers = await db.teacher.find_many(
+            where=where,
+            include={"user": True, "department": True, "designation": True},
+            skip=skip,
+            take=page_size,
+            order=order,
+        )
+        items = [
             TeacherResponse(
                 id=t.id, user_id=t.userId, email=t.user.email if t.user else "",
                 employee_id=t.employeeId, first_name=t.firstName, last_name=t.lastName,
@@ -209,6 +302,17 @@ class AdminService:
             )
             for t in teachers
         ]
+        total_pages = max(1, (total_items + page_size - 1) // page_size) if total_items > 0 else 1
+        return {
+            "items": items,
+            "page": page,
+            "page_size": page_size,
+            "total_items": total_items,
+            "total_pages": total_pages,
+            "has_next": page < total_pages,
+            "has_prev": page > 1,
+        }
+
 
     async def update_teacher(self, id: str, data: dict, actor: str = "system", ip: Optional[str] = None) -> TeacherResponse:
         mapping = {
@@ -258,9 +362,47 @@ class AdminService:
             enrolled_student_ids=[e.studentId for e in cls.enrollments] if cls.enrollments else [],
         )
 
-    async def get_all_classes(self) -> List[ClassResponse]:
-        classes = await db.academicclass.find_many(include={"subject": True, "classroom": True, "enrollments": True})
-        return [
+    async def get_all_classes(
+        self,
+        page: int = 1,
+        page_size: int = 10,
+        sort_by: Optional[str] = None,
+        sort_order: str = "asc",
+        q: Optional[str] = None,
+        subject_id: Optional[str] = None,
+    ) -> dict:
+        where: dict = {}
+        if subject_id and subject_id != "all":
+            where["subjectId"] = subject_id
+
+        if q and q.strip():
+            query_str = q.strip()
+            where["OR"] = [
+                {"name": {"contains": query_str, "mode": "insensitive"}},
+                {"subject": {"is": {"name": {"contains": query_str, "mode": "insensitive"}}}},
+                {"subject": {"is": {"code": {"contains": query_str, "mode": "insensitive"}}}},
+            ]
+
+        # Whitelist safe order columns
+        allowed_sorts = {
+            "name": "name",
+            "created_at": "createdAt",
+            "semester": "semester",
+        }
+        order_col = allowed_sorts.get(sort_by, "createdAt")
+        order_dir = "desc" if sort_order.lower() == "desc" else "asc"
+        order = {order_col: order_dir}
+
+        total_items = await db.academicclass.count(where=where)
+        skip = (page - 1) * page_size
+        classes = await db.academicclass.find_many(
+            where=where,
+            include={"subject": True, "classroom": True, "enrollments": True},
+            skip=skip,
+            take=page_size,
+            order=order,
+        )
+        items = [
             ClassResponse(
                 id=c.id, name=c.name, subject_name=c.subject.name if c.subject else "",
                 subject_code=c.subject.code if c.subject else "", teacherId=c.teacherId,
@@ -271,6 +413,17 @@ class AdminService:
             )
             for c in classes
         ]
+        total_pages = max(1, (total_items + page_size - 1) // page_size) if total_items > 0 else 1
+        return {
+            "items": items,
+            "page": page,
+            "page_size": page_size,
+            "total_items": total_items,
+            "total_pages": total_pages,
+            "has_next": page < total_pages,
+            "has_prev": page > 1,
+        }
+
 
     async def update_class(self, class_id: str, data: dict, actor: str = "system", ip: Optional[str] = None) -> ClassResponse:
         renames = {"subject_id": "subjectId", "classroom_id": "classroomId", "teacher_id": "teacherId"}
@@ -412,8 +565,57 @@ class AdminService:
 
     # --- Misc ---
 
-    async def get_audit_logs(self) -> List[AuditLog]:
-        return await db.auditlog.find_many(order={"timestamp": "desc"})
+    async def get_audit_logs(
+        self,
+        page: int = 1,
+        page_size: int = 20,
+        sort_by: Optional[str] = None,
+        sort_order: str = "desc",
+        q: Optional[str] = None,
+        severity: Optional[str] = None,
+    ) -> dict:
+        where: dict = {}
+        if severity and severity != "all":
+            where["severity"] = severity.upper()
+
+        if q and q.strip():
+            query_str = q.strip()
+            where["OR"] = [
+                {"eventType": {"contains": query_str, "mode": "insensitive"}},
+                {"actor": {"contains": query_str, "mode": "insensitive"}},
+                {"target": {"contains": query_str, "mode": "insensitive"}},
+                {"description": {"contains": query_str, "mode": "insensitive"}},
+            ]
+
+        allowed_sorts = {
+            "timestamp": "timestamp",
+            "event_type": "eventType",
+            "severity": "severity",
+            "actor": "actor",
+        }
+        order_col = allowed_sorts.get(sort_by, "timestamp")
+        order_dir = "asc" if sort_order.lower() == "asc" else "desc"
+        order = {order_col: order_dir}
+
+        total_items = await db.auditlog.count(where=where)
+        skip = (page - 1) * page_size
+        logs = await db.auditlog.find_many(
+            where=where,
+            skip=skip,
+            take=page_size,
+            order=order,
+        )
+        total_pages = max(1, (total_items + page_size - 1) // page_size) if total_items > 0 else 1
+        return {
+            "items": logs,
+            "page": page,
+            "page_size": page_size,
+            "total_items": total_items,
+            "total_pages": total_pages,
+            "has_next": page < total_pages,
+            "has_prev": page > 1,
+        }
+
 
     async def get_stats(self) -> dict:
         return {
@@ -430,4 +632,157 @@ class AdminService:
         from app.services.auth_service import AuthService
         await AuthService().request_password_reset(user.email)
         await self._log_action("TRIGGER_PASSWORD_RESET", "INFO", actor, user_id, f"Dispatched password reset email for {user.email}", ip)
+
+    async def bulk_create_students(
+        self,
+        students: list,
+        actor: str = "system",
+        ip: Optional[str] = None,
+    ) -> dict:
+        from app.core.security import generate_temporary_password
+
+        imported_count = 0
+        failed_count = 0
+        errors = []
+
+        for idx, item in enumerate(students):
+            try:
+                existing_user = await db.user.find_unique(where={"email": item.email})
+                if existing_user:
+                    errors.append(f"Row {idx + 1}: Email '{item.email}' already registered.")
+                    failed_count += 1
+                    continue
+
+                existing_student = await db.student.find_unique(where={"enrollmentNumber": item.enrollment_number})
+                if existing_student:
+                    errors.append(f"Row {idx + 1}: Enrollment '{item.enrollment_number}' already exists.")
+                    failed_count += 1
+                    continue
+
+                plain_password = generate_temporary_password()
+                user = await db.user.create(data={
+                    "email": item.email,
+                    "hashedPassword": hash_password(plain_password),
+                    "role": "STUDENT",
+                    "mustChangePassword": True,
+                })
+                await db.student.create(
+                    data={k: v for k, v in {
+                        "userId": user.id,
+                        "enrollmentNumber": item.enrollment_number,
+                        "firstName": item.first_name,
+                        "lastName": item.last_name,
+                        "phone": item.phone,
+                        "semester": item.semester,
+                        "batch": item.batch,
+                        "departmentId": item.department_id,
+                    }.items() if v is not None}
+                )
+                imported_count += 1
+            except Exception as e:
+                errors.append(f"Row {idx + 1} ({item.email}): {str(e)}")
+                failed_count += 1
+
+        if imported_count > 0:
+            await self._log_action(
+                "BULK_IMPORT_STUDENTS",
+                "INFO",
+                actor,
+                "SYSTEM",
+                f"Bulk imported {imported_count} students ({failed_count} failed)",
+                ip,
+            )
+
+        return {
+            "imported_count": imported_count,
+            "failed_count": failed_count,
+            "errors": errors,
+        }
+
+    async def bulk_create_teachers(
+        self,
+        teachers: list,
+        actor: str = "system",
+        ip: Optional[str] = None,
+    ) -> dict:
+        from app.core.security import generate_temporary_password
+
+        imported_count = 0
+        failed_count = 0
+        errors = []
+
+        for idx, item in enumerate(teachers):
+            try:
+                existing_user = await db.user.find_unique(where={"email": item.email})
+                if existing_user:
+                    errors.append(f"Row {idx + 1}: Email '{item.email}' already registered.")
+                    failed_count += 1
+                    continue
+
+                existing_teacher = await db.teacher.find_unique(where={"employeeId": item.employee_id})
+                if existing_teacher:
+                    errors.append(f"Row {idx + 1}: Employee ID '{item.employee_id}' already exists.")
+                    failed_count += 1
+                    continue
+
+                plain_password = generate_temporary_password()
+                user = await db.user.create(data={
+                    "email": item.email,
+                    "hashedPassword": hash_password(plain_password),
+                    "role": "TEACHER",
+                    "mustChangePassword": True,
+                })
+                await db.teacher.create(
+                    data={k: v for k, v in {
+                        "userId": user.id,
+                        "employeeId": item.employee_id,
+                        "firstName": item.first_name,
+                        "lastName": item.last_name,
+                        "phone": item.phone,
+                        "departmentId": item.department_id,
+                        "designationId": item.designation_id,
+                    }.items() if v is not None}
+                )
+                imported_count += 1
+            except Exception as e:
+                errors.append(f"Row {idx + 1} ({item.email}): {str(e)}")
+                failed_count += 1
+
+        if imported_count > 0:
+            await self._log_action(
+                "BULK_IMPORT_TEACHERS",
+                "INFO",
+                actor,
+                "SYSTEM",
+                f"Bulk imported {imported_count} faculty ({failed_count} failed)",
+                ip,
+            )
+
+        return {
+            "imported_count": imported_count,
+            "failed_count": failed_count,
+            "errors": errors,
+        }
+
+    async def export_audit_logs_csv(self) -> str:
+        import io
+        import csv
+
+        logs = await db.auditlog.find_many(order={"timestamp": "desc"}, take=1000)
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(["ID", "Timestamp", "Event Type", "Severity", "Actor", "Target", "Description", "IP Address"])
+        for l in logs:
+            writer.writerow([
+                l.id,
+                l.timestamp.isoformat() if l.timestamp else "",
+                l.eventType,
+                l.severity,
+                l.actor,
+                l.target,
+                l.description,
+                l.ipAddress or "",
+            ])
+        return output.getvalue()
+
 

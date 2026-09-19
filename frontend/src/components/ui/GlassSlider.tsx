@@ -1,8 +1,9 @@
 "use client";
 
 import React from "react";
+import { cn } from "@/lib/utils";
 
-interface GlassSliderProps {
+export interface GlassSliderProps {
   label?: string;
   min: number;
   max: number;
@@ -10,6 +11,7 @@ interface GlassSliderProps {
   value: number;
   onChange: (value: number) => void;
   unit?: string;
+  className?: string;
 }
 
 export default function GlassSlider({
@@ -20,15 +22,16 @@ export default function GlassSlider({
   value,
   onChange,
   unit = "",
+  className = "",
 }: GlassSliderProps): React.ReactElement {
   const percent = ((value - min) / (max - min)) * 100;
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className={cn("flex flex-col gap-2 w-full", className)}>
       {label && (
-        <div className="flex items-center justify-between">
-          <label className="text-sm font-medium text-slate-300">{label}</label>
-          <span className="text-sm font-semibold text-slate-300">
+        <div className="flex items-center justify-between text-xs font-medium">
+          <label className="text-foreground">{label}</label>
+          <span className="font-semibold text-foreground">
             {value}
             {unit}
           </span>
@@ -42,13 +45,13 @@ export default function GlassSlider({
           step={step}
           value={value}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full h-2 rounded-full appearance-none cursor-pointer"
+          className="w-full h-2 rounded-full appearance-none cursor-pointer bg-secondary"
           style={{
-            background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${percent}%, rgba(255,255,255,0.08) ${percent}%, rgba(255,255,255,0.08) 100%)`,
+            background: `linear-gradient(to right, #0f172a 0%, #0f172a ${percent}%, #e2e8f0 ${percent}%, #e2e8f0 100%)`,
           }}
         />
       </div>
-      <div className="flex justify-between text-xs text-slate-600">
+      <div className="flex justify-between text-[11px] text-muted-foreground">
         <span>{min}{unit}</span>
         <span>{max}{unit}</span>
       </div>

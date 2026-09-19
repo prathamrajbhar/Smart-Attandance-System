@@ -96,22 +96,22 @@ export default function GeofenceControls({
   };
 
   return (
-    <div className="space-y-6">
-      <GlassCard>
-        <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">
-          Geofence Settings
+    <div className="space-y-4">
+      <GlassCard padding="md">
+        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
+          Geofence Parameters
         </h3>
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/5">
-              <p className="text-[11px] text-slate-500 mb-0.5">Latitude</p>
-              <p className="text-sm font-mono text-emerald-400 font-medium">
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="p-2 rounded-lg bg-secondary border border-border">
+              <p className="text-[10px] text-muted-foreground mb-0.5 font-medium">Latitude</p>
+              <p className="text-xs font-mono text-foreground font-semibold">
                 {lat.toFixed(6)}
               </p>
             </div>
-            <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/5">
-              <p className="text-[11px] text-slate-500 mb-0.5">Longitude</p>
-              <p className="text-sm font-mono text-emerald-400 font-medium">
+            <div className="p-2 rounded-lg bg-secondary border border-border">
+              <p className="text-[10px] text-muted-foreground mb-0.5 font-medium">Longitude</p>
+              <p className="text-xs font-mono text-foreground font-semibold">
                 {lng.toFixed(6)}
               </p>
             </div>
@@ -130,25 +130,25 @@ export default function GeofenceControls({
 
       <GlassButton
         variant="primary"
-        size="lg"
-        className="w-full bg-emerald-600 hover:bg-emerald-500 border-emerald-400/30 text-white font-medium"
+        size="md"
+        className="w-full font-medium"
         onClick={() => void handleSave()}
         loading={saving}
-        icon={<Save size={18} />}
+        icon={<Save size={16} />}
       >
         Save Geofence
       </GlassButton>
 
-      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.02] border border-white/5 text-slate-400 text-xs">
-        <Info size={14} className="text-emerald-400 shrink-0" />
-        <span>Click map or search a place to relocate geofence center</span>
+      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary/60 border border-border text-muted-foreground text-xs">
+        <Info size={14} className="text-emerald-600 shrink-0" />
+        <span>Click map or search a location to reposition geofence center</span>
       </div>
 
-      <GlassCard>
-        <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">
+      <GlassCard padding="md">
+        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
           Export Attendance
         </h3>
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           <GlassInput
             label="From Date (optional)"
             type="date"
@@ -162,14 +162,14 @@ export default function GeofenceControls({
             onChange={(e) => setToDate(e.target.value)}
           />
           <GlassButton
-            variant="ghost"
-            size="md"
-            className="w-full mt-2"
-            icon={<Download size={16} />}
+            variant="secondary"
+            size="sm"
+            className="w-full mt-1"
+            icon={<Download size={14} />}
             loading={exporting}
             onClick={() => void handleExportCsv()}
           >
-            Export CSV
+            Export Attendance CSV
           </GlassButton>
         </div>
       </GlassCard>

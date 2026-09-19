@@ -3,12 +3,14 @@
 import React from "react";
 import { Inbox } from "lucide-react";
 import GlassButton from "./GlassButton";
+import { cn } from "@/lib/utils";
 
-interface GlassEmptyStateProps {
+export interface GlassEmptyStateProps {
   title?: string;
   message?: string;
   actionLabel?: string;
   onAction?: () => void;
+  className?: string;
 }
 
 export default function GlassEmptyState({
@@ -16,14 +18,21 @@ export default function GlassEmptyState({
   message = "There is nothing to display right now.",
   actionLabel,
   onAction,
+  className = "",
 }: GlassEmptyStateProps): React.ReactElement {
   return (
-    <div className="glass-panel-static p-16 text-center animate-fade-in-up">
-      <Inbox size={48} className="text-slate-600 mx-auto mb-4" />
-      <h3 className="text-lg font-semibold text-slate-300 mb-2">{title}</h3>
-      <p className="text-sm text-slate-500 mb-6 max-w-sm mx-auto">{message}</p>
+    <div className={cn("rounded-xl border border-border bg-card p-12 text-center shadow-sm", className)}>
+      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-muted-foreground">
+        <Inbox size={24} />
+      </div>
+      <h3 className="text-base font-semibold text-foreground">{title}</h3>
+      <p className="mt-1 text-sm text-muted-foreground max-w-sm mx-auto">{message}</p>
       {actionLabel && onAction && (
-        <GlassButton variant="primary" onClick={onAction}>{actionLabel}</GlassButton>
+        <div className="mt-5">
+          <GlassButton variant="primary" size="sm" onClick={onAction}>
+            {actionLabel}
+          </GlassButton>
+        </div>
       )}
     </div>
   );

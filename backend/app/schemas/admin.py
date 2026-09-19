@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 
 class ClassCreate(BaseModel):
@@ -91,4 +91,40 @@ class AdminStatsResponse(BaseModel):
     studentCount: int
     teacherCount: int
     classCount: int
+
+
+class StudentBulkItem(BaseModel):
+    email: EmailStr
+    enrollment_number: str = Field(..., min_length=3, max_length=30)
+    first_name: str = Field(..., min_length=1, max_length=100)
+    last_name: str = Field(..., min_length=1, max_length=100)
+    department_id: Optional[str] = None
+    semester: Optional[int] = Field(None, ge=1, le=8)
+    batch: Optional[str] = Field(None, max_length=20)
+    phone: Optional[str] = None
+
+
+class StudentBulkCreateRequest(BaseModel):
+    students: list[StudentBulkItem] = Field(..., min_length=1, description="List of student records to ingest")
+
+
+class TeacherBulkItem(BaseModel):
+    email: EmailStr
+    employee_id: str = Field(..., min_length=3, max_length=30)
+    first_name: str = Field(..., min_length=1, max_length=100)
+    last_name: str = Field(..., min_length=1, max_length=100)
+    department_id: str
+    designation_id: str
+    phone: Optional[str] = None
+
+
+class TeacherBulkCreateRequest(BaseModel):
+    teachers: list[TeacherBulkItem] = Field(..., min_length=1, description="List of faculty records to ingest")
+
+
+class BulkImportResponse(BaseModel):
+    imported_count: int
+    failed_count: int
+    errors: list[str] = []
+
 

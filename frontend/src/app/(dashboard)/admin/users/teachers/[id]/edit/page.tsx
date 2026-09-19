@@ -9,9 +9,9 @@ import GlassBreadcrumb from "@/components/ui/GlassBreadcrumb";
 import GlassPageHeader from "@/components/ui/GlassPageHeader";
 import GlassCard from "@/components/ui/GlassCard";
 import GlassInput from "@/components/ui/GlassInput";
-import GlassSelect from "@/components/ui/GlassSelect";
 import GlassButton from "@/components/ui/GlassButton";
 import GlassLoader from "@/components/ui/GlassLoader";
+import EditTeacherFormFields from "./EditTeacherFormFields";
 import type { TeacherResponse, DepartmentResponse, DesignationResponse } from "@/types";
 
 export default function EditTeacherPage(): React.ReactElement {
@@ -114,18 +114,17 @@ export default function EditTeacherPage(): React.ReactElement {
       <GlassPageHeader title="Edit Teacher Profile" description="Update teacher personal and academic details." />
 
       <form onSubmit={handleSubmit} className="max-w-4xl space-y-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1 space-y-8">
-            <GlassCard className="!p-0 overflow-hidden relative">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-white/10 to-transparent"></div>
-              <div className="p-6 border-b border-white/5 bg-white/[0.01]">
-                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                  <User size={20} className="text-slate-300" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-1 space-y-6">
+            <GlassCard className="!p-0 overflow-hidden">
+              <div className="p-5 border-b border-border bg-muted/40">
+                <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+                  <User size={18} className="text-primary" />
                   Account Info
                 </h3>
-                <p className="text-sm text-slate-400 mt-1">Core system identifiers.</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Core system identifiers.</p>
               </div>
-              <div className="p-6 space-y-5">
+              <div className="p-5 space-y-4">
                 <GlassInput label="Email Address" value={teacher.email} disabled />
                 <GlassInput
                   label="Employee ID *"
@@ -137,68 +136,20 @@ export default function EditTeacherPage(): React.ReactElement {
           </div>
 
           <div className="lg:col-span-2">
-            <GlassCard className="!p-0 overflow-hidden relative h-full">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-white/10 to-transparent"></div>
-              <div className="p-6 border-b border-white/5 bg-white/[0.01]">
-                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                  <Briefcase size={20} className="text-slate-300" />
+            <GlassCard className="!p-0 overflow-hidden h-full">
+              <div className="p-5 border-b border-border bg-muted/40">
+                <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+                  <Briefcase size={18} className="text-primary" />
                   Professional Profile
                 </h3>
-                <p className="text-sm text-slate-400 mt-1">Personal and academic details.</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Personal and academic details.</p>
               </div>
-              <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <GlassInput
-              label="First Name *"
-              value={form.first_name ?? ""}
-              onChange={(e) => set("first_name", e.target.value)}
-            />
-            <GlassInput
-              label="Last Name *"
-              value={form.last_name ?? ""}
-              onChange={(e) => set("last_name", e.target.value)}
-            />
-            <GlassSelect
-              label="Department *"
-              options={[{ value: "", label: "— Select Department —" }, ...deptOptions]}
-              value={form.department_id ?? ""}
-              onChange={(v) => set("department_id", v)}
-            />
-            <GlassSelect
-              label="Designation *"
-              options={[{ value: "", label: "— Select Designation —" }, ...desigOptions]}
-              value={form.designation_id ?? ""}
-              onChange={(v) => set("designation_id", v)}
-            />
-            <GlassInput
-              label="Phone (optional)"
-              type="tel"
-              value={form.phone ?? ""}
-              onChange={(e) => set("phone", e.target.value)}
-            />
-            <GlassInput
-              label="Qualification (optional)"
-              value={form.qualification ?? ""}
-              onChange={(e) => set("qualification", e.target.value)}
-            />
-            <GlassInput
-              label="Specialization (optional)"
-              value={form.specialization ?? ""}
-              onChange={(e) => set("specialization", e.target.value)}
-            />
-            <GlassInput
-              label="Experience (Years)"
-              type="number"
-              min="0"
-              value={form.experience_years ?? ""}
-              onChange={(e) => set("experience_years", e.target.value)}
-            />
-            <GlassInput
-              label="Joining Date (optional)"
-              type="date"
-              value={form.joining_date ?? ""}
-              onChange={(e) => set("joining_date", e.target.value)}
-            />
-              </div>
+              <EditTeacherFormFields
+                form={form}
+                set={set}
+                deptOptions={deptOptions}
+                desigOptions={desigOptions}
+              />
             </GlassCard>
           </div>
         </div>

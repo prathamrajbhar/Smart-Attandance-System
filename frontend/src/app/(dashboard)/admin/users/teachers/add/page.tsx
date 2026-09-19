@@ -2,15 +2,15 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { User, Briefcase, PlusCircle, X } from "lucide-react";
+import { User, PlusCircle, X } from "lucide-react";
 import toast from "react-hot-toast";
 import api, { getApiErrorMessage } from "@/lib/api";
 import GlassBreadcrumb from "@/components/ui/GlassBreadcrumb";
 import GlassPageHeader from "@/components/ui/GlassPageHeader";
 import GlassCard from "@/components/ui/GlassCard";
 import GlassInput from "@/components/ui/GlassInput";
-import GlassSelect from "@/components/ui/GlassSelect";
 import GlassButton from "@/components/ui/GlassButton";
+import TeacherFormProfile from "./TeacherFormProfile";
 import type { TeacherCreate, DepartmentResponse, DesignationResponse } from "@/types";
 
 type FormErrors = Partial<Record<keyof TeacherCreate, string>>;
@@ -103,18 +103,17 @@ export default function AddTeacherPage(): React.ReactElement {
       />
 
       <form onSubmit={handleSubmit} className="max-w-4xl space-y-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1 space-y-8">
-            <GlassCard className="!p-0 overflow-hidden relative">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
-              <div className="p-6 border-b border-white/5 bg-white/[0.01]">
-                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                  <User size={20} className="text-slate-300" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-1 space-y-6">
+            <GlassCard className="!p-0 overflow-hidden">
+              <div className="p-5 border-b border-border bg-muted/40">
+                <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+                  <User size={18} className="text-primary" />
                   Account Info
                 </h3>
-                <p className="text-sm text-slate-400 mt-1">Core system credentials.</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Core system credentials.</p>
               </div>
-              <div className="p-6 space-y-5">
+              <div className="p-5 space-y-4">
                 <GlassInput
                   label="Email Address"
                   type="email"
@@ -130,98 +129,23 @@ export default function AddTeacherPage(): React.ReactElement {
                   onChange={(e) => set("employee_id", e.target.value)}
                   error={errors.employee_id}
                 />
-                <div className="p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-300 leading-relaxed">
+                <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200/60 text-xs text-blue-800 leading-relaxed">
                   🔒 A secure temporary password will be automatically generated and emailed to this teacher. They will be prompted to choose a new password upon first login.
                 </div>
               </div>
             </GlassCard>
           </div>
 
-          <div className="lg:col-span-2 space-y-8">
-            <GlassCard className="!p-0 overflow-hidden relative">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-500"></div>
-              <div className="p-6 border-b border-white/5 bg-white/[0.01]">
-                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                  <Briefcase size={20} className="text-slate-300" />
-                  Professional Profile
-                </h3>
-                <p className="text-sm text-slate-400 mt-1">Personal and academic details.</p>
-              </div>
-              <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <GlassInput
-              label="First Name"
-              placeholder="e.g. Ravi"
-              value={form.first_name}
-              onChange={(e) => set("first_name", e.target.value)}
-              error={errors.first_name}
+          <div className="lg:col-span-2">
+            <TeacherFormProfile
+              form={form}
+              errors={errors}
+              set={set}
+              deptOptions={deptOptions}
+              desigOptions={desigOptions}
             />
-            <GlassInput
-              label="Last Name"
-              placeholder="e.g. Shankar"
-              value={form.last_name}
-              onChange={(e) => set("last_name", e.target.value)}
-              error={errors.last_name}
-            />
-            <GlassInput
-              label="Phone (optional)"
-              type="tel"
-              placeholder="+91 98765 43210"
-              value={form.phone ?? ""}
-              onChange={(e) => set("phone", e.target.value || undefined)}
-            />
-            <GlassInput
-              label="Joining Date (optional)"
-              type="date"
-              value={form.joining_date ?? ""}
-              onChange={(e) => set("joining_date", e.target.value || undefined)}
-            />
-              </div>
-            </GlassCard>
-            
-            <GlassCard className="!p-0 overflow-hidden relative">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-pink-500"></div>
-              <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <GlassSelect
-              label="Department"
-              options={deptOptions}
-              value={form.department_id}
-              onChange={(v) => set("department_id", v)}
-              error={errors.department_id}
-            />
-            <GlassSelect
-              label="Designation"
-              options={desigOptions}
-              value={form.designation_id}
-              onChange={(v) => set("designation_id", v)}
-              error={errors.designation_id}
-            />
-            <GlassInput
-              label="Qualification (optional)"
-              placeholder="e.g. Ph.D, M.Tech"
-              value={form.qualification ?? ""}
-              onChange={(e) => set("qualification", e.target.value || undefined)}
-            />
-            <GlassInput
-              label="Specialization (optional)"
-              placeholder="e.g. Machine Learning"
-              value={form.specialization ?? ""}
-              onChange={(e) => set("specialization", e.target.value || undefined)}
-            />
-            <div className="sm:col-span-2">
-              <GlassInput
-                label="Experience (years, optional)"
-                type="number"
-                placeholder="e.g. 5"
-                value={form.experience_years !== undefined ? String(form.experience_years) : ""}
-                onChange={(e) =>
-                  set("experience_years", e.target.value ? Number(e.target.value) : undefined)
-                }
-              />
-            </div>
-            </div>
-          </GlassCard>
+          </div>
         </div>
-      </div>
 
         <div className="flex justify-end gap-4 pt-4 pb-12">
           <GlassButton variant="ghost" type="button" onClick={() => router.back()} icon={<X size={16} />}>

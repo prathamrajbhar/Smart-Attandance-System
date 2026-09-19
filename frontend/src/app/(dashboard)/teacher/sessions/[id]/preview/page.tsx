@@ -158,13 +158,13 @@ export default function SessionPreviewPage(): React.ReactElement {
 
       <div className="mb-6 flex items-center justify-between gap-4 print:hidden">
         <div className="relative flex items-center flex-1 max-w-md">
-          <Search className="absolute left-4 text-slate-500 pointer-events-none" size={16} />
+          <Search className="absolute left-3 text-muted-foreground pointer-events-none" size={16} />
           <input
             type="text"
             placeholder="Search students by name, enrollment or email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="glass-input glass-input-with-icon pr-4 py-3 w-full text-sm text-slate-200 outline-none rounded-xl border border-white/10 placeholder-slate-500 focus:border-white/10/50"
+            className="glass-input pl-9 pr-4 py-2 w-full text-sm text-foreground outline-none rounded-xl border border-input bg-background placeholder:text-muted-foreground focus:ring-1 focus:ring-ring"
           />
         </div>
       </div>

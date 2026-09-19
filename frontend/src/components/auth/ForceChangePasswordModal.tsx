@@ -60,7 +60,7 @@ export default function ForceChangePasswordModal({
       await api.post("/auth/change-password", {
         new_password: newPassword,
       });
-      toast.success("Password set successfully! Welcome to your account.");
+      toast.success("Password updated successfully!");
       onSuccess();
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to update password."));
@@ -70,15 +70,15 @@ export default function ForceChangePasswordModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-      <div className="w-full max-w-md glass-panel-static p-6 sm:p-8 shadow-2xl relative z-10 border border-white/10 rounded-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl relative z-10">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-            <ShieldCheck size={24} />
+          <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-600">
+            <ShieldCheck size={22} />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-100 tracking-tight font-[Outfit]">Set Permanent Password</h2>
-            <p className="text-xs text-slate-400">Create a secure password to activate your account</p>
+            <h2 className="text-lg font-bold text-foreground font-[Outfit]">Set Permanent Password</h2>
+            <p className="text-xs text-muted-foreground">Create a secure password to activate your account</p>
           </div>
         </div>
 
@@ -90,21 +90,21 @@ export default function ForceChangePasswordModal({
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             error={errors.newPassword}
-            icon={<Lock size={16} className="text-slate-400" />}
+            icon={<Lock size={15} />}
             autoComplete="new-password"
           />
 
-          <div className="p-3 rounded-xl bg-slate-900/60 border border-white/5 space-y-2">
-            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Security Requirements</p>
-            <div className="grid grid-cols-1 gap-1.5">
+          <div className="p-3 rounded-lg bg-secondary/50 border border-border space-y-1.5">
+            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Security Requirements</p>
+            <div className="grid grid-cols-1 gap-1">
               {rules.map((rule) => (
                 <div key={rule.label} className="flex items-center gap-2 text-xs">
                   {rule.valid ? (
-                    <Check size={13} className="text-emerald-400 shrink-0" />
+                    <Check size={13} className="text-emerald-600 shrink-0" />
                   ) : (
-                    <X size={13} className="text-slate-500 shrink-0" />
+                    <X size={13} className="text-muted-foreground/60 shrink-0" />
                   )}
-                  <span className={rule.valid ? "text-emerald-300 font-medium" : "text-slate-400"}>
+                  <span className={rule.valid ? "text-emerald-700 font-medium" : "text-muted-foreground"}>
                     {rule.label}
                   </span>
                 </div>
@@ -119,7 +119,7 @@ export default function ForceChangePasswordModal({
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             error={errors.confirmPassword}
-            icon={<Lock size={16} className="text-slate-400" />}
+            icon={<Lock size={15} />}
             autoComplete="new-password"
           />
 
@@ -127,13 +127,13 @@ export default function ForceChangePasswordModal({
             <div className="flex items-center gap-1.5 text-xs px-1">
               {passwordsMatch ? (
                 <>
-                  <Check size={14} className="text-emerald-400" />
-                  <span className="text-emerald-400 font-medium">Passwords match</span>
+                  <Check size={14} className="text-emerald-600" />
+                  <span className="text-emerald-700 font-medium">Passwords match</span>
                 </>
               ) : (
                 <>
-                  <X size={14} className="text-rose-400" />
-                  <span className="text-rose-400">Passwords do not match</span>
+                  <X size={14} className="text-rose-600" />
+                  <span className="text-rose-600">Passwords do not match</span>
                 </>
               )}
             </div>
@@ -145,7 +145,7 @@ export default function ForceChangePasswordModal({
               variant="primary"
               size="lg"
               loading={loading}
-              className="w-full font-bold text-sm tracking-wider uppercase"
+              className="w-full"
               icon={<CheckCircle2 size={16} />}
             >
               Activate Account & Continue

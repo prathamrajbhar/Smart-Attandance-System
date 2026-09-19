@@ -44,67 +44,66 @@ export default function ForgotPasswordPage(): React.ReactElement {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute w-[350px] h-[350px] rounded-full bg-white/5 filter blur-[80px] -z-10 pointer-events-none" />
-      <div className="w-full max-w-md animate-fade-in-up relative z-10">
-        <div className="text-center mb-8">
-          <div className="inline-flex p-4 rounded-2xl bg-gradient-to-tr from-white/10 to-purple-500/10 border border-white/10 mb-5">
-            <KeyRound size={36} className="text-slate-300" />
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-6">
+          <div className="inline-flex p-3 rounded-xl bg-primary text-primary-foreground shadow-sm mb-3">
+            <KeyRound size={26} />
           </div>
-          <h1 className="text-3xl font-extrabold text-slate-100 tracking-tight font-[Outfit]">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground font-[Outfit]">
             Smart Attendance
           </h1>
-          <p className="text-xs text-slate-500 mt-2">Password Recovery</p>
+          <p className="text-xs text-muted-foreground mt-1">Password Recovery</p>
         </div>
 
         {submitted ? (
-          <div className="glass-panel-static p-8 text-center space-y-6">
-            <div className="inline-flex p-4 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-              <CheckCircle2 size={36} />
+          <div className="rounded-2xl border border-border bg-card p-7 text-center space-y-5 shadow-sm">
+            <div className="inline-flex p-3 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600">
+              <CheckCircle2 size={32} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-slate-100">Check Your Inbox</h2>
-              <p className="text-sm text-slate-400 mt-2">
-                If an account exists for <span className="text-slate-200 font-semibold">{email}</span>, you will receive a secure password reset link.
+              <h2 className="text-lg font-semibold text-foreground">Check Your Inbox</h2>
+              <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                If an account exists for <strong className="text-foreground">{email}</strong>, you will receive a secure reset link.
               </p>
             </div>
             <Link href="/login" className="inline-block">
-              <GlassButton variant="secondary">Back to Login</GlassButton>
+              <GlassButton variant="secondary" size="sm">Back to Login</GlassButton>
             </Link>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="glass-panel-static p-8 space-y-6 shadow-2xl">
+          <form onSubmit={handleSubmit} className="rounded-2xl border border-border bg-card p-7 space-y-5 shadow-sm">
             <div className="space-y-1">
-              <h2 className="text-lg font-bold text-slate-200 tracking-wide font-[Outfit]">Forgot Password?</h2>
-              <p className="text-xs text-slate-400">
-                Enter your registered email and we will dispatch a password reset link.
+              <h2 className="text-base font-semibold text-foreground">Forgot Password?</h2>
+              <p className="text-xs text-muted-foreground">
+                Enter your registered email and we will dispatch a reset link.
               </p>
             </div>
 
             <GlassInput
               label="Email Address"
               type="email"
-              placeholder="you@university.edu"
+              placeholder="name@university.edu"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               error={error}
-              icon={<Mail size={16} className="text-slate-400" />}
+              icon={<Mail size={15} />}
               autoComplete="email"
             />
 
-            <div className="pt-2 space-y-3">
+            <div className="pt-1 space-y-3">
               <GlassButton
                 type="submit"
                 variant="primary"
                 size="lg"
                 loading={loading}
-                className="w-full font-bold text-sm tracking-wider uppercase"
+                className="w-full font-medium"
               >
                 Send Reset Link
               </GlassButton>
 
-              <Link href="/login" className="flex items-center justify-center gap-1.5 text-xs text-slate-400 hover:text-slate-200 transition-colors pt-2">
-                <ArrowLeft size={14} /> Back to Sign In
+              <Link href="/login" className="flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors pt-1">
+                <ArrowLeft size={13} /> Back to Sign In
               </Link>
             </div>
           </form>

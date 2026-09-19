@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export interface TableColumn<T> {
   key: string;
@@ -10,13 +11,19 @@ export interface TableColumn<T> {
   sortable?: boolean;
 }
 
-interface GlassTableProps<T> {
+export interface GlassTableProps<T> {
   columns: TableColumn<T>[];
   data: T[];
   pageSize?: number;
   emptyMessage?: string;
   onRowClick?: (row: T) => void;
+  className?: string;
+  loading?: boolean;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  onSortChange?: (key: string) => void;
 }
+
 
 function sortByColumn<T extends Record<string, unknown>>(a: T, b: T, key: string, asc: boolean): number {
   const aVal = a[key];
@@ -32,68 +39,109 @@ export default function GlassTable<T extends Record<string, unknown>>({
   columns,
   data,
   pageSize = 10,
-  emptyMessage = "No data found",
+  emptyMessage = "No records found",
   onRowClick,
+  className = "",
+  loading = false,
+  sortBy,
+  sortOrder = "asc",
+  onSortChange,
 }: GlassTableProps<T>): React.ReactElement {
   const [page, setPage] = useState(0);
-  const [sortKey, setSortKey] = useState<string | null>(null);
-  const [sortAsc, setSortAsc] = useState(true);
+  const [internalSortKey, setInternalSortKey] = useState<string | null>(null);
+  const [internalSortAsc, setInternalSortAsc] = useState(true);
+
+  const activeSortKey = sortBy !== undefined ? sortBy : internalSortKey;
+  const isAsc = sortBy !== undefined ? sortOrder === "asc" : internalSortAsc;
 
   const sorted = useMemo(() => {
-    if (!sortKey) return data;
-    return [...data].sort((a, b) => sortByColumn(a, b, sortKey, sortAsc));
-  }, [data, sortKey, sortAsc]);
+    if (sortBy !== undefined) return data; // Server-sorted
+    if (!activeSortKey) return data;
+    return [...data].sort((a, b) => sortByColumn(a, b, activeSortKey, isAsc));
+  }, [data, activeSortKey, isAsc, sortBy]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
-  const paginated = sorted.slice(page * pageSize, (page + 1) * pageSize);
+  const paginated = sortBy !== undefined ? data : sorted.slice(page * pageSize, (page + 1) * pageSize);
 
   function handleSort(key: string): void {
-    if (sortKey === key) {
-      setSortAsc(!sortAsc);
+    if (onSortChange) {
+      onSortChange(key);
+      return;
+    }
+    if (internalSortKey === key) {
+      setInternalSortAsc(!internalSortAsc);
     } else {
-      setSortKey(key);
-      setSortAsc(true);
+      setInternalSortKey(key);
+      setInternalSortAsc(true);
     }
     setPage(0);
   }
 
+  if (loading) {
+    return (
+      <div className={cn("rounded-xl border border-border bg-card shadow-sm overflow-hidden", className)}>
+        <div className="p-4 space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-10 w-full rounded-lg bg-secondary/60 animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   if (data.length === 0) {
     return (
-      <div className="glass-panel-static p-12 text-center">
-        <p className="text-slate-500 text-sm">{emptyMessage}</p>
+      <div className={cn("rounded-xl border border-border bg-card p-12 text-center shadow-sm", className)}>
+        <p className="text-sm font-medium text-muted-foreground">{emptyMessage}</p>
       </div>
     );
   }
 
   return (
-    <div className="glass-panel-static overflow-hidden">
-      <div className="overflow-x-auto overflow-y-auto max-h-[420px]">
-        <table className="glass-table">
+    <div className={cn("rounded-xl border border-border bg-card shadow-sm overflow-hidden", className)}>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-sm border-collapse">
           <thead>
-            <tr>
-              {columns.map((col) => (
-                <th
-                  key={col.key}
-                  onClick={col.sortable ? () => handleSort(col.key) : undefined}
-                  className={`${col.sortable ? "cursor-pointer select-none hover:text-slate-300" : ""} sticky top-0 bg-[#080916]/95 backdrop-blur-md z-10`}
-                >
-                  <span className="flex items-center gap-1">
-                    {col.header}
-                    {col.sortable && <ArrowUpDown size={12} className="opacity-40" />}
-                  </span>
-                </th>
-              ))}
+            <tr className="border-b border-border bg-secondary/50">
+              {columns.map((col) => {
+                const isActive = activeSortKey === col.key;
+                return (
+                  <th
+                    key={col.key}
+                    onClick={col.sortable ? () => handleSort(col.key) : undefined}
+                    className={cn(
+                      "h-10 px-4 text-xs font-semibold tracking-wide select-none whitespace-nowrap",
+                      isActive ? "text-foreground font-bold" : "text-muted-foreground",
+                      col.sortable && "cursor-pointer hover:text-foreground"
+                    )}
+                  >
+                    <span className="inline-flex items-center gap-1.5">
+                      {col.header}
+                      {col.sortable && (
+                        isActive ? (
+                          isAsc ? <ArrowUp size={12} className="text-primary" /> : <ArrowDown size={12} className="text-primary" />
+                        ) : (
+                          <ArrowUpDown size={12} className="opacity-40" />
+                        )
+                      )}
+                    </span>
+                  </th>
+                );
+              })}
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-border">
             {paginated.map((row, i) => (
               <tr
                 key={i}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
-                className={onRowClick ? "cursor-pointer" : ""}
+                className={cn(
+                  "transition-colors hover:bg-muted/50",
+                  onRowClick && "cursor-pointer"
+                )}
               >
                 {columns.map((col) => (
-                  <td key={col.key}>
+                  <td key={col.key} className="p-4 text-sm text-foreground align-middle">
                     {col.render ? col.render(row) : (row[col.key] as React.ReactNode) ?? "—"}
                   </td>
                 ))}
@@ -103,26 +151,33 @@ export default function GlassTable<T extends Record<string, unknown>>({
         </table>
       </div>
 
+
       {totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-white/5">
-          <span className="text-xs text-slate-500">
-            {page * pageSize + 1}–{Math.min((page + 1) * pageSize, sorted.length)} of {sorted.length}
+        <div className="flex items-center justify-between border-t border-border px-4 py-3 bg-card text-xs text-muted-foreground">
+          <span>
+            Showing <strong className="font-semibold text-foreground">{page * pageSize + 1}</strong> to{" "}
+            <strong className="font-semibold text-foreground">
+              {Math.min((page + 1) * pageSize, sorted.length)}
+            </strong>{" "}
+            of <strong className="font-semibold text-foreground">{sorted.length}</strong> results
           </span>
           <div className="flex items-center gap-1">
             <button
               onClick={() => setPage(Math.max(0, page - 1))}
               disabled={page === 0}
-              className="glass-btn glass-btn-ghost glass-btn-sm"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-input bg-card text-foreground hover:bg-secondary disabled:pointer-events-none disabled:opacity-40 transition-colors"
+              aria-label="Previous page"
             >
               <ChevronLeft size={14} />
             </button>
-            <span className="text-xs text-slate-400 px-2">
+            <span className="px-2 font-medium text-foreground">
               {page + 1} / {totalPages}
             </span>
             <button
               onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
               disabled={page >= totalPages - 1}
-              className="glass-btn glass-btn-ghost glass-btn-sm"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-input bg-card text-foreground hover:bg-secondary disabled:pointer-events-none disabled:opacity-40 transition-colors"
+              aria-label="Next page"
             >
               <ChevronRight size={14} />
             </button>

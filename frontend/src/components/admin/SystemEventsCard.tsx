@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import { Clock } from "lucide-react";
-import GlassCard from "@/components/ui/GlassCard";
+import { Clock, ArrowRight, User, Network } from "lucide-react";
+import Link from "next/link";
 import type { AuditLogResponse } from "@/types";
 
 interface SystemEventsCardProps {
@@ -29,65 +29,84 @@ export default function SystemEventsCard({ events }: SystemEventsCardProps): Rea
   const displayEvents = events.slice(0, 5);
 
   return (
-    <GlassCard className="relative overflow-hidden" padding="none">
-      <div className="p-5 border-b border-white/[0.05] flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Clock size={16} className="text-emerald-400" />
-          <h3 className="text-sm font-extrabold text-slate-200 tracking-wide font-[Outfit] uppercase">Live Audit Stream</h3>
+    <div className="rounded-xl border border-border bg-card shadow-xs overflow-hidden flex flex-col justify-between">
+      <div className="p-4 sm:p-5 border-b border-border flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="p-1.5 rounded-lg bg-blue-50 border border-blue-100 text-blue-600">
+            <Clock size={16} />
+          </div>
+          <div>
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-[Outfit]">Live Audit Stream</h3>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Immutable security transactions & node state events</p>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block" />
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Live Sync</span>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span>LIVE SYNC</span>
+          </span>
         </div>
       </div>
 
-      <div className="p-5 space-y-4 relative">
-        <div className="absolute left-[33px] top-[25px] bottom-[25px] w-px bg-white/[0.06] pointer-events-none" />
-
+      <div className="p-4 sm:p-5 space-y-3 relative">
         {displayEvents.length === 0 ? (
-          <p className="text-xs text-slate-500 italic py-4 text-center">No recent audit events recorded.</p>
+          <p className="text-xs text-muted-foreground italic py-8 text-center">No recent audit events recorded.</p>
         ) : (
           displayEvents.map((evt) => {
             const isSuccess = evt.severity === "INFO" || evt.severity === "LOW";
             const isWarning = evt.severity === "WARNING" || evt.severity === "MEDIUM";
 
             return (
-              <div key={evt.id} className="flex gap-4 relative z-10 group">
-                <div className="flex items-center justify-center shrink-0">
-                  <div
-                    className={`w-3.5 h-3.5 rounded-full border-2 ${
-                      isSuccess
-                        ? "bg-emerald-500/20 border-emerald-500/50"
-                        : isWarning
-                        ? "bg-amber-500/20 border-amber-500/50"
-                        : "bg-rose-500/20 border-rose-500/50"
-                    } flex items-center justify-center`}
-                  >
-                    <div
-                      className={`w-1 h-1 rounded-full ${
-                        isSuccess ? "bg-emerald-400" : isWarning ? "bg-amber-400" : "bg-rose-400"
+              <div
+                key={evt.id}
+                className="p-3 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/60 transition-colors space-y-1.5"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span
+                      className={`w-2 h-2 rounded-full shrink-0 ${
+                        isSuccess ? "bg-emerald-500" : isWarning ? "bg-amber-500" : "bg-rose-500"
                       }`}
                     />
+                    <p className="text-xs font-bold text-foreground truncate uppercase tracking-tight">
+                      {((evt.eventType || (evt as { action?: string }).action) ?? "SYSTEM_EVENT").replace(/_/g, " ")}
+                    </p>
                   </div>
+                  <span className="text-[11px] font-medium text-muted-foreground shrink-0">
+                    {formatRelativeTime(evt.timestamp || (evt as { createdAt?: string }).createdAt || new Date().toISOString())}
+                  </span>
                 </div>
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-xs font-bold text-slate-200 group-hover:text-slate-100 transition-colors duration-200">
-                      {evt.eventType.replace(/_/g, " ")}
-                    </p>
-                    <span className="text-[10px] font-semibold text-slate-500 shrink-0 mt-0.5">
-                      {formatRelativeTime(evt.timestamp)}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-400 mt-0.5 leading-normal font-medium">{evt.description}</p>
-                  <p className="text-[9px] text-slate-600 mt-0.5 font-mono">Actor: {evt.actor}</p>
+                <p className="text-xs text-muted-foreground line-clamp-1">
+                  {evt.description ||
+                    ((evt as { details?: Record<string, unknown> }).details
+                      ? JSON.stringify((evt as { details?: Record<string, unknown> }).details)
+                      : "System activity log entry")}
+                </p>
+
+                <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-1 border-t border-border/40">
+                  <span className="flex items-center gap-1 font-mono truncate max-w-[200px]">
+                    <User size={11} className="text-slate-400" />
+                    {evt.actor || (evt as { performedBy?: string }).performedBy || "System"}
+                  </span>
+                  <span className="flex items-center gap-1 font-mono">
+                    <Network size={11} className="text-slate-400" />
+                    {evt.ip || "127.0.0.1"}
+                  </span>
                 </div>
               </div>
             );
           })
         )}
       </div>
-    </GlassCard>
+
+      <div className="px-5 py-3 border-t border-border bg-secondary/20 flex items-center justify-between text-[11px] text-muted-foreground">
+        <span>Displaying latest system telemetry</span>
+        <Link href="/admin/audit" className="text-primary hover:underline font-semibold inline-flex items-center gap-1">
+          <span>Full Audit Log</span>
+          <ArrowRight size={12} />
+        </Link>
+      </div>
+    </div>
   );
 }

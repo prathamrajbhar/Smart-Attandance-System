@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
+import { cn } from "@/lib/utils";
 
-interface GlassCardProps {
+export interface GlassCardProps {
   children: React.ReactNode;
   className?: string;
   hoverable?: boolean;
@@ -11,34 +12,33 @@ interface GlassCardProps {
   glowColor?: string;
 }
 
+const padMap: Record<"none" | "sm" | "md" | "lg", string> = {
+  none: "p-0",
+  sm: "p-4",
+  md: "p-6",
+  lg: "p-6 sm:p-8",
+};
+
 export default function GlassCard({
   children,
   className = "",
   hoverable = false,
   padding = "md",
   onClick,
-  glowColor,
 }: GlassCardProps): React.ReactElement {
-  const [isHovered, setIsHovered] = useState(false);
-  const padMap = { none: "p-0", sm: "p-4", md: "p-6", lg: "p-8" };
-
-  const glowStyle =
-    hoverable && isHovered && glowColor
-      ? { boxShadow: `0 24px 48px rgba(0, 0, 0, 0.8), 0 0 40px ${glowColor}20, inset 0 1px 0 0 rgba(255, 255, 255, 0.25)` }
-      : {};
-
   return (
     <div
-      className={`${hoverable ? "glass-panel" : "glass-panel-static"} ${padMap[padding]} ${
-        onClick ? "cursor-pointer" : ""
-      } ${className}`}
+      className={cn(
+        "rounded-xl border border-border bg-card text-card-foreground shadow-sm transition-all duration-200",
+        padMap[padding],
+        hoverable && "hover:border-slate-300 hover:shadow-md",
+        onClick && "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        className
+      )}
       onClick={onClick}
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}
       onKeyDown={onClick ? (e) => e.key === "Enter" && onClick() : undefined}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={glowStyle}
     >
       {children}
     </div>

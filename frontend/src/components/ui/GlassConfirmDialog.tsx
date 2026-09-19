@@ -3,8 +3,9 @@
 import React from "react";
 import { AlertTriangle } from "lucide-react";
 import GlassButton from "./GlassButton";
+import { cn } from "@/lib/utils";
 
-interface GlassConfirmDialogProps {
+export interface GlassConfirmDialogProps {
   isOpen: boolean;
   title: string;
   message: string;
@@ -28,22 +29,33 @@ export default function GlassConfirmDialog({
   if (!isOpen) return null;
 
   return (
-    <div className="overlay" onClick={onCancel}>
-      <div className="modal-panel max-w-md" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-start gap-4 mb-6">
-          <div className="p-2.5 rounded-xl bg-white/5">
-            <AlertTriangle size={22} className="text-slate-300" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm" onClick={onCancel}>
+      <div
+        className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start gap-3.5 mb-5">
+          <div className={cn(
+            "p-2.5 rounded-lg shrink-0",
+            variant === "danger" ? "bg-red-50 text-red-600 border border-red-100" : "bg-sky-50 text-sky-600 border border-sky-100"
+          )}>
+            <AlertTriangle size={20} />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-slate-100">{title}</h3>
-            <p className="text-sm text-slate-400 mt-1">{message}</p>
+            <h3 className="text-base font-semibold text-foreground">{title}</h3>
+            <p className="text-sm text-muted-foreground mt-1">{message}</p>
           </div>
         </div>
-        <div className="flex justify-end gap-3">
-          <GlassButton variant="ghost" onClick={onCancel} disabled={loading}>
+        <div className="flex justify-end gap-2 pt-2 border-t border-border">
+          <GlassButton variant="ghost" size="sm" onClick={onCancel} disabled={loading}>
             Cancel
           </GlassButton>
-          <GlassButton variant={variant === "danger" ? "danger" : "primary"} onClick={onConfirm} loading={loading}>
+          <GlassButton
+            variant={variant === "danger" ? "danger" : "primary"}
+            size="sm"
+            onClick={onConfirm}
+            loading={loading}
+          >
             {confirmLabel}
           </GlassButton>
         </div>

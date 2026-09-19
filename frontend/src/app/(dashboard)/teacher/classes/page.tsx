@@ -33,55 +33,55 @@ export default function TeacherClassesPage(): React.ReactElement {
     fetch();
   }, []);
 
-  if (loading) return <GlassLoader text="Loading your classes..." />;
+  if (loading) return <GlassLoader text="Loading your assigned classes..." />;
 
   return (
-    <div className="animate-fade-in-up space-y-8">
-      <GlassPageHeader title="My Classes" description="Manage class parameters and configure geofence details" />
+    <div className="space-y-6">
+      <GlassPageHeader title="My Classes" description="Manage academic rosters, lecture schedules, and geofence parameters" />
 
       {classes.length === 0 ? (
-        <GlassEmptyState title="No Classes Assigned" message="Contact your administrator to get assigned to classes." />
+        <GlassEmptyState title="No Classes Assigned" message="Contact your institution administrator to receive class assignments." />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {classes.map((cls) => (
             <GlassCard 
               key={cls.id} 
               hoverable 
-              padding="lg" 
-              className="group hover:border-white/10 transition-all duration-300 relative overflow-hidden flex flex-col justify-between h-full"
+              padding="md" 
+              className="bg-card flex flex-col justify-between h-full"
             >
               <div 
                 onClick={() => router.push(`/teacher/classes/${cls.id}`)}
                 className="cursor-pointer flex-grow"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="p-2.5 rounded-xl bg-white/5 text-slate-300 group-hover:bg-white/5 group-hover:text-indigo-400 transition-all">
-                    <BookOpen size={20} />
+                <div className="flex items-start justify-between mb-3">
+                  <div className="p-2 rounded-lg bg-secondary text-primary">
+                    <BookOpen size={18} />
                   </div>
                   {cls.geofence ? (
-                    <GlassBadge variant="success" className="font-semibold"><MapPin size={10} className="mr-1" /> Configured</GlassBadge>
+                    <GlassBadge variant="success"><MapPin size={10} className="mr-0.5" /> Geofence Active</GlassBadge>
                   ) : (
-                    <GlassBadge variant="neutral" className="font-semibold">No Geofence</GlassBadge>
+                    <GlassBadge variant="neutral">No Geofence</GlassBadge>
                   )}
                 </div>
                 
-                <h3 className="text-lg font-bold text-slate-100 mb-1 group-hover:text-indigo-300 transition-colors font-[Outfit] tracking-wide">{cls.name}</h3>
-                <p className="text-sm font-semibold text-slate-400 mb-4">{cls.subject}</p>
+                <h3 className="text-base font-bold text-foreground font-[Outfit] tracking-tight">{cls.name}</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">{cls.subject}</p>
               </div>
               
-              <div className="border-t border-white/5 pt-4">
-                <div className="flex items-center justify-between mb-4">
+              <div className="border-t border-border pt-3.5 mt-4">
+                <div className="flex items-center justify-between mb-3 text-xs">
                   {cls.geofence ? (
-                    <span className="text-xs font-semibold text-slate-500">
-                      Radius: <strong className="text-slate-300">{cls.geofence.radiusMeters}m</strong>
+                    <span className="text-muted-foreground font-medium">
+                      Radius: <strong className="text-foreground">{cls.geofence.radiusMeters}m</strong>
                     </span>
                   ) : (
-                    <span className="text-xs font-medium text-slate-600">Pending Setup</span>
+                    <span className="text-muted-foreground">Setup Required</span>
                   )}
                 </div>
                 <div className="flex gap-2">
                   <GlassButton
-                    variant="ghost"
+                    variant="secondary"
                     size="sm"
                     className="flex-1 text-xs"
                     onClick={() => router.push(`/teacher/classes/${cls.id}`)}
@@ -92,11 +92,11 @@ export default function TeacherClassesPage(): React.ReactElement {
                   <GlassButton
                     variant="primary"
                     size="sm"
-                    className="flex-1 text-xs text-white"
+                    className="flex-1 text-xs"
                     onClick={() => router.push(`/teacher/sessions?classId=${cls.id}`)}
                     icon={<Users size={12} />}
                   >
-                    Manual Attendance
+                    Attendance
                   </GlassButton>
                 </div>
               </div>

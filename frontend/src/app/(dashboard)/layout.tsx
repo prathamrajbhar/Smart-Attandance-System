@@ -33,23 +33,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (!isHydrated || !isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <GlassLoader text="Authenticating..." />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row">
+    <div className="min-h-screen flex flex-col md:flex-row bg-background text-foreground">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className="flex-1 md:ml-[302px] min-w-0 transition-all duration-300">
+      <div className="flex-1 md:ml-[260px] min-w-0 flex flex-col transition-all duration-200">
         <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
-        <main className="px-4 md:px-6 pb-6 lg:pb-8 animate-fade-in-up">
+        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 max-w-7xl w-full mx-auto">
           {children}
         </main>
       </div>
     </div>
   );
 }
-

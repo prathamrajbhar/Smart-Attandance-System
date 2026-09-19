@@ -79,36 +79,36 @@ export default function AnalyticsPage(): React.ReactElement {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <GlassCard>
-              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                <BarChart3 size={16} /> Attendance Trend
+            <GlassCard className="bg-card">
+              <h3 className="text-xs font-bold text-foreground uppercase tracking-wider mb-4 flex items-center gap-2 font-[Outfit]">
+                <BarChart3 size={16} className="text-emerald-600" /> Attendance Trend
               </h3>
               <ResponsiveContainer width="100%" height={280}>
                 <AreaChart data={trendData}>
                   <defs>
                     <linearGradient id="attendanceGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.25} />
                       <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                  <XAxis dataKey="session" stroke="#64748b" fontSize={12} />
-                  <YAxis stroke="#64748b" fontSize={12} domain={[0, 100]} />
-                  <Tooltip contentStyle={{ background: "rgba(15,23,42,0.95)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12 }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="session" stroke="#64748b" fontSize={11} />
+                  <YAxis stroke="#64748b" fontSize={11} domain={[0, 100]} />
+                  <Tooltip contentStyle={{ backgroundColor: "#ffffff", borderColor: "#e2e8f0", borderRadius: 8, fontSize: 12 }} />
                   <Area type="monotone" dataKey="attendance" stroke="#10b981" fill="url(#attendanceGrad)" strokeWidth={2} />
                 </AreaChart>
               </ResponsiveContainer>
             </GlassCard>
 
-            <GlassCard>
-              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Session Breakdown</h3>
+            <GlassCard className="bg-card">
+              <h3 className="text-xs font-bold text-foreground uppercase tracking-wider mb-4 font-[Outfit]">Session Breakdown</h3>
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={trendData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                  <XAxis dataKey="session" stroke="#64748b" fontSize={12} />
-                  <YAxis stroke="#64748b" fontSize={12} domain={[0, 100]} />
-                  <Tooltip contentStyle={{ background: "rgba(15,23,42,0.95)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12 }} />
-                  <Bar dataKey="attendance" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="session" stroke="#64748b" fontSize={11} />
+                  <YAxis stroke="#64748b" fontSize={11} domain={[0, 100]} />
+                  <Tooltip contentStyle={{ backgroundColor: "#ffffff", borderColor: "#e2e8f0", borderRadius: 8, fontSize: 12 }} />
+                  <Bar dataKey="attendance" fill="#0284c7" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </GlassCard>

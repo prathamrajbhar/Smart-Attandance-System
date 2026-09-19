@@ -1,66 +1,126 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Eye, Pencil } from "lucide-react";
-import Link from "next/link";
+import { Plus, Upload } from "lucide-react";
 import api from "@/lib/api";
-import GlassPageHeader from "@/components/ui/GlassPageHeader";
 import GlassBreadcrumb from "@/components/ui/GlassBreadcrumb";
-import GlassTable, { type TableColumn } from "@/components/ui/GlassTable";
-import GlassSearch from "@/components/ui/GlassSearch";
-import GlassButton from "@/components/ui/GlassButton";
-import GlassLoader from "@/components/ui/GlassLoader";
-import type { TeacherResponse } from "@/types";
+import GlassTable from "@/components/ui/GlassTable";
+import EnterpriseTableToolbar from "@/components/ui/EnterpriseTableToolbar";
+import EnterprisePagination from "@/components/ui/EnterprisePagination";
+import BulkImportModal from "@/components/admin/BulkImportModal";
+import { useTableQuery } from "@/hooks/useTableQuery";
+import { teacherColumns } from "./teacher-columns";
+import type { TeacherResponse, DepartmentResponse } from "@/types";
 
 export default function TeachersPage(): React.ReactElement {
   const router = useRouter();
-  const [teachers, setTeachers] = useState<TeacherResponse[]>([]);
-  const [filtered, setFiltered] = useState<TeacherResponse[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [departments, setDepartments] = useState<{ value: string; label: string }[]>([]);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
+
+  const {
+    data: teachers,
+    totalItems,
+    loading,
+    searchQuery,
+    currentPage,
+    pageSize,
+    sortBy,
+    sortOrder,
+    filterValue,
+    setSearchQuery,
+    setCurrentPage,
+    setPageSize,
+    handleSort,
+    setFilterValue,
+    refetch,
+  } = useTableQuery<TeacherResponse>({
+    endpoint: "/admin/users/teachers",
+    defaultPageSize: 10,
+    defaultSortBy: "created_at",
+    defaultSortOrder: "desc",
+  });
 
   useEffect(() => {
-    async function fetchTeachers(): Promise<void> {
+    async function loadDepartments(): Promise<void> {
       try {
-        const { data } = await api.get<TeacherResponse[]>("/admin/users/teachers");
-        setTeachers(data);
-        setFiltered(data);
-      } catch { setTeachers([]); setFiltered([]); }
-      finally { setLoading(false); }
+        const { data } = await api.get<DepartmentResponse[]>("/admin/departments");
+        setDepartments(data.map((d) => ({ value: d.id, label: d.name })));
+      } catch {
+        setDepartments([]);
+      }
     }
-    fetchTeachers();
+    void loadDepartments();
   }, []);
 
-  const handleSearch = useCallback((query: string) => {
-    if (!query.trim()) { setFiltered(teachers); return; }
-    const q = query.toLowerCase();
-    setFiltered(teachers.filter((t) => t.email.toLowerCase().includes(q) || t.department.toLowerCase().includes(q)));
-  }, [teachers]);
-
-  const columns: TableColumn<TeacherResponse & Record<string, unknown>>[] = [
-    { key: "email", header: "Email", sortable: true },
-    { key: "department", header: "Department", sortable: true },
-    { key: "designation", header: "Designation", sortable: true },
-    {
-      key: "actions", header: "Actions",
-      render: (row) => (
-        <div className="flex items-center gap-2">
-          <Link href={`/admin/users/teachers/${row.id}`} className="glass-btn glass-btn-ghost glass-btn-sm"><Eye size={14} /> View</Link>
-          <Link href={`/admin/users/teachers/${row.id}/edit`} className="glass-btn glass-btn-ghost glass-btn-sm"><Pencil size={14} /> Edit</Link>
-        </div>
-      ),
-    },
-  ];
-
-  if (loading) return <GlassLoader text="Loading teachers..." />;
-
   return (
-    <div className="animate-fade-in-up">
-      <GlassBreadcrumb items={[{ label: "Admin", href: "/admin/dashboard" }, { label: "Teachers" }]} />
-      <GlassPageHeader title="Teacher Directory" description={`${teachers.length} teachers registered`}
-        actions={<GlassButton variant="primary" icon={<Plus size={16} />} onClick={() => router.push("/admin/users/teachers/add")}>Add Teacher</GlassButton>} />
-      <div className="mb-6"><GlassSearch placeholder="Search by email or department..." onSearch={handleSearch} /></div>
-      <GlassTable columns={columns} data={filtered as (TeacherResponse & Record<string, unknown>)[]} emptyMessage="No teachers found" />
+    <div className="space-y-4 animate-fade-in-up">
+      <GlassBreadcrumb items={[{ label: "Admin", href: "/admin/dashboard" }, { label: "Users" }, { label: "Teachers" }]} />
+
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2 border-b border-border/60">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground font-[Outfit]">
+            Faculty & Staff Directory
+          </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Manage academic ranks, faculty profiles, and departmental assignments.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsBulkImportOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card text-xs font-medium text-foreground hover:bg-secondary transition-colors shadow-2xs"
+          >
+            <Upload size={13} /> Bulk Import
+          </button>
+          <button
+            onClick={() => router.push("/admin/users/teachers/add")}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-slate-800 transition-colors shadow-2xs"
+          >
+            <Plus size={14} /> Add Teacher
+          </button>
+        </div>
+      </div>
+
+      <EnterpriseTableToolbar
+        searchPlaceholder="Search by name, email, employee ID..."
+        searchValue={searchQuery}
+        onSearch={setSearchQuery}
+        filterLabel="Department"
+        filterOptions={departments}
+        selectedFilter={filterValue}
+        onFilterChange={setFilterValue}
+      />
+
+      <div className="rounded-xl border border-border bg-card shadow-2xs overflow-hidden">
+        <GlassTable
+          columns={teacherColumns}
+          data={teachers as (TeacherResponse & Record<string, unknown>)[]}
+          loading={loading}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSortChange={handleSort}
+          emptyMessage="No faculty members found matching current filters"
+        />
+        <EnterprisePagination
+          totalItems={totalItems}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          itemName="faculty members"
+        />
+      </div>
+
+      <BulkImportModal
+        isOpen={isBulkImportOpen}
+        onClose={() => setIsBulkImportOpen(false)}
+        entityType="teachers"
+        onSuccess={() => void refetch()}
+      />
     </div>
   );
 }
+
+

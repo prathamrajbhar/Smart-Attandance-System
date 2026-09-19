@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Mail, KeyRound, ShieldAlert } from "lucide-react";
 import GlassButton from "./GlassButton";
 
-interface GlassResetPasswordDialogProps {
+export interface GlassResetPasswordDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => Promise<void>;
@@ -37,40 +37,41 @@ export default function GlassResetPasswordDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in">
-      <div className="glass-panel-static w-full max-w-md p-6 shadow-2xl relative border border-white/10">
-        <div className="flex items-center gap-3 mb-3 text-amber-400">
-          <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
-            <KeyRound size={22} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl relative">
+        <div className="flex items-center gap-3 mb-3 text-amber-600">
+          <div className="p-2 rounded-lg bg-amber-50 border border-amber-200">
+            <KeyRound size={20} />
           </div>
           <div>
-            <h2 className="text-lg font-bold font-[Outfit] text-slate-100">{title}</h2>
-            <p className="text-xs text-slate-400">Admin-Initiated Security Action</p>
+            <h2 className="text-base font-bold text-foreground font-[Outfit]">{title}</h2>
+            <p className="text-xs text-muted-foreground">Admin-Initiated Security Action</p>
           </div>
         </div>
 
         <div className="space-y-3 my-4">
-          <p className="text-sm text-slate-300 leading-relaxed">
+          <p className="text-sm text-foreground leading-relaxed">
             {description || (
               <>
                 A secure, time-limited password reset link will be dispatched to{" "}
-                <span className="text-emerald-400 font-semibold">{userEmail}</span>.
+                <strong className="text-foreground font-semibold">{userEmail}</strong>.
               </>
             )}
           </p>
 
-          <div className="p-3 rounded-lg bg-white/[0.02] border border-white/5 flex items-start gap-2.5 text-xs text-slate-400">
-            <ShieldAlert size={16} className="text-amber-400 shrink-0 mt-0.5" />
+          <div className="p-3 rounded-lg bg-secondary/70 border border-border flex items-start gap-2.5 text-xs text-muted-foreground">
+            <ShieldAlert size={16} className="text-amber-600 shrink-0 mt-0.5" />
             <span>
               In accordance with security standards, administrators cannot manually set passwords. The user must define their own password via the email link.
             </span>
           </div>
         </div>
 
-        <form onSubmit={handleTrigger} className="flex gap-3 justify-end mt-6 pt-3 border-t border-white/5">
+        <form onSubmit={handleTrigger} className="flex gap-2 justify-end mt-5 pt-3 border-t border-border">
           <GlassButton
             type="button"
             variant="ghost"
+            size="sm"
             onClick={onClose}
             disabled={loading}
           >
@@ -79,9 +80,9 @@ export default function GlassResetPasswordDialog({
           <GlassButton
             type="submit"
             variant="primary"
+            size="sm"
             loading={loading}
-            icon={<Mail size={16} className="text-slate-200" />}
-            className="bg-emerald-600 hover:bg-emerald-500 text-white"
+            icon={<Mail size={15} />}
           >
             Send Reset Email
           </GlassButton>

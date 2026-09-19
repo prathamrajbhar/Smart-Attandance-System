@@ -79,27 +79,26 @@ function ResetPasswordContent(): React.ReactElement {
 
   if (verifying) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 space-y-4">
-        <GlassLoader />
-        <p className="text-sm text-slate-400">Verifying password reset link...</p>
+      <div className="flex flex-col items-center justify-center p-8 space-y-3">
+        <GlassLoader text="Verifying password reset token..." />
       </div>
     );
   }
 
   if (!tokenData?.valid) {
     return (
-      <div className="glass-panel-static p-8 text-center space-y-6">
-        <div className="inline-flex p-4 rounded-full bg-red-500/10 border border-red-500/20 text-red-400">
-          <AlertCircle size={36} />
+      <div className="rounded-2xl border border-border bg-card p-7 text-center space-y-5 shadow-sm">
+        <div className="inline-flex p-3 rounded-full bg-red-50 border border-red-200 text-red-600">
+          <AlertCircle size={32} />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-slate-100">Invalid or Expired Link</h2>
-          <p className="text-sm text-slate-400 mt-2">
+          <h2 className="text-lg font-semibold text-foreground">Invalid or Expired Link</h2>
+          <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
             {tokenData?.message || "This password reset link has expired or has already been used."}
           </p>
         </div>
         <Link href="/forgot-password" className="inline-block">
-          <GlassButton variant="secondary">Request New Link</GlassButton>
+          <GlassButton variant="secondary" size="sm">Request New Link</GlassButton>
         </Link>
       </div>
     );
@@ -107,33 +106,33 @@ function ResetPasswordContent(): React.ReactElement {
 
   if (completed) {
     return (
-      <div className="glass-panel-static p-8 text-center space-y-6">
-        <div className="inline-flex p-4 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-          <CheckCircle2 size={36} />
+      <div className="rounded-2xl border border-border bg-card p-7 text-center space-y-5 shadow-sm">
+        <div className="inline-flex p-3 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600">
+          <CheckCircle2 size={32} />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-slate-100">Password Updated!</h2>
-          <p className="text-sm text-slate-400 mt-2">
-            Your new password is now active. Redirecting to login...
+          <h2 className="text-lg font-semibold text-foreground">Password Updated!</h2>
+          <p className="text-xs text-muted-foreground mt-1.5">
+            Your new password is now active. Redirecting to sign in...
           </p>
         </div>
         <Link href="/login" className="inline-block">
-          <GlassButton variant="primary">Go to Login</GlassButton>
+          <GlassButton variant="primary" size="sm">Go to Login</GlassButton>
         </Link>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="glass-panel-static p-8 space-y-6 shadow-2xl">
+    <form onSubmit={handleSubmit} className="rounded-2xl border border-border bg-card p-7 space-y-5 shadow-sm">
       <div className="space-y-1">
-        <h2 className="text-lg font-bold text-slate-200 tracking-wide font-[Outfit]">Choose New Password</h2>
-        <p className="text-xs text-slate-400">
-          Resetting password for <span className="text-emerald-400 font-semibold">{tokenData.email}</span>
+        <h2 className="text-base font-semibold text-foreground">Choose New Password</h2>
+        <p className="text-xs text-muted-foreground">
+          Resetting password for <strong className="text-foreground">{tokenData.email}</strong>
         </p>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3.5">
         <GlassInput
           label="New Password"
           type="password"
@@ -141,7 +140,7 @@ function ResetPasswordContent(): React.ReactElement {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           error={errors.password}
-          icon={<Lock size={16} className="text-slate-400" />}
+          icon={<Lock size={15} />}
           autoComplete="new-password"
         />
 
@@ -152,18 +151,18 @@ function ResetPasswordContent(): React.ReactElement {
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           error={errors.confirmPassword}
-          icon={<Lock size={16} className="text-slate-400" />}
+          icon={<Lock size={15} />}
           autoComplete="new-password"
         />
       </div>
 
-      <div className="pt-2">
+      <div className="pt-1">
         <GlassButton
           type="submit"
           variant="primary"
           size="lg"
           loading={submitting}
-          className="w-full font-bold text-sm tracking-wider uppercase"
+          className="w-full font-medium"
         >
           Update Password
         </GlassButton>
@@ -174,20 +173,19 @@ function ResetPasswordContent(): React.ReactElement {
 
 export default function ResetPasswordPage(): React.ReactElement {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute w-[350px] h-[350px] rounded-full bg-white/5 filter blur-[80px] -z-10 pointer-events-none" />
-      <div className="w-full max-w-md animate-fade-in-up relative z-10">
-        <div className="text-center mb-8">
-          <div className="inline-flex p-4 rounded-2xl bg-gradient-to-tr from-white/10 to-purple-500/10 border border-white/10 mb-5">
-            <KeyRound size={36} className="text-slate-300" />
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-6">
+          <div className="inline-flex p-3 rounded-xl bg-primary text-primary-foreground shadow-sm mb-3">
+            <KeyRound size={26} />
           </div>
-          <h1 className="text-3xl font-extrabold text-slate-100 tracking-tight font-[Outfit]">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground font-[Outfit]">
             Smart Attendance
           </h1>
-          <p className="text-xs text-slate-500 mt-2">Set Your New Password</p>
+          <p className="text-xs text-muted-foreground mt-1">Set Your New Password</p>
         </div>
 
-        <Suspense fallback={<div className="glass-panel-static p-8 text-center"><GlassLoader /></div>}>
+        <Suspense fallback={<div className="rounded-2xl border border-border bg-card p-8 text-center"><GlassLoader /></div>}>
           <ResetPasswordContent />
         </Suspense>
       </div>

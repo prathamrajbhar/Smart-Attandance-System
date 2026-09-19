@@ -20,12 +20,12 @@ function ScoreGauge({ label, score, color }: { label: string; score: number; col
   return (
     <div className="flex flex-col items-center gap-2">
       <svg width="100" height="100" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8" />
+        <circle cx="50" cy="50" r={r} fill="none" stroke="#e2e8f0" strokeWidth="8" />
         <circle cx="50" cy="50" r={r} fill="none" stroke={color} strokeWidth="8" strokeLinecap="round"
           strokeDasharray={c} strokeDashoffset={offset} className="score-ring" transform="rotate(-90 50 50)" />
-        <text x="50" y="50" textAnchor="middle" dominantBaseline="central" fill="#f1f5f9" fontSize="16" fontWeight="700">{pct.toFixed(0)}%</text>
+        <text x="50" y="50" textAnchor="middle" dominantBaseline="central" fill="#0f172a" fontSize="16" fontWeight="700">{pct.toFixed(0)}%</text>
       </svg>
-      <p className="text-xs text-slate-400">{label}</p>
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
     </div>
   );
 }
@@ -64,35 +64,35 @@ export default function ReviewDetailPage(): React.ReactElement {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <GlassCard>
-            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-6">AI Evidence</h3>
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-6">AI Evidence</h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-              <ScoreGauge label="Face" score={record.face_score ?? 0} color="#3b82f6" />
-              <ScoreGauge label="Liveness" score={record.liveness_score ?? 0} color="#10b981" />
-              <ScoreGauge label="Background" score={record.background_score ?? 0} color="#8b5cf6" />
-              <ScoreGauge label="Final" score={record.final_ai_score ?? 0} color={(record.final_ai_score ?? 0) >= 0.75 ? "#10b981" : "#f43f5e"} />
+              <ScoreGauge label="Face" score={record.face_score ?? 0} color="#2563eb" />
+              <ScoreGauge label="Liveness" score={record.liveness_score ?? 0} color="#16a34a" />
+              <ScoreGauge label="Background" score={record.background_score ?? 0} color="#7c3aed" />
+              <ScoreGauge label="Final" score={record.final_ai_score ?? 0} color={(record.final_ai_score ?? 0) >= 0.75 ? "#16a34a" : "#e11d48"} />
             </div>
           </GlassCard>
           <GlassCard>
             <div className="grid grid-cols-2 gap-4">
-              <div><p className="text-xs text-slate-500">Student</p><p className="text-sm text-slate-200">{record.student_name}</p></div>
-              <div><p className="text-xs text-slate-500">Enrollment</p><p className="text-sm text-slate-200">{record.enrollment_number}</p></div>
-              <div><p className="text-xs text-slate-500">GPS</p><p className="text-xs font-mono text-slate-400">{record.gps_latitude?.toFixed(4) ?? "N/A"}, {record.gps_longitude?.toFixed(4) ?? "N/A"}</p></div>
-              <div><p className="text-xs text-slate-500">Date</p><p className="text-sm text-slate-400">{new Date(record.created_at).toLocaleString()}</p></div>
+              <div><p className="text-xs font-medium text-muted-foreground">Student</p><p className="text-sm font-semibold text-foreground">{record.student_name}</p></div>
+              <div><p className="text-xs font-medium text-muted-foreground">Enrollment</p><p className="text-sm font-semibold text-foreground">{record.enrollment_number}</p></div>
+              <div><p className="text-xs font-medium text-muted-foreground">GPS</p><p className="text-xs font-mono text-foreground">{record.gps_latitude?.toFixed(4) ?? "N/A"}, {record.gps_longitude?.toFixed(4) ?? "N/A"}</p></div>
+              <div><p className="text-xs font-medium text-muted-foreground">Date</p><p className="text-sm text-foreground">{new Date(record.created_at).toLocaleString()}</p></div>
             </div>
           </GlassCard>
           {record.student_note && (
             <GlassCard>
-              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
                 <MessageSquare size={16} /> Student Note
               </h3>
-              <p className="text-sm text-slate-300 bg-white/[0.03] p-4 rounded-xl border border-white/5 italic">
+              <p className="text-sm text-foreground bg-muted/50 p-4 rounded-xl border border-border italic">
                 &ldquo;{record.student_note}&rdquo;
               </p>
             </GlassCard>
           )}
         </div>
         <GlassCard>
-          <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Decision</h3>
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Decision</h3>
           <div className="space-y-4">
             <GlassTextarea label="Remarks" placeholder="Justification..." value={remarks} onChange={(e) => setRemarks(e.target.value)} />
             <GlassButton variant="primary" className="w-full" icon={<CheckCircle2 size={16} />} onClick={() => setConfirmAction("Approved")}>Approve</GlassButton>

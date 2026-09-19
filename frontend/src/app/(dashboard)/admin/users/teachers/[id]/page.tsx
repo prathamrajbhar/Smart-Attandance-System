@@ -17,29 +17,29 @@ import GlassResetPasswordDialog from "@/components/ui/GlassResetPasswordDialog";
 import type { TeacherResponse } from "@/types";
 
 const colorVariants: Record<string, string> = {
-  blue: "bg-blue-500/10 text-blue-400 group-hover:shadow-blue-500/20",
-  purple: "bg-purple-500/10 text-purple-400 group-hover:shadow-purple-500/20",
-  amber: "bg-amber-500/10 text-amber-400 group-hover:shadow-amber-500/20",
-  emerald: "bg-emerald-500/10 text-emerald-400 group-hover:shadow-emerald-500/20",
-  rose: "bg-rose-500/10 text-rose-400 group-hover:shadow-rose-500/20",
-  orange: "bg-orange-500/10 text-orange-400 group-hover:shadow-orange-500/20",
-  cyan: "bg-cyan-500/10 text-cyan-400 group-hover:shadow-cyan-500/20",
-  indigo: "bg-indigo-500/10 text-indigo-400 group-hover:shadow-indigo-500/20",
-  slate: "bg-slate-500/10 text-slate-400 group-hover:shadow-slate-500/20",
+  blue: "bg-blue-50 text-blue-700 border border-blue-200/60",
+  purple: "bg-purple-50 text-purple-700 border border-purple-200/60",
+  amber: "bg-amber-50 text-amber-700 border border-amber-200/60",
+  emerald: "bg-emerald-50 text-emerald-700 border border-emerald-200/60",
+  rose: "bg-rose-50 text-rose-700 border border-rose-200/60",
+  orange: "bg-orange-50 text-orange-700 border border-orange-200/60",
+  cyan: "bg-cyan-50 text-cyan-700 border border-cyan-200/60",
+  indigo: "bg-indigo-50 text-indigo-700 border border-indigo-200/60",
+  slate: "bg-slate-100 text-slate-700 border border-slate-200/60",
 };
 
 const InfoItem = ({ icon: Icon, label, value, color }: { icon: React.ElementType, label: string, value: string, color: string }) => (
-  <div className="group flex items-center justify-between p-4 rounded-xl border border-transparent hover:border-white/5 hover:bg-white/[0.02] transition-all duration-300">
-    <div className="flex items-center gap-4">
-      <div className={`p-3 rounded-2xl ${colorVariants[color] || colorVariants.slate} group-hover:scale-110 transition-transform duration-300 shadow-[0_4px_12px_rgba(0,0,0,0.5)]`}>
-        <Icon size={20} />
+  <div className="group flex items-center justify-between p-3 rounded-lg border border-transparent hover:border-border hover:bg-muted/40 transition-colors">
+    <div className="flex items-center gap-3.5">
+      <div className={`p-2.5 rounded-xl ${colorVariants[color] || colorVariants.slate} transition-transform`}>
+        <Icon size={18} />
       </div>
       <div>
-        <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">{label}</p>
-        <p className="text-sm font-semibold text-slate-200">{value}</p>
+        <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
+        <p className="text-sm font-semibold text-foreground">{value}</p>
       </div>
     </div>
-    <ChevronRight size={16} className="text-slate-700 group-hover:text-slate-400 transition-colors opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 duration-300" />
+    <ChevronRight size={16} className="text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
   </div>
 );
 
@@ -90,40 +90,33 @@ export default function TeacherDetailPage(): React.ReactElement {
         { label: fullName },
       ]} />
       
-      {}
-      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-slate-900/50 backdrop-blur-md shadow-2xl">
-        <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/20 via-teal-600/10 to-transparent opacity-50"></div>
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
-        
-        <div className="relative p-8 sm:p-10 flex flex-col sm:flex-row items-center sm:items-start gap-8">
+      {/* Hero Banner */}
+      <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-xs">
+        <div className="relative flex flex-col sm:flex-row items-center sm:items-start gap-6">
           <div className="flex-shrink-0 relative">
-            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-white/10 to-teal-600 p-1 shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
-              <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center border-4 border-slate-900">
-                <span className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-white/5 to-transparent">
-                  {initials || <User size={40} className="text-slate-300" />}
-                </span>
-              </div>
+            <div className="w-24 h-24 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center text-primary font-bold text-3xl shadow-xs">
+              {initials || <User size={36} className="text-muted-foreground" />}
             </div>
-            <div className="absolute -bottom-2 -right-2 bg-white/5 border border-white/10 text-slate-300 p-2 rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
-              <CheckCircle size={18} />
+            <div className="absolute -bottom-1 -right-1 bg-background border border-border text-emerald-600 p-1.5 rounded-full shadow-xs">
+              <CheckCircle size={16} />
             </div>
           </div>
           
-          <div className="flex-1 text-center sm:text-left space-y-4">
+          <div className="flex-1 text-center sm:text-left space-y-3">
             <div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight mb-1.5">
                 {fullName}
               </h1>
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
                 <GlassBadge variant="success">{teacher.employee_id}</GlassBadge>
                 <GlassBadge variant="info">{teacher.department}</GlassBadge>
-                <span className="text-sm text-slate-400 flex items-center gap-1.5 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-                  <Award size={14} /> Faculty
+                <span className="text-xs text-muted-foreground flex items-center gap-1.5 bg-muted px-2.5 py-0.5 rounded-full border border-border">
+                  <Award size={12} /> Faculty
                 </span>
               </div>
             </div>
             
-            <p className="text-slate-400 max-w-2xl text-sm leading-relaxed">
+            <p className="text-muted-foreground max-w-2xl text-sm leading-relaxed">
               Faculty profile containing professional credentials, department affiliations, and contact records. Manage administrative access and academic assignments from this panel.
             </p>
             
@@ -131,7 +124,7 @@ export default function TeacherDetailPage(): React.ReactElement {
               <GlassButton variant="primary" icon={<Pencil size={16} />} onClick={() => router.push(`/admin/users/teachers/${id}/edit`)}>
                 Edit Profile
               </GlassButton>
-              <GlassButton variant="ghost" className="text-warning hover:text-warning hover:bg-warning/10" icon={<KeyRound size={16} />} onClick={() => setIsResetDialogOpen(true)}>
+              <GlassButton variant="ghost" className="text-amber-600 hover:text-amber-700 hover:bg-amber-50" icon={<KeyRound size={16} />} onClick={() => setIsResetDialogOpen(true)}>
                 Reset Password
               </GlassButton>
             </div>
@@ -139,17 +132,16 @@ export default function TeacherDetailPage(): React.ReactElement {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <GlassCard className="!p-0 overflow-hidden relative">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-white/10 to-transparent"></div>
-          <div className="p-6 border-b border-white/5 bg-white/[0.01]">
-            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-              <User size={20} className="text-slate-300" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <GlassCard className="!p-0 overflow-hidden">
+          <div className="p-5 border-b border-border bg-muted/40">
+            <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+              <User size={18} className="text-primary" />
               Personal Information
             </h3>
-            <p className="text-sm text-slate-400 mt-1">Direct contact and identity details.</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Direct contact and identity details.</p>
           </div>
-          <div className="p-2 space-y-1">
+          <div className="p-3 space-y-1">
             <InfoItem icon={Mail} label="Email Address" value={teacher.email} color="blue" />
             <InfoItem icon={Phone} label="Phone Number" value={teacher.phone || "Not provided"} color="purple" />
             <InfoItem icon={Hash} label="Employee ID" value={teacher.employee_id} color="amber" />
@@ -162,16 +154,15 @@ export default function TeacherDetailPage(): React.ReactElement {
           </div>
         </GlassCard>
 
-        <GlassCard className="!p-0 overflow-hidden relative">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-500 to-transparent"></div>
-          <div className="p-6 border-b border-white/5 bg-white/[0.01]">
-            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-              <Briefcase size={20} className="text-slate-300" />
+        <GlassCard className="!p-0 overflow-hidden">
+          <div className="p-5 border-b border-border bg-muted/40">
+            <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+              <Briefcase size={18} className="text-primary" />
               Professional Profile
             </h3>
-            <p className="text-sm text-slate-400 mt-1">Academic credentials and departmental roles.</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Academic credentials and departmental roles.</p>
           </div>
-          <div className="p-2 space-y-1">
+          <div className="p-3 space-y-1">
             <InfoItem icon={Building2} label="Department" value={teacher.department} color="rose" />
             <InfoItem icon={Briefcase} label="Designation" value={teacher.designation} color="orange" />
             <InfoItem 

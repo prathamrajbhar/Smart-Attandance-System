@@ -102,85 +102,79 @@ export default function SmartPassScannerModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-      <div className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-white/10 bg-slate-900/95 p-6 shadow-2xl">
-        <div className="flex items-center justify-between pb-4 border-b border-white/10">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+      <div className="relative w-full max-w-lg overflow-hidden rounded-xl border border-border bg-card p-6 shadow-xl">
+        <div className="flex items-center justify-between pb-3 border-b border-border">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-              <QrCode size={20} />
+            <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200">
+              <QrCode size={18} />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-slate-100 font-[Outfit]">Smart Pass QR Verification</h3>
-              <p className="text-xs text-slate-400">Scan student rotating QR or enter token</p>
+              <h3 className="text-base font-bold text-foreground font-[Outfit]">Smart Pass Verification</h3>
+              <p className="text-xs text-muted-foreground">Scan rotating QR pass or enter security token</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
           >
             <X size={18} />
           </button>
         </div>
 
-        {/* Video / Camera Viewport */}
-        <div className="my-5 relative rounded-xl overflow-hidden bg-slate-950 border border-white/10 aspect-video flex items-center justify-center">
+        <div className="my-4 relative rounded-lg overflow-hidden bg-slate-100 border border-border aspect-video flex items-center justify-center">
           {cameraActive ? (
             <>
               <video ref={videoRef} className="w-full h-full object-cover" playsInline muted />
-              {/* Scan Overlay Frame */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-48 h-48 border-2 border-emerald-400/80 rounded-xl relative animate-pulse">
-                  <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-emerald-400" />
-                  <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-emerald-400" />
-                  <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-emerald-400" />
-                  <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-emerald-400" />
+                <div className="w-44 h-44 border-2 border-emerald-500 rounded-lg relative animate-pulse">
+                  <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-emerald-500" />
+                  <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-emerald-500" />
+                  <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-emerald-500" />
+                  <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-emerald-500" />
                 </div>
               </div>
             </>
           ) : (
             <div className="text-center p-6 space-y-2">
-              <Camera size={32} className="mx-auto text-slate-600" />
-              <p className="text-xs text-slate-400 font-medium">{cameraError || "Camera standby"}</p>
+              <Camera size={28} className="mx-auto text-muted-foreground" />
+              <p className="text-xs text-muted-foreground">{cameraError || "Camera ready to initialize"}</p>
               <GlassButton variant="secondary" size="sm" onClick={startCamera}>
-                <RefreshCw size={14} className="mr-1.5" /> Initialize Camera
+                <RefreshCw size={13} className="mr-1" /> Initialize Camera
               </GlassButton>
             </div>
           )}
         </div>
 
-        {/* Feedback Alert */}
         {feedback && (
           <div
-            className={`mb-4 p-3 rounded-xl border flex items-center gap-2.5 text-xs font-semibold ${
+            className={`mb-3 p-2.5 rounded-md border flex items-center gap-2 text-xs font-medium ${
               feedback.type === "success"
-                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
-                : "bg-rose-500/10 border-rose-500/30 text-rose-300"
+                ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                : "bg-red-50 border-red-200 text-red-800"
             }`}
           >
-            {feedback.type === "success" ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+            {feedback.type === "success" ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
             <span>{feedback.message}</span>
           </div>
         )}
 
-        {/* Manual Token Entry Fallback */}
         <div className="space-y-3">
           <GlassInput
-            label="Smart Pass Token (or Barcode Data)"
-            placeholder="Paste JWT / Smart Pass QR token string..."
+            label="Smart Pass Token"
+            placeholder="Paste rotating QR token payload..."
             value={manualToken}
             onChange={(e) => setManualToken(e.target.value)}
           />
-          <div className="flex gap-3">
-            <GlassButton
-              variant="primary"
-              className="w-full"
-              loading={loading}
-              onClick={() => verifyToken(manualToken)}
-              disabled={!manualToken.trim()}
-            >
-              Verify & Mark Present
-            </GlassButton>
-          </div>
+          <GlassButton
+            variant="primary"
+            className="w-full"
+            loading={loading}
+            onClick={() => verifyToken(manualToken)}
+            disabled={!manualToken.trim()}
+          >
+            Verify Token & Mark Attendance
+          </GlassButton>
         </div>
       </div>
     </div>

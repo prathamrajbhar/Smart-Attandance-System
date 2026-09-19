@@ -106,7 +106,7 @@ export default function GeofenceMap({
 
   return (
     <div
-      className="relative w-full h-[460px] rounded-xl overflow-hidden border border-white/10"
+      className="relative w-full h-[460px] rounded-xl overflow-hidden border border-border bg-card shadow-xs"
       style={{ minHeight: 460 }}
     >
       {mapReady ? (
@@ -120,7 +120,6 @@ export default function GeofenceMap({
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              className="dark-map-tiles"
             />
             <MapClickHandler onLocationSelect={onLocationChange} />
             <MapUpdater lat={lat} lng={lng} />
@@ -129,34 +128,32 @@ export default function GeofenceMap({
               center={[lat, lng]}
               radius={radius}
               pathOptions={{
-                color: "#10b981",
-                fillColor: "#10b981",
-                fillOpacity: 0.18,
+                color: "#0f172a",
+                fillColor: "#0f172a",
+                fillOpacity: 0.12,
                 weight: 2,
               }}
             />
           </MapContainer>
 
-          {/* Location Search Bar floating over top-left of the map */}
           <div className="absolute top-4 left-4 z-[400] w-72 sm:w-80">
             <LocationSearchBar onSelectLocation={handleSearchSelect} />
           </div>
 
-          {/* Current Location GPS Button floating over top-right of the map */}
           <div className="absolute top-4 right-4 z-[400]">
             <GlassButton
               variant="secondary"
               size="sm"
-              icon={<Navigation size={15} className="text-emerald-400" />}
+              icon={<Navigation size={14} className="text-foreground" />}
               onClick={handleGetCurrentLocation}
-              className="bg-slate-900/90 backdrop-blur-md border border-white/15 shadow-lg text-xs"
+              className="bg-card shadow-md text-xs border border-border"
             >
               Current Location
             </GlassButton>
           </div>
         </>
       ) : (
-        <div className="flex items-center justify-center h-full text-slate-500 bg-slate-950">
+        <div className="flex items-center justify-center h-full text-muted-foreground bg-muted text-xs">
           Loading interactive map...
         </div>
       )}

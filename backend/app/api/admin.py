@@ -1,6 +1,6 @@
 from functools import wraps
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from prisma.models import User
 
 from app.api.dependencies import RoleChecker, get_current_user
@@ -12,12 +12,15 @@ from app.schemas.admin import (
     ClassCreate, ClassUpdate, ClassResponse, AssignTeacherRequest, EnrollRequest,
     DepartmentCreate, DepartmentUpdate, DepartmentResponse,
     AuditLogResponse, AdminStatsResponse,
+    StudentBulkCreateRequest, TeacherBulkCreateRequest, BulkImportResponse,
 )
 from app.schemas.master_data import (
     SubjectCreate, SubjectUpdate, SubjectResponse,
     ClassroomCreate, ClassroomUpdate, ClassroomResponse,
     DesignationCreate, DesignationUpdate, DesignationResponse,
 )
+from app.schemas.pagination import PaginatedResponse
+from app.core.rate_limit import rate_limiter
 from app.services.admin_service import AdminService
 from app.services.absentee_scanner import run_absentee_scan
 
@@ -66,6 +69,29 @@ async def create_teacher(data: TeacherCreate, request: Request, current_user: Us
     return await admin_service.create_teacher(data, actor=current_user.email, ip=_get_client_ip(request))
 
 
+@router.post("/users/students/bulk", response_model=BulkImportResponse, status_code=status.HTTP_200_OK)
+@_handle_generic_err
+async def bulk_create_students(
+    data: StudentBulkCreateRequest,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.bulk_create_students(data.students, actor=current_user.email, ip=_get_client_ip(request))
+
+
+@router.post("/users/teachers/bulk", response_model=BulkImportResponse, status_code=status.HTTP_200_OK)
+@_handle_generic_err
+async def bulk_create_teachers(
+    data: TeacherBulkCreateRequest,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.bulk_create_teachers(data.teachers, actor=current_user.email, ip=_get_client_ip(request))
+
+
+
 @router.post("/classes", response_model=ClassResponse, status_code=status.HTTP_201_CREATED)
 @_handle_value_err
 async def create_class(data: ClassCreate, request: Request, current_user: User = Depends(get_current_user), admin_service: AdminService = Depends()):
@@ -85,9 +111,19 @@ async def enroll_students(class_id: str, data: EnrollRequest, request: Request, 
     return {"status": "success", "enrolled_count": enrolled_count}
 
 
-@router.get("/users/students", response_model=list[StudentResponse])
-async def get_students(admin_service: AdminService = Depends()):
-    return await admin_service.get_all_students()
+@router.get("/users/students", response_model=PaginatedResponse[StudentResponse], dependencies=[Depends(rate_limiter(requests_limit=120, window_seconds=60))])
+async def get_students(
+    page: int = 1,
+    page_size: int = 10,
+    sort_by: str | None = None,
+    sort_order: str = "asc",
+    q: str | None = None,
+    department_id: str | None = None,
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.get_all_students(
+        page=page, page_size=min(page_size, 100), sort_by=sort_by, sort_order=sort_order, q=q, department_id=department_id
+    )
 
 
 @router.get("/users/students/{id}", response_model=StudentResponse)
@@ -112,9 +148,20 @@ async def update_student(id: str, data: StudentUpdate, request: Request, current
 
 
 
-@router.get("/users/teachers", response_model=list[TeacherResponse])
-async def get_teachers(admin_service: AdminService = Depends()):
-    return await admin_service.get_all_teachers()
+@router.get("/users/teachers", response_model=PaginatedResponse[TeacherResponse], dependencies=[Depends(rate_limiter(requests_limit=120, window_seconds=60))])
+async def get_teachers(
+    page: int = 1,
+    page_size: int = 10,
+    sort_by: str | None = None,
+    sort_order: str = "asc",
+    q: str | None = None,
+    department_id: str | None = None,
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.get_all_teachers(
+        page=page, page_size=min(page_size, 100), sort_by=sort_by, sort_order=sort_order, q=q, department_id=department_id
+    )
+
 
 
 @router.get("/users/teachers/{id}", response_model=TeacherResponse)
@@ -159,9 +206,19 @@ async def trigger_user_password_reset(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err))
 
 
-@router.get("/classes", response_model=list[ClassResponse])
-async def get_classes(admin_service: AdminService = Depends()):
-    return await admin_service.get_all_classes()
+@router.get("/classes", response_model=PaginatedResponse[ClassResponse], dependencies=[Depends(rate_limiter(requests_limit=120, window_seconds=60))])
+async def get_classes(
+    page: int = 1,
+    page_size: int = 10,
+    sort_by: str | None = None,
+    sort_order: str = "asc",
+    q: str | None = None,
+    subject_id: str | None = None,
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.get_all_classes(
+        page=page, page_size=min(page_size, 100), sort_by=sort_by, sort_order=sort_order, q=q, subject_id=subject_id
+    )
 
 
 @router.get("/classes/{class_id}", response_model=ClassResponse)
@@ -177,6 +234,7 @@ async def get_class_by_id(class_id: str, admin_service: AdminService = Depends()
         enrolled_count=len(cls.enrollments) if cls.enrollments else 0,
         enrolled_student_ids=[e.studentId for e in cls.enrollments] if cls.enrollments else [],
     )
+
 
 
 @router.put("/classes/{class_id}", response_model=ClassResponse)
@@ -334,9 +392,31 @@ async def delete_designation(id: str, request: Request, current_user: User = Dep
 
 
 # --- Misc Admin ---
-@router.get("/audit", response_model=list[AuditLogResponse])
-async def get_audit_logs(admin_service: AdminService = Depends()):
-    return await admin_service.get_audit_logs()
+@router.get("/audit", response_model=PaginatedResponse[AuditLogResponse], dependencies=[Depends(rate_limiter(requests_limit=120, window_seconds=60))])
+async def get_audit_logs(
+    page: int = 1,
+    page_size: int = 20,
+    sort_by: str | None = None,
+    sort_order: str = "desc",
+    q: str | None = None,
+    severity: str | None = None,
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.get_audit_logs(
+        page=page, page_size=min(page_size, 100), sort_by=sort_by, sort_order=sort_order, q=q, severity=severity
+    )
+
+
+@router.get("/audit/export", dependencies=[Depends(rate_limiter(requests_limit=10, window_seconds=60))])
+async def export_audit_logs(admin_service: AdminService = Depends()):
+    csv_data = await admin_service.export_audit_logs_csv()
+    return Response(
+        content=csv_data,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=system-audit-logs.csv"},
+    )
+
+
 
 
 @router.get("/stats", response_model=AdminStatsResponse)

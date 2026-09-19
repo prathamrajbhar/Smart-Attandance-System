@@ -2,38 +2,44 @@
 
 import React from "react";
 import GlassCard from "./GlassCard";
+import { cn } from "@/lib/utils";
 
-interface GlassStatCardProps {
+export interface GlassStatCardProps {
   icon: React.ReactNode;
   label: string;
   value: string | number;
   trend?: string;
   trendUp?: boolean;
   accentColor?: string;
+  subtext?: string;
 }
 
-const iconColors: Record<string, string> = {
-  blue: "text-blue-400 bg-blue-500/[0.15] shadow-[0_0_15px_rgba(59,130,246,0.3)]",
-  emerald: "text-emerald-400 bg-emerald-500/[0.15] shadow-[0_0_15px_rgba(16,185,129,0.3)]",
-  amber: "text-amber-400 bg-amber-500/[0.15] shadow-[0_0_15px_rgba(245,158,11,0.3)]",
-  rose: "text-rose-400 bg-rose-500/[0.15] shadow-[0_0_15px_rgba(244,63,94,0.3)]",
-  purple: "text-purple-400 bg-purple-500/[0.15] shadow-[0_0_15px_rgba(168,85,247,0.3)]",
-};
-
-const hexColors: Record<string, string> = {
-  blue: "#3b82f6",
-  emerald: "#10b981",
-  amber: "#f59e0b",
-  rose: "#f43f5e",
-  purple: "#a855f7",
-};
-
-const bgGradients: Record<string, string> = {
-  blue: "bg-gradient-to-br from-blue-500/[0.04] to-transparent",
-  emerald: "bg-gradient-to-br from-emerald-500/[0.04] to-transparent",
-  amber: "bg-gradient-to-br from-amber-500/[0.04] to-transparent",
-  rose: "bg-gradient-to-br from-rose-500/[0.04] to-transparent",
-  purple: "bg-gradient-to-br from-purple-500/[0.04] to-transparent",
+const colorStyles: Record<string, { icon: string; border: string; glow: string }> = {
+  blue: {
+    icon: "text-blue-600 bg-blue-50 border-blue-100",
+    border: "hover:border-blue-200",
+    glow: "from-blue-500/5",
+  },
+  emerald: {
+    icon: "text-emerald-600 bg-emerald-50 border-emerald-100",
+    border: "hover:border-emerald-200",
+    glow: "from-emerald-500/5",
+  },
+  purple: {
+    icon: "text-purple-600 bg-purple-50 border-purple-100",
+    border: "hover:border-purple-200",
+    glow: "from-purple-500/5",
+  },
+  amber: {
+    icon: "text-amber-600 bg-amber-50 border-amber-100",
+    border: "hover:border-amber-200",
+    glow: "from-amber-500/5",
+  },
+  rose: {
+    icon: "text-rose-600 bg-rose-50 border-rose-100",
+    border: "hover:border-rose-200",
+    glow: "from-rose-500/5",
+  },
 };
 
 export default function GlassStatCard({
@@ -41,32 +47,54 @@ export default function GlassStatCard({
   label,
   value,
   trend,
-  trendUp,
+  trendUp = true,
   accentColor = "blue",
+  subtext,
 }: GlassStatCardProps): React.ReactElement {
+  const theme = colorStyles[accentColor] || colorStyles.blue;
+
   return (
-    <GlassCard 
-      hoverable 
-      padding="lg" 
-      className={`relative overflow-hidden ${bgGradients[accentColor] || bgGradients.blue}`}
-      glowColor={hexColors[accentColor] || hexColors.blue}
+    <GlassCard
+      hoverable
+      padding="none"
+      className={cn(
+        "relative overflow-hidden bg-card border border-border transition-all duration-200 p-5 shadow-xs group",
+        theme.border
+      )}
     >
-      <div className="flex items-start justify-between mb-4">
-        <div className={`p-3 rounded-xl ${iconColors[accentColor] || iconColors.blue}`}>
+      <div className={cn("absolute -right-6 -top-6 w-24 h-24 rounded-full bg-gradient-to-br to-transparent pointer-events-none opacity-60 group-hover:opacity-100 transition-opacity", theme.glow)} />
+      <div className="flex items-center justify-between mb-3 relative">
+        <div className={cn("p-2.5 rounded-xl border flex items-center justify-center shrink-0 shadow-2xs", theme.icon)}>
           {icon}
         </div>
         {trend && (
-          <span className={`text-xs font-semibold px-2.5 py-1 rounded-md flex items-center gap-1 ${
-            trendUp 
-              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]" 
-              : "bg-rose-500/10 text-rose-400 border border-rose-500/20 shadow-[0_0_10px_rgba(244,63,94,0.1)]"
-            }`}>
-            {trendUp ? "↑" : "↓"} {trend}
+          <span
+            className={cn(
+              "text-[11px] font-semibold px-2 py-0.5 rounded-md border flex items-center gap-1 shadow-2xs",
+              trendUp
+                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                : "bg-rose-50 text-rose-700 border-rose-200"
+            )}
+          >
+            <span>{trendUp ? "↑" : "↓"}</span>
+            <span>{trend}</span>
           </span>
         )}
       </div>
-      <p className="text-3xl font-bold text-white mb-1.5 tracking-tight drop-shadow-md">{value}</p>
-      <p className="text-sm font-semibold text-slate-400 uppercase tracking-wider">{label}</p>
+      <div className="relative">
+        <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground font-[Outfit]">
+          {typeof value === "number" ? value.toLocaleString() : value}
+        </p>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-1">
+          {label}
+        </p>
+        {subtext && (
+          <p className="text-[11px] text-muted-foreground mt-1.5 flex items-center gap-1 font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-300 inline-block" />
+            <span>{subtext}</span>
+          </p>
+        )}
+      </div>
     </GlassCard>
   );
 }

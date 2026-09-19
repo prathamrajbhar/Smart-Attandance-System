@@ -1,68 +1,115 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Eye, Pencil } from "lucide-react";
-import Link from "next/link";
+import { Plus, Upload } from "lucide-react";
 import api from "@/lib/api";
-import GlassPageHeader from "@/components/ui/GlassPageHeader";
 import GlassBreadcrumb from "@/components/ui/GlassBreadcrumb";
-import GlassTable, { type TableColumn } from "@/components/ui/GlassTable";
-import GlassSearch from "@/components/ui/GlassSearch";
-import GlassButton from "@/components/ui/GlassButton";
-import GlassLoader from "@/components/ui/GlassLoader";
-import type { ClassResponse } from "@/types";
+import GlassTable from "@/components/ui/GlassTable";
+import EnterpriseTableToolbar from "@/components/ui/EnterpriseTableToolbar";
+import EnterprisePagination from "@/components/ui/EnterprisePagination";
+import { useTableQuery } from "@/hooks/useTableQuery";
+import { classColumns } from "./class-columns";
+import type { ClassResponse, SubjectResponse } from "@/types";
 
 export default function ClassesPage(): React.ReactElement {
   const router = useRouter();
-  const [classes, setClasses] = useState<ClassResponse[]>([]);
-  const [filtered, setFiltered] = useState<ClassResponse[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [subjects, setSubjects] = useState<{ value: string; label: string }[]>([]);
+
+  const {
+    data: classes,
+    totalItems,
+    loading,
+    searchQuery,
+    currentPage,
+    pageSize,
+    sortBy,
+    sortOrder,
+    filterValue,
+    setSearchQuery,
+    setCurrentPage,
+    setPageSize,
+    handleSort,
+    setFilterValue,
+  } = useTableQuery<ClassResponse>({
+    endpoint: "/admin/classes",
+    defaultPageSize: 10,
+    defaultSortBy: "created_at",
+    defaultSortOrder: "desc",
+  });
 
   useEffect(() => {
-    async function fetch(): Promise<void> {
-      try { const { data } = await api.get<ClassResponse[]>("/admin/classes"); setClasses(data); setFiltered(data); }
-      catch { setClasses([]); setFiltered([]); }
-      finally { setLoading(false); }
+    async function loadSubjects(): Promise<void> {
+      try {
+        const { data } = await api.get<SubjectResponse[]>("/admin/subjects");
+        setSubjects(data.map((s) => ({ value: s.id, label: s.name })));
+      } catch {
+        setSubjects([]);
+      }
     }
-    fetch();
+    void loadSubjects();
   }, []);
 
-  const handleSearch = useCallback((q: string) => {
-    if (!q.trim()) { setFiltered(classes); return; }
-    const lq = q.toLowerCase();
-    setFiltered(classes.filter((c) =>
-      c.name.toLowerCase().includes(lq) ||
-      c.subject_name.toLowerCase().includes(lq) ||
-      c.subject_code.toLowerCase().includes(lq)
-    ));
-  }, [classes]);
-
-  const columns: TableColumn<ClassResponse & Record<string, unknown>>[] = [
-    { key: "name", header: "Class Name", sortable: true },
-    { key: "subject_name", header: "Subject", sortable: true, render: (r) => <span>{String(r.subject_name)}<span className="ml-1 text-xs text-slate-500">({String(r.subject_code)})</span></span> },
-    { key: "enrolled_count", header: "Enrolled", render: (r) => <span className="font-mono text-sm">{String(r.enrolled_count)}{r.max_students ? ` / ${String(r.max_students)}` : ""}</span> },
-    { key: "classroom_name", header: "Classroom", render: (r) => <span className="text-slate-400 text-sm">{String(r.classroom_name || "—")}</span> },
-    {
-      key: "actions", header: "Actions",
-      render: (row) => (
-        <div className="flex items-center gap-2">
-          <Link href={`/admin/classes/${row.id}`} className="glass-btn glass-btn-ghost glass-btn-sm"><Eye size={14} /> View</Link>
-          <Link href={`/admin/classes/${row.id}/edit`} className="glass-btn glass-btn-ghost glass-btn-sm"><Pencil size={14} /> Edit</Link>
-        </div>
-      ),
-    },
-  ];
-
-  if (loading) return <GlassLoader text="Loading classes..." />;
-
   return (
-    <div className="animate-fade-in-up">
+    <div className="space-y-4 animate-fade-in-up">
       <GlassBreadcrumb items={[{ label: "Admin", href: "/admin/dashboard" }, { label: "Classes" }]} />
-      <GlassPageHeader title="Class Directory" description={`${classes.length} classes registered`}
-        actions={<GlassButton variant="primary" icon={<Plus size={16} />} onClick={() => router.push("/admin/classes/create")}>Create Class</GlassButton>} />
-      <div className="mb-6"><GlassSearch placeholder="Search classes..." onSearch={handleSearch} /></div>
-      <GlassTable columns={columns} data={filtered as (ClassResponse & Record<string, unknown>)[]} emptyMessage="No classes found" />
+
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2 border-b border-border/60">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground font-[Outfit]">
+            Class & Course Directory
+          </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Configure academic schedules, geofence zones, and student enrollment quotas.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => router.push("/admin/classes/create")}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card text-xs font-medium text-foreground hover:bg-secondary transition-colors shadow-2xs"
+          >
+            <Upload size={13} /> Bulk Import
+          </button>
+          <button
+            onClick={() => router.push("/admin/classes/create")}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-slate-800 transition-colors shadow-2xs"
+          >
+            <Plus size={14} /> Create Class
+          </button>
+        </div>
+      </div>
+
+      <EnterpriseTableToolbar
+        searchPlaceholder="Search by class name or subject..."
+        searchValue={searchQuery}
+        onSearch={setSearchQuery}
+        filterLabel="Subject"
+        filterOptions={subjects}
+        selectedFilter={filterValue}
+        onFilterChange={setFilterValue}
+      />
+
+      <div className="rounded-xl border border-border bg-card shadow-2xs overflow-hidden">
+        <GlassTable
+          columns={classColumns}
+          data={classes as (ClassResponse & Record<string, unknown>)[]}
+          loading={loading}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSortChange={handleSort}
+          emptyMessage="No classes found matching current filters"
+        />
+        <EnterprisePagination
+          totalItems={totalItems}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          itemName="classes"
+        />
+      </div>
     </div>
   );
 }
+

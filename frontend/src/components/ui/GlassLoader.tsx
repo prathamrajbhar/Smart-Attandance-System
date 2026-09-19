@@ -2,18 +2,18 @@
 
 import React from "react";
 import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-interface GlassLoaderProps {
+export interface GlassLoaderProps {
   text?: string;
+  className?: string;
 }
 
-export default function GlassLoader({ text = "Loading..." }: GlassLoaderProps): React.ReactElement {
+export default function GlassLoader({ text = "Loading...", className = "" }: GlassLoaderProps): React.ReactElement {
   return (
-    <div className="flex flex-col items-center justify-center py-24 gap-4 animate-fade-in-up">
-      <Loader2 size={32} className="text-slate-300 animate-spin" />
-      <p className="text-sm text-slate-400">{text}</p>
+    <div className={cn("flex flex-col items-center justify-center py-16 gap-3", className)}>
+      <Loader2 size={28} className="text-primary animate-spin" />
+      <p className="text-xs font-medium text-muted-foreground">{text}</p>
     </div>
   );
 }
-
-

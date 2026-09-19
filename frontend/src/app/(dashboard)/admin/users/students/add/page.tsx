@@ -9,23 +9,11 @@ import GlassBreadcrumb from "@/components/ui/GlassBreadcrumb";
 import GlassPageHeader from "@/components/ui/GlassPageHeader";
 import GlassCard from "@/components/ui/GlassCard";
 import GlassInput from "@/components/ui/GlassInput";
-import GlassSelect from "@/components/ui/GlassSelect";
 import GlassButton from "@/components/ui/GlassButton";
+import StudentFormFields from "./StudentFormFields";
 import type { StudentCreate, DepartmentResponse } from "@/types";
 
 type FormErrors = Partial<Record<keyof StudentCreate, string>>;
-
-const GENDER_OPTIONS = [
-  { value: "Male", label: "Male" },
-  { value: "Female", label: "Female" },
-  { value: "Other", label: "Other" },
-  { value: "Prefer not to say", label: "Prefer not to say" },
-];
-
-const SEMESTER_OPTIONS = Array.from({ length: 8 }, (_, i) => ({
-  value: String(i + 1),
-  label: `Semester ${i + 1}`,
-}));
 
 export default function AddStudentPage(): React.ReactElement {
   const router = useRouter();
@@ -98,18 +86,17 @@ export default function AddStudentPage(): React.ReactElement {
       <GlassPageHeader title="Add Student" description="Create a new student account and profile" />
 
       <form onSubmit={handleSubmit} className="max-w-4xl space-y-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1 space-y-8">
-            <GlassCard className="!p-0 overflow-hidden relative">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
-              <div className="p-6 border-b border-white/5 bg-white/[0.01]">
-                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                  <User size={20} className="text-slate-300" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-1 space-y-6">
+            <GlassCard className="!p-0 overflow-hidden">
+              <div className="p-5 border-b border-border bg-muted/40">
+                <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+                  <User size={18} className="text-primary" />
                   Account Info
                 </h3>
-                <p className="text-sm text-slate-400 mt-1">Core system credentials.</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Core system credentials.</p>
               </div>
-              <div className="p-6 space-y-5">
+              <div className="p-5 space-y-4">
                 <GlassInput
                   label="Email Address"
                   type="email"
@@ -125,7 +112,7 @@ export default function AddStudentPage(): React.ReactElement {
                   onChange={(e) => set("enrollment_number", e.target.value)}
                   error={errors.enrollment_number}
                 />
-                <div className="p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-300 leading-relaxed">
+                <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200/60 text-xs text-blue-800 leading-relaxed">
                   🔒 A secure temporary password will be automatically generated and emailed to this student. They will be prompted to choose a new password upon first login.
                 </div>
               </div>
@@ -133,68 +120,20 @@ export default function AddStudentPage(): React.ReactElement {
           </div>
 
           <div className="lg:col-span-2">
-            <GlassCard className="!p-0 overflow-hidden relative h-full">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-500"></div>
-              <div className="p-6 border-b border-white/5 bg-white/[0.01]">
-                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                  <GraduationCap size={20} className="text-slate-300" />
+            <GlassCard className="!p-0 overflow-hidden h-full">
+              <div className="p-5 border-b border-border bg-muted/40">
+                <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+                  <GraduationCap size={18} className="text-primary" />
                   Student Profile
                 </h3>
-                <p className="text-sm text-slate-400 mt-1">Personal and academic details.</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Personal and academic details.</p>
               </div>
-              <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <GlassInput
-              label="First Name"
-              placeholder="e.g. Aanya"
-              value={form.first_name}
-              onChange={(e) => set("first_name", e.target.value)}
-              error={errors.first_name}
-            />
-            <GlassInput
-              label="Last Name"
-              placeholder="e.g. Sharma"
-              value={form.last_name}
-              onChange={(e) => set("last_name", e.target.value)}
-              error={errors.last_name}
-            />
-            <GlassInput
-              label="Phone (optional)"
-              type="tel"
-              placeholder="+91 98765 43210"
-              value={form.phone ?? ""}
-              onChange={(e) => set("phone", e.target.value || undefined)}
-            />
-            <GlassSelect
-              label="Gender (optional)"
-              options={[{ value: "", label: "— Select —" }, ...GENDER_OPTIONS]}
-              value={form.gender ?? ""}
-              onChange={(v) => set("gender", v || undefined)}
-            />
-            <GlassInput
-              label="Date of Birth (optional)"
-              type="date"
-              value={form.date_of_birth ?? ""}
-              onChange={(e) => set("date_of_birth", e.target.value || undefined)}
-            />
-            <GlassSelect
-              label="Semester (optional)"
-              options={[{ value: "", label: "— Select —" }, ...SEMESTER_OPTIONS]}
-              value={form.semester ? String(form.semester) : ""}
-              onChange={(v) => set("semester", v ? Number(v) : undefined)}
-            />
-            <GlassInput
-              label="Batch (optional)"
-              placeholder="e.g. 2022-2026"
-              value={form.batch ?? ""}
-              onChange={(e) => set("batch", e.target.value || undefined)}
-            />
-            <GlassSelect
-              label="Department (optional)"
-              options={deptOptions}
-              value={form.department_id ?? ""}
-              onChange={(v) => set("department_id", v || undefined)}
-            />
-              </div>
+              <StudentFormFields
+                form={form}
+                errors={errors}
+                set={set}
+                deptOptions={deptOptions}
+              />
             </GlassCard>
           </div>
         </div>

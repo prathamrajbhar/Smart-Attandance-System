@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { RefreshCw, ClipboardList, QrCode, Download } from "lucide-react";
 import toast from "react-hot-toast";
@@ -8,14 +8,14 @@ import api, { getApiErrorMessage } from "@/lib/api";
 import { getWebSocket } from "@/lib/websocket";
 import GlassBreadcrumb from "@/components/ui/GlassBreadcrumb";
 import GlassPageHeader from "@/components/ui/GlassPageHeader";
-import GlassTable, { type TableColumn } from "@/components/ui/GlassTable";
-import GlassBadge, { statusToBadgeVariant } from "@/components/ui/GlassBadge";
+import GlassTable from "@/components/ui/GlassTable";
 import GlassButton from "@/components/ui/GlassButton";
 import GlassStatCard from "@/components/ui/GlassStatCard";
 import GlassLoader from "@/components/ui/GlassLoader";
 import GlassConfirmDialog from "@/components/ui/GlassConfirmDialog";
 import SmartPassScannerModal from "@/components/scanner/SmartPassScannerModal";
 import { exportRosterToCSV } from "@/utils/exportUtils";
+import { getRosterColumns } from "./roster-columns";
 import type { SessionAttendanceResponse, StudentRosterItem, BulkMarkRequest } from "@/types";
 
 export default function SessionRosterPage(): React.ReactElement {
@@ -60,7 +60,7 @@ export default function SessionRosterPage(): React.ReactElement {
     };
   }, [fetchRoster]);
 
-  async function handleOverride(studentId: string, status: string): Promise<void> {
+  const handleOverride = useCallback(async (studentId: string, status: string): Promise<void> => {
     try {
       await api.post(`/teacher/sessions/${id}/override`, { student_id: studentId, status });
       toast.success(`Marked as ${status}`);
@@ -68,7 +68,7 @@ export default function SessionRosterPage(): React.ReactElement {
     } catch {
       toast.error("Failed to override attendance");
     }
-  }
+  }, [id, fetchRoster]);
 
   async function handleBulkMarkConfirm(): Promise<void> {
     if (!roster) return;
@@ -89,8 +89,12 @@ export default function SessionRosterPage(): React.ReactElement {
     }
   }
 
+  const columns = useMemo(() => getRosterColumns({
+    onOverride: (studentId, status) => void handleOverride(studentId, status),
+  }), [handleOverride]);
+
   if (loading) return <GlassLoader text="Loading roster..." />;
-  if (!roster) return <div className="text-center py-20 text-slate-500">Session not found</div>;
+  if (!roster) return <div className="text-center py-20 text-muted-foreground text-xs">Session not found</div>;
 
   const counts = roster.roster.reduce(
     (acc, r) => {
@@ -101,54 +105,6 @@ export default function SessionRosterPage(): React.ReactElement {
     },
     { present: 0, flagged: 0, absent: 0 }
   );
-
-  const columns: TableColumn<StudentRosterItem & Record<string, unknown>>[] = [
-    { key: "enrollment_number", header: "Enrollment #", sortable: true },
-    { key: "full_name", header: "Full Name", sortable: true },
-    {
-      key: "status",
-      header: "Status",
-      render: (r) => <GlassBadge variant={statusToBadgeVariant(String(r.status))}>{String(r.status)}</GlassBadge>,
-    },
-    {
-      key: "final_score",
-      header: "AI Score",
-      render: (r) => {
-        const score = Number(r.final_score);
-        if (score === 0 && r.status === "Absent") return <span className="text-slate-500">—</span>;
-        return <span className="font-mono text-sm">{(score * 100).toFixed(1)}%</span>;
-      },
-    },
-    {
-      key: "marked_at",
-      header: "Marked At",
-      render: (r) => (
-        <span className="text-xs text-slate-400">
-          {r.marked_at ? new Date(String(r.marked_at)).toLocaleTimeString() : "—"}
-        </span>
-      ),
-    },
-    {
-      key: "actions",
-      header: "Override",
-      render: (row) => (
-        <div className="flex gap-1">
-          <button
-            onClick={() => void handleOverride(String(row.student_id), "Present")}
-            className="glass-btn glass-btn-ghost glass-btn-sm text-slate-300"
-          >
-            Present
-          </button>
-          <button
-            onClick={() => void handleOverride(String(row.student_id), "Absent")}
-            className="glass-btn glass-btn-ghost glass-btn-sm text-slate-300"
-          >
-            Absent
-          </button>
-        </div>
-      ),
-    },
-  ];
 
   return (
     <div className="animate-fade-in-up">

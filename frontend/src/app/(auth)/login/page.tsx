@@ -67,79 +67,75 @@ export default function LoginPage(): React.ReactElement {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      {}
-      <div className="absolute w-[350px] h-[350px] rounded-full bg-white/5 filter blur-[80px] -z-10 pointer-events-none" />
-
-      <div className="w-full max-w-md animate-fade-in-up relative z-10">
-        {}
-        <div className="text-center mb-8">
-          <div className="inline-flex p-4 rounded-2xl bg-gradient-to-tr from-white/10 to-purple-500/10 border border-white/10 shadow-[0_4px_12px_rgba(0,0,0,0.5)] mb-5">
-            <Shield size={36} className="text-slate-300 animate-pulse" />
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-6">
+          <div className="inline-flex p-3 rounded-xl bg-primary text-primary-foreground shadow-sm mb-3">
+            <Shield size={28} />
           </div>
-          <h1 className="text-3xl font-extrabold text-slate-100 tracking-tight font-[Outfit] bg-clip-text bg-gradient-to-r from-slate-100 to-indigo-200">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground font-[Outfit]">
             Smart Attendance
           </h1>
-          <p className="text-xs text-slate-500 mt-2 font-medium tracking-wide">
-            AI-Powered Multi-Layered Verification System
+          <p className="text-xs text-muted-foreground mt-1">
+            Enterprise Verification & Management Suite
           </p>
         </div>
 
-        {}
-        <form onSubmit={handleSubmit} className="glass-panel-static p-8 space-y-6 shadow-2xl">
+        <form onSubmit={handleSubmit} className="rounded-2xl border border-border bg-card p-7 shadow-sm space-y-5">
           <div className="space-y-1">
-            <h2 className="text-lg font-bold text-slate-200 tracking-wide font-[Outfit]">Welcome Back</h2>
-            <p className="text-xs text-slate-500">Sign in to your administration or teacher account</p>
+            <h2 className="text-base font-semibold text-foreground">Sign In</h2>
+            <p className="text-xs text-muted-foreground">Access your administrator or faculty account</p>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3.5">
             <GlassInput
               label="Email Address"
               type="email"
-              placeholder="you@university.edu"
+              placeholder="name@university.edu"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               error={errors.email}
-              icon={<Mail size={16} className="text-slate-400" />}
+              icon={<Mail size={15} />}
               autoComplete="email"
             />
 
-            <GlassInput
-              label="Password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              error={errors.password}
-              icon={<Lock size={16} className="text-slate-400" />}
-              autoComplete="current-password"
-            />
-            <div className="flex justify-end pt-1">
-              <Link
-                href="/forgot-password"
-                className="text-xs font-medium text-slate-400 hover:text-emerald-400 transition-colors"
-              >
-                Forgot password?
-              </Link>
+            <div>
+              <GlassInput
+                label="Password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                error={errors.password}
+                icon={<Lock size={15} />}
+                autoComplete="current-password"
+              />
+              <div className="flex justify-end pt-1.5">
+                <Link
+                  href="/forgot-password"
+                  className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Forgot password?
+                </Link>
+              </div>
             </div>
           </div>
 
-          <div className="pt-2">
+          <div className="pt-1">
             <GlassButton
               type="submit"
               variant="primary"
               size="lg"
               loading={loading}
-              className="w-full mt-2 animate-pulse-glow font-bold text-sm tracking-wider uppercase"
+              className="w-full font-medium"
             >
-              Sign In
+              Sign In to Dashboard
             </GlassButton>
           </div>
         </form>
 
-        {}
-        <p className="text-center text-[10px] font-bold text-slate-600 uppercase tracking-widest mt-8">
-          Enterprise Security Verification Suite
+        <p className="text-center text-xs text-muted-foreground mt-6">
+          Protected by Smart Attendance Zero-Trust Verification
         </p>
       </div>
 
@@ -156,4 +152,3 @@ export default function LoginPage(): React.ReactElement {
     </div>
   );
 }
-

@@ -21,24 +21,22 @@ export default function VerificationSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function fetchConfig() {
-    try {
-      setLoading(true);
-      setError(null);
-      const { data } = await api.get<SystemConfig>("/admin/config");
-      setConfig(data);
-    } catch (err: unknown) {
-      setError(getApiErrorMessage(err, "Failed to fetch configuration"));
-    } finally {
-      setLoading(false);
-    }
-  }
+
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      void fetchConfig();
-    }, 0);
-    return () => clearTimeout(timer);
+    let isMounted = true;
+    const load = async () => {
+      try {
+        const { data } = await api.get<SystemConfig>("/admin/config");
+        if (isMounted) setConfig(data);
+      } catch (err: unknown) {
+        if (isMounted) setError(getApiErrorMessage(err, "Failed to fetch configuration"));
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    void load();
+    return () => { isMounted = false; };
   }, []);
 
   const handleToggle = (key: keyof SystemConfig) => {
@@ -52,7 +50,7 @@ export default function VerificationSettingsPage() {
       setSaving(true);
       setError(null);
       await api.patch("/admin/config", config);
-      toast.success("Configuration saved successfully");
+      toast.success("Verification configuration updated");
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, "Failed to save configuration"));
     } finally {
@@ -63,7 +61,7 @@ export default function VerificationSettingsPage() {
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <GlassLoader text="Loading configuration..." />
+        <GlassLoader text="Loading verification controls..." />
       </div>
     );
   }
@@ -72,61 +70,61 @@ export default function VerificationSettingsPage() {
     <div className="space-y-6 max-w-4xl">
       <GlassPageHeader
         title="Verification Kill-Switch"
-        description="Dynamically enable or disable specific verification steps for the attendance system."
+        description="Dynamically enable or disable specific multi-modal verification steps for attendance sessions."
       />
 
       {error && (
-        <div className="p-4 bg-red-500/20 border border-red-500/50 rounded-xl text-red-200 flex items-start gap-3">
-          <AlertTriangleIcon className="w-5 h-5 shrink-0 mt-0.5" />
+        <div className="p-3.5 bg-red-50 border border-red-200 rounded-lg text-red-800 text-xs flex items-start gap-2.5">
+          <AlertTriangleIcon className="w-4 h-4 shrink-0 mt-0.5" />
           <p>{error}</p>
         </div>
       )}
 
-      <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-200 flex items-start gap-3">
-        <AlertTriangleIcon className="w-5 h-5 shrink-0 mt-0.5" />
+      <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 flex items-start gap-2.5 text-xs">
+        <AlertTriangleIcon className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
         <div>
-          <h4 className="font-semibold">Important Warning</h4>
-          <p className="text-sm opacity-90 mt-1">
-            Disabling a verification step will automatically mark that check as 100% successful for all users. This acts as a fallback if an AI model or external API experiences downtime. Use with caution.
+          <h4 className="font-semibold text-foreground">Operational Notice</h4>
+          <p className="text-muted-foreground mt-0.5 leading-relaxed">
+            Disabling a verification step will automatically mark that validation check as 100% successful for all sessions. Use this fallback if biometric hardware or spatial coordinates experience network issues.
           </p>
         </div>
       </div>
 
       {config && (
-        <GlassCard className="p-6">
-          <div className="space-y-8">
+        <GlassCard className="p-6 bg-card">
+          <div className="space-y-6">
             <ToggleOption
-              icon={<CameraIcon className="w-6 h-6 text-blue-400" />}
+              icon={<CameraIcon className="w-5 h-5 text-primary" />}
               title="Face Recognition"
-              description="Verify student identity using facial recognition AI models."
+              description="Verify student facial features using FaceNet 128-d cosine similarity model."
               enabled={config.isFaceRecognitionEnabled}
               onToggle={() => handleToggle("isFaceRecognitionEnabled")}
             />
             
             <ToggleOption
-              icon={<MapPinIcon className="w-6 h-6 text-emerald-400" />}
+              icon={<MapPinIcon className="w-5 h-5 text-primary" />}
               title="GPS Geofencing"
-              description="Verify student location against the classroom geofence."
+              description="Verify device location against the assigned classroom coordinate radius."
               enabled={config.isGpsVerificationEnabled}
               onToggle={() => handleToggle("isGpsVerificationEnabled")}
             />
 
             <ToggleOption
-              icon={<ShieldCheckIcon className="w-6 h-6 text-purple-400" />}
+              icon={<ShieldCheckIcon className="w-5 h-5 text-primary" />}
               title="AI Background Validation"
-              description="Analyze background context to ensure students are in a classroom setting."
+              description="Analyze classroom background context to ensure presence in valid academic environment."
               enabled={config.isAiBackgroundValidationEnabled}
               onToggle={() => handleToggle("isAiBackgroundValidationEnabled")}
             />
           </div>
 
-          <div className="mt-8 pt-6 border-t border-white/10 flex justify-end">
+          <div className="mt-6 pt-5 border-t border-border flex justify-end">
             <GlassButton
               onClick={handleSave}
               disabled={saving}
               variant="primary"
             >
-              {saving ? "Saving..." : "Save Configuration"}
+              {saving ? "Saving Changes..." : "Save Configuration"}
             </GlassButton>
           </div>
         </GlassCard>
@@ -149,20 +147,20 @@ function ToggleOption({
   onToggle: () => void; 
 }) {
   return (
-    <div className="flex items-start gap-4">
-      <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+    <div className="flex items-start gap-3.5 p-3.5 rounded-lg border border-border bg-secondary/30">
+      <div className="p-2.5 rounded-lg bg-card border border-border shrink-0">
         {icon}
       </div>
-      <div className="flex-1">
-        <h3 className="text-lg font-medium text-white">{title}</h3>
-        <p className="text-sm text-white/60 mt-1">{description}</p>
+      <div className="flex-1 min-w-0">
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
       </div>
       <div>
         <button
           type="button"
           onClick={onToggle}
-          className={`relative inline-flex h-7 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 ${
-            enabled ? 'bg-blue-500' : 'bg-slate-700'
+          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
+            enabled ? 'bg-primary' : 'bg-slate-300'
           }`}
           role="switch"
           aria-checked={enabled}
@@ -170,8 +168,8 @@ function ToggleOption({
           <span className="sr-only">Toggle {title}</span>
           <span
             aria-hidden="true"
-            className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-              enabled ? 'translate-x-7' : 'translate-x-0'
+            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xs transition duration-200 ease-in-out ${
+              enabled ? 'translate-x-5' : 'translate-x-0'
             }`}
           />
         </button>

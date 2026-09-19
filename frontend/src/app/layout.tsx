@@ -10,24 +10,20 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }): React.ReactElement {
   return (
     <html lang="en">
-      <body>
-        <div className="animated-bg" aria-hidden="true" />
-        <div style={{ position: "relative", zIndex: 1, minHeight: "100vh" }}>
-          {children}
-        </div>
+      <body className="bg-background text-foreground antialiased min-h-screen">
+        {children}
         <Toaster
           position="top-right"
           toastOptions={{
             duration: 4000,
             style: {
-              background: "rgba(15, 23, 42, 0.95)",
-              backdropFilter: "blur(16px)",
-              color: "#f1f5f9",
-              border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: "12px",
+              background: "#ffffff",
+              color: "#0f172a",
+              border: "1px solid #e2e8f0",
+              borderRadius: "8px",
               fontSize: "14px",
               padding: "12px 16px",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
             },
           }}
         />

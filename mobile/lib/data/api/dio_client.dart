@@ -8,8 +8,9 @@ import 'package:smart_attendance_app/data/local/secure_storage.dart';
 import 'package:smart_attendance_app/utils/logger.dart';
 
 final dioProvider = Provider<Dio>((ref) {
+  final normalizedBaseUrl = kApiBaseUrl.endsWith('/') ? kApiBaseUrl : '$kApiBaseUrl/';
   final dio = Dio(BaseOptions(
-    baseUrl: kApiBaseUrl,
+    baseUrl: normalizedBaseUrl,
     connectTimeout: const Duration(milliseconds: kConnectTimeout),
     receiveTimeout: const Duration(milliseconds: kReceiveTimeout),
     headers: {'Accept': 'application/json'},
@@ -24,19 +25,11 @@ final dioProvider = Provider<Dio>((ref) {
         options.headers['Authorization'] = 'Bearer $token';
       }
 
-      // Preserve baseUrl path prefix (e.g. /api/v1) when endpoints start with '/'
-      if (options.path.startsWith('/') && options.baseUrl.isNotEmpty) {
-        final baseUri = Uri.tryParse(options.baseUrl);
-        if (baseUri != null && baseUri.path.isNotEmpty && baseUri.path != '/') {
-          final cleanBasePath = baseUri.path.endsWith('/')
-              ? baseUri.path.substring(0, baseUri.path.length - 1)
-              : baseUri.path;
-          if (!options.path.startsWith(cleanBasePath)) {
-            options.path = '$cleanBasePath${options.path}';
-            final portStr = baseUri.hasPort ? ':${baseUri.port}' : '';
-            options.baseUrl = '${baseUri.scheme}://${baseUri.host}$portStr';
-          }
-        }
+      // Strip leading slash so path resolves relative to baseUrl (preserving /api/v1/)
+      if (options.path.startsWith('/') &&
+          !options.path.startsWith('http://') &&
+          !options.path.startsWith('https://')) {
+        options.path = options.path.substring(1);
       }
 
       handler.next(options);
@@ -45,10 +38,12 @@ final dioProvider = Provider<Dio>((ref) {
       handler.next(response);
     },
     onError: (error, handler) async {
-      AppLogger.error('[HTTP] ${error.requestOptions.method} ${error.requestOptions.path}: ${error.message}');
+      AppLogger.error('[HTTP] ${error.requestOptions.method} ${error.requestOptions.uri}: ${error.message ?? error.error}');
       if (error.response?.statusCode == 401 &&
           !error.requestOptions.path.endsWith('/auth/login') &&
-          !error.requestOptions.path.endsWith('/auth/logout')) {
+          !error.requestOptions.path.endsWith('/auth/logout') &&
+          !error.requestOptions.path.endsWith('auth/login') &&
+          !error.requestOptions.path.endsWith('auth/logout')) {
         await storage.clearAll();
         AppEvents.broadcastAuthError('session_expired');
       }
@@ -66,8 +61,11 @@ AppException mapDioError(DioException error) {
     case DioExceptionType.receiveTimeout:
       return const NetworkException('Connection timed out. Please try again.');
     case DioExceptionType.connectionError:
-      return const NetworkException(
-          'Unable to connect to the server. Check your internet connection.');
+      final detail = error.error?.toString() ?? error.message;
+      return NetworkException(
+          detail != null && detail.isNotEmpty
+              ? 'Connection failed: $detail'
+              : 'Unable to connect to the server. Check your internet connection.');
     case DioExceptionType.badResponse:
       final statusCode = error.response?.statusCode ?? 0;
       final detail = _extractDetail(error.response?.data);
@@ -82,8 +80,11 @@ AppException mapDioError(DioException error) {
       }
       return ServerException(detail, statusCode: statusCode);
     default:
+      final detail = error.error?.toString() ?? error.message;
       return NetworkException(
-          error.message ?? 'An unexpected network error occurred.');
+          detail != null && detail.isNotEmpty
+              ? detail
+              : 'An unexpected network error occurred.');
   }
 }
 

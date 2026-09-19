@@ -8,6 +8,7 @@ import api from "@/lib/api";
 import toast from "react-hot-toast";
 import CommandPaletteModal from "./CommandPaletteModal";
 import NotificationPopover from "./NotificationPopover";
+import { useNotifications } from "@/hooks/useNotifications";
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -16,6 +17,7 @@ interface HeaderProps {
 export default function Header({ onMenuToggle }: HeaderProps): React.ReactElement {
   const router = useRouter();
   const { user, logout } = useAuthStore();
+  const { unreadCount } = useNotifications(25000);
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
 
@@ -87,15 +89,18 @@ export default function Header({ onMenuToggle }: HeaderProps): React.ReactElemen
         <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
           {/* Notification Bell */}
           <div className="relative">
-
             <button
               type="button"
               onClick={() => setIsNotifOpen((prev) => !prev)}
-              className="relative p-2 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors shadow-2xs"
+              className="relative p-2 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors shadow-2xs cursor-pointer"
               title="Notifications"
             >
               <Bell size={15} />
-              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-card" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center ring-2 ring-card shadow-xs">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
             </button>
             <NotificationPopover
               isOpen={isNotifOpen}

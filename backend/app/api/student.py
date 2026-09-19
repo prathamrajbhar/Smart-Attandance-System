@@ -291,6 +291,31 @@ async def create_leave_request(
         "documentUrl": document_url,
         "status": "PENDING",
     })
+
+    try:
+        from app.db.client import db
+        from app.services.notification_service import notify_teacher_leave_submitted
+        enrollments = await db.enrollment.find_many(
+            where={"studentId": student.id},
+            include={"academicClass": {"include": {"teacher": True}}}
+        )
+        notified_teachers = set()
+        for enr in enrollments:
+            if enr.academicClass and enr.academicClass.teacher and enr.academicClass.teacher.userId:
+                t_user_id = enr.academicClass.teacher.userId
+                if t_user_id not in notified_teachers:
+                    notified_teachers.add(t_user_id)
+                    await notify_teacher_leave_submitted(
+                        teacher_user_id=t_user_id,
+                        student_name=_student_name(student),
+                        leave_id=leave.id,
+                        start_date=start_date,
+                        end_date=end_date,
+                        reason=reason,
+                    )
+    except Exception as exc:
+        logger.warning("Failed to send leave notification to teachers: %s", exc)
+
     return _make_leave_response(leave, _student_name(student), student.enrollmentNumber)
 
 

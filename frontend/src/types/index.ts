@@ -1,5 +1,6 @@
 export * from "./models";
 export * from "./attendance";
+export * from "./notification";
 
 export interface LoginRequest {
   email: string;

@@ -113,3 +113,24 @@ class SessionService:
                 await gamification_service.recalculate_student_streak(student.id)
             except Exception as e:
                 logger.warning("Failed to recalculate streak for student %s: %s", student.id, e)
+
+        # Notify teacher that session has concluded
+        try:
+            subject_class = await db.academicclass.find_unique(
+                where={"id": session.academicClassId},
+                include={"teacher": True}
+            )
+            if subject_class and subject_class.teacher:
+                final_records = await db.attendance.find_many(where={"sessionId": session_id})
+                present_count = sum(1 for r in final_records if r.status in ("Present", "Late"))
+                total_count = len(enrollments)
+                from app.services.notification_service import notify_teacher_session_concluded
+                await notify_teacher_session_concluded(
+                    teacher_user_id=subject_class.teacher.userId,
+                    class_name=subject_class.name,
+                    session_id=session_id,
+                    present_count=present_count,
+                    total_count=total_count,
+                )
+        except Exception as e:
+            logger.warning("Failed to notify teacher of session conclusion: %s", e)

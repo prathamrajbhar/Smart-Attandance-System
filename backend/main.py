@@ -27,7 +27,7 @@ from app.db.client import connect_db, disconnect_db
 from app.db.redis import connect_redis, disconnect_redis
 from app.services.s3_service import s3_service
 from app.services.scheduler import session_scheduler
-from app.api import auth, student, teacher, admin, logs, health, ws as ws_module
+from app.api import auth, student, teacher, admin, logs, health, notifications, ws as ws_module
 from app.middleware.request_logging import RequestLoggingMiddleware
 
 setup_logging(level=settings.LOG_LEVEL)
@@ -77,6 +77,7 @@ app.include_router(student.router, prefix=settings.API_V1_STR)
 app.include_router(teacher.router, prefix=settings.API_V1_STR)
 app.include_router(admin.router, prefix=settings.API_V1_STR)
 app.include_router(logs.router, prefix=settings.API_V1_STR)
+app.include_router(notifications.router, prefix=settings.API_V1_STR)
 app.include_router(ws_module.router, prefix=settings.API_V1_STR)
 
 

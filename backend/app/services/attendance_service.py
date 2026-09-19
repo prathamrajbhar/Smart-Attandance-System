@@ -180,14 +180,23 @@ class AttendanceService:
 
         if status == "Flagged":
             try:
-                from app.services.notification_service import notify_student_attendance_flagged
+                from app.services.notification_service import notify_student_attendance_flagged, notify_teacher_attendance_flagged
                 student = await self.student_repo.get_by_id(submission.student_id)
+                ac = await self.class_repo.get_by_id(session.academicClassId)
+                class_name = ac.name if ac else "your class"
+                student_name = f"{student.firstName or ''} {student.lastName or ''}".strip() or "Student" if student else "Student"
+                
+                # In-app notification for Teacher
+                if ac and ac.teacherId:
+                    teacher = await self.teacher_repo.get_by_id(ac.teacherId)
+                    if teacher and teacher.userId:
+                        await notify_teacher_attendance_flagged(teacher.userId, student_name, class_name, attendance_record.id)
+
+                # Push notification for Student (FCM)
                 if student and student.fcmToken:
-                    ac = await self.class_repo.get_by_id(session.academicClassId)
-                    class_name = ac.name if ac else "your class"
                     await notify_student_attendance_flagged(student.fcmToken, student.firstName or "Student", class_name, attendance_record.id)
             except Exception as e:
-                logger.warning("FCM notification failed: %s", e)
+                logger.warning("Attendance flagged notification failed: %s", e)
 
         try:
             from app.services.gamification_service import GamificationService
@@ -414,14 +423,23 @@ class AttendanceService:
 
         if predicted_status == "Flagged":
             try:
-                from app.services.notification_service import notify_student_attendance_flagged
+                from app.services.notification_service import notify_student_attendance_flagged, notify_teacher_attendance_flagged
                 student = await self.student_repo.get_by_id(student_id)
+                ac = await self.class_repo.get_by_id(session.academicClassId)
+                class_name = ac.name if ac else "your class"
+                student_name = f"{student.firstName or ''} {student.lastName or ''}".strip() or "Student" if student else "Student"
+
+                # In-app notification for Teacher
+                if ac and ac.teacherId:
+                    teacher = await self.teacher_repo.get_by_id(ac.teacherId)
+                    if teacher and teacher.userId:
+                        await notify_teacher_attendance_flagged(teacher.userId, student_name, class_name, attendance_record.id)
+
+                # Push notification for Student (FCM)
                 if student and student.fcmToken:
-                    ac = await self.class_repo.get_by_id(session.academicClassId)
-                    class_name = ac.name if ac else "your class"
                     await notify_student_attendance_flagged(student.fcmToken, student.firstName or "Student", class_name, attendance_record.id)
             except Exception as e:
-                logger.warning("FCM notification failed: %s", e)
+                logger.warning("Attendance flagged notification failed: %s", e)
 
         try:
             from app.services.gamification_service import GamificationService

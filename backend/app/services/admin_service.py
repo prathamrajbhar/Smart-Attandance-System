@@ -426,11 +426,17 @@ class AdminService:
 
 
     async def update_class(self, class_id: str, data: dict, actor: str = "system", ip: Optional[str] = None) -> ClassResponse:
-        renames = {"subject_id": "subjectId", "classroom_id": "classroomId", "teacher_id": "teacherId"}
-        for old, new in renames.items():
-            if old in data:
-                data[new] = data.pop(old)
-        cls = await db.academicclass.update(where={"id": class_id}, data=data, include={"subject": True, "classroom": True, "enrollments": True})
+        mapping = {
+            "name": "name",
+            "subject_id": "subjectId",
+            "classroom_id": "classroomId",
+            "teacher_id": "teacherId",
+            "semester": "semester",
+            "batch": "batch",
+            "max_students": "maxStudents",
+        }
+        update_data = {mapping[k]: v for k, v in data.items() if k in mapping and v is not None}
+        cls = await db.academicclass.update(where={"id": class_id}, data=update_data, include={"subject": True, "classroom": True, "enrollments": True})
         await self._log_action("UPDATE_CLASS", "INFO", actor, class_id, f"Updated class {cls.name}", ip)
         return ClassResponse(
             id=cls.id, name=cls.name, subject_name=cls.subject.name if cls.subject else "",

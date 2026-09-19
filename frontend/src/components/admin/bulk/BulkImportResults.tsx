@@ -2,11 +2,11 @@
 
 import React from "react";
 import { CheckCircle2, AlertTriangle, XCircle, Download, Mail, RefreshCw } from "lucide-react";
-import { BulkImportSummary } from "./bulk-types";
+import { BulkImportSummary, BulkImportEntityType } from "./bulk-types";
 
 interface BulkImportResultsProps {
   summary: BulkImportSummary;
-  entityType: "students" | "teachers";
+  entityType: BulkImportEntityType;
   onClose: () => void;
   onReset: () => void;
 }
@@ -22,13 +22,21 @@ export default function BulkImportResults({
 
   const handleDownloadFailedCsv = (): void => {
     if (summary.failedRecords.length === 0) return;
-    const isStudent = entityType === "students";
-    const header = isStudent
-      ? "email,enrollment_number,first_name,last_name,error_reason\n"
-      : "email,employee_id,first_name,last_name,error_reason\n";
+    let header = "";
+    if (entityType === "students") {
+      header = "email,enrollment_number,first_name,last_name,error_reason\n";
+    } else if (entityType === "teachers") {
+      header = "email,employee_id,first_name,last_name,error_reason\n";
+    } else {
+      header = "class_name,subject_code,teacher_email,classroom_name,error_reason\n";
+    }
 
     const rows = summary.failedRecords
-      .map((r) => `${r.email},${r.identifier},${r.first_name},${r.last_name},"${r.validationError || "Ingestion error"}"`)
+      .map((r) =>
+        entityType === "classes"
+          ? `${r.first_name},${r.identifier},${r.email},${r.last_name},"${r.validationError || "Ingestion error"}"`
+          : `${r.email},${r.identifier},${r.first_name},${r.last_name},"${r.validationError || "Ingestion error"}"`
+      )
       .join("\n");
 
     const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });

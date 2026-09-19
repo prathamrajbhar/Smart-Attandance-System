@@ -2,11 +2,10 @@
 
 import { useState, useRef } from "react";
 import api, { getApiErrorMessage } from "@/lib/api";
-import { ParsedBulkRecord, ImportStage, BatchProgressItem, BulkImportSummary } from "./bulk-types";
+import { ParsedBulkRecord, ImportStage, BatchProgressItem, BulkImportSummary, BulkImportEntityType } from "./bulk-types";
+import { buildBatches, buildBulkPayload } from "./bulk-payload-builder";
 
-const BATCH_SIZE = 10;
-
-export function useBulkImportProcessor(entityType: "students" | "teachers", onSuccess: () => void) {
+export function useBulkImportProcessor(entityType: BulkImportEntityType, onSuccess: () => void) {
   const [stage, setStage] = useState<ImportStage>("upload");
   const [records, setRecords] = useState<ParsedBulkRecord[]>([]);
   const [fileName, setFileName] = useState<string>("");
@@ -43,21 +42,6 @@ export function useBulkImportProcessor(entityType: "students" | "teachers", onSu
     if (updated.length === 0) handleReset();
   };
 
-  const buildBatches = (list: ParsedBulkRecord[]): BatchProgressItem[] => {
-    const total = Math.ceil(list.length / BATCH_SIZE);
-    return Array.from({ length: total }, (_, i) => ({
-      batchNumber: i + 1,
-      totalBatches: total,
-      startIndex: i * BATCH_SIZE,
-      endIndex: Math.min((i + 1) * BATCH_SIZE, list.length),
-      status: "queued",
-      importedCount: 0,
-      failedCount: 0,
-      invitationsSent: 0,
-      errorMessages: [],
-    }));
-  };
-
   const executeBulkImport = async (): Promise<void> => {
     const initialBatches = buildBatches(records);
     setBatches(initialBatches);
@@ -83,27 +67,7 @@ export function useBulkImportProcessor(entityType: "students" | "teachers", onSu
       );
 
       try {
-        const isStudent = entityType === "students";
-        const endpoint = isStudent ? "/admin/users/students/bulk" : "/admin/users/teachers/bulk";
-        const payload = isStudent
-          ? {
-              students: slice.map((s) => ({
-                email: s.email,
-                enrollment_number: s.identifier,
-                first_name: s.first_name,
-                last_name: s.last_name,
-              })),
-              send_invite: sendInvite,
-            }
-          : {
-              teachers: slice.map((t) => ({
-                email: t.email,
-                employee_id: t.identifier,
-                first_name: t.first_name,
-                last_name: t.last_name,
-              })),
-              send_invite: sendInvite,
-            };
+        const { endpoint, payload } = buildBulkPayload(entityType, slice, sendInvite);
 
         const { data } = await api.post<{
           imported_count: number;

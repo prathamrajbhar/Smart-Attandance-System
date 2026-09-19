@@ -1,18 +1,19 @@
 "use client";
 
 import React from "react";
-import { X, Users, GraduationCap } from "lucide-react";
+import { X, Users, GraduationCap, BookOpen } from "lucide-react";
 import toast from "react-hot-toast";
 import { useBulkImportProcessor } from "./bulk/useBulkImportProcessor";
 import BulkImportDropzone from "./bulk/BulkImportDropzone";
 import BulkImportPreviewTable from "./bulk/BulkImportPreviewTable";
 import BulkImportProgress from "./bulk/BulkImportProgress";
 import BulkImportResults from "./bulk/BulkImportResults";
+import { BulkImportEntityType } from "./bulk/bulk-types";
 
 interface BulkImportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  entityType: "students" | "teachers";
+  entityType: BulkImportEntityType;
   onSuccess: () => void;
 }
 
@@ -51,6 +52,18 @@ export default function BulkImportModal({
     onClose();
   };
 
+  const getEntityIcon = (): React.ReactElement => {
+    if (entityType === "students") return <GraduationCap size={18} />;
+    if (entityType === "teachers") return <Users size={18} />;
+    return <BookOpen size={18} />;
+  };
+
+  const getEntityTitle = (): string => {
+    if (entityType === "students") return "Students";
+    if (entityType === "teachers") return "Faculty";
+    return "Classes";
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-150">
       <div className="fixed inset-0" onClick={stage !== "importing" ? handleClose : undefined} />
@@ -59,14 +72,14 @@ export default function BulkImportModal({
         <div className="flex items-center justify-between border-b border-border pb-3">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-              {entityType === "students" ? <GraduationCap size={18} /> : <Users size={18} />}
+              {getEntityIcon()}
             </div>
             <div>
               <h3 className="text-base font-bold text-foreground font-[Outfit]">
-                Bulk Ingest {entityType === "students" ? "Students" : "Faculty"}
+                Bulk Ingest {getEntityTitle()}
               </h3>
               <p className="text-xs text-muted-foreground">
-                {fileName ? `File: ${fileName}` : "Upload institution roster for 10-batch ingestion & email invites"}
+                {fileName ? `File: ${fileName}` : "Upload institution roster for 10-batch ingestion & verification"}
               </p>
             </div>
           </div>

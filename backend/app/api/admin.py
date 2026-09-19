@@ -12,7 +12,7 @@ from app.schemas.admin import (
     ClassCreate, ClassUpdate, ClassResponse, AssignTeacherRequest, EnrollRequest,
     DepartmentCreate, DepartmentUpdate, DepartmentResponse,
     AuditLogResponse, AdminStatsResponse,
-    StudentBulkCreateRequest, TeacherBulkCreateRequest, BulkImportResponse,
+    StudentBulkCreateRequest, TeacherBulkCreateRequest, ClassBulkCreateRequest, BulkImportResponse,
 )
 from app.schemas.master_data import (
     SubjectCreate, SubjectUpdate, SubjectResponse,
@@ -100,6 +100,21 @@ async def bulk_create_teachers(
         ip=_get_client_ip(request),
     )
 
+
+
+@router.post("/classes/bulk", response_model=BulkImportResponse, status_code=status.HTTP_200_OK)
+@_handle_generic_err
+async def bulk_create_classes(
+    data: ClassBulkCreateRequest,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.bulk_create_classes(
+        data.classes,
+        actor=current_user.email,
+        ip=_get_client_ip(request),
+    )
 
 
 @router.post("/classes", response_model=ClassResponse, status_code=status.HTTP_201_CREATED)

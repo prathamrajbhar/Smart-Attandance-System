@@ -2,10 +2,11 @@
 
 import React, { useRef } from "react";
 import { Upload, Download, FileSpreadsheet, AlertCircle } from "lucide-react";
-import { ParsedBulkRecord } from "./bulk-types";
+import { ParsedBulkRecord, BulkImportEntityType } from "./bulk-types";
+import { getSampleCsv } from "./bulk-csv-samples";
 
 interface BulkImportDropzoneProps {
-  entityType: "students" | "teachers";
+  entityType: BulkImportEntityType;
   onRecordsParsed: (records: ParsedBulkRecord[], fileName: string) => void;
   onError: (msg: string) => void;
 }
@@ -29,31 +30,65 @@ export default function BulkImportDropzone({
 
     for (let i = 1; i < rawLines.length; i++) {
       const parts = rawLines[i].split(",").map((p) => p.trim().replace(/^["']|["']$/g, ""));
-      if (parts.length < 4) continue;
+      if (parts.length < 3) continue;
 
-      const email = parts[0] || "";
-      const identifier = parts[1] || "";
-      const firstName = parts[2] || "";
-      const lastName = parts[3] || "";
+      if (entityType === "classes") {
+        const name = parts[0] || "";
+        const subjectCode = parts[1] || "";
+        const teacherEmail = parts[2] || "";
+        const classroomName = parts[3] || "";
+        const semester = parts[4] ? parseInt(parts[4], 10) : undefined;
+        const batch = parts[5] || undefined;
+        const maxStudents = parts[6] ? parseInt(parts[6], 10) : undefined;
 
-      const isValidEmail = emailRegex.test(email);
-      const hasIdentifier = identifier.length >= 3;
-      const isValid = isValidEmail && hasIdentifier && firstName.length > 0;
+        const isValidEmail = emailRegex.test(teacherEmail);
+        const hasName = name.length >= 2;
+        const hasSubject = subjectCode.length >= 1;
+        const isValid = isValidEmail && hasName && hasSubject;
 
-      let validationError: string | undefined;
-      if (!isValidEmail) validationError = "Invalid email format";
-      else if (!hasIdentifier) validationError = "Identifier too short (min 3 chars)";
-      else if (!firstName) validationError = "First name is required";
+        let validationError: string | undefined;
+        if (!hasName) validationError = "Class name is required (min 2 chars)";
+        else if (!hasSubject) validationError = "Subject code is required";
+        else if (!isValidEmail) validationError = "Valid teacher email is required";
 
-      records.push({
-        id: `row-${i}-${Date.now()}`,
-        email,
-        identifier,
-        first_name: firstName,
-        last_name: lastName,
-        isValid,
-        validationError,
-      });
+        records.push({
+          id: `row-${i}-${Date.now()}`,
+          email: teacherEmail,
+          identifier: subjectCode,
+          first_name: name,
+          last_name: classroomName,
+          semester,
+          batch,
+          max_students: maxStudents,
+          isValid,
+          validationError,
+        });
+      } else {
+        if (parts.length < 4) continue;
+        const email = parts[0] || "";
+        const identifier = parts[1] || "";
+        const firstName = parts[2] || "";
+        const lastName = parts[3] || "";
+
+        const isValidEmail = emailRegex.test(email);
+        const hasIdentifier = identifier.length >= 3;
+        const isValid = isValidEmail && hasIdentifier && firstName.length > 0;
+
+        let validationError: string | undefined;
+        if (!isValidEmail) validationError = "Invalid email format";
+        else if (!hasIdentifier) validationError = "Identifier too short (min 3 chars)";
+        else if (!firstName) validationError = "First name is required";
+
+        records.push({
+          id: `row-${i}-${Date.now()}`,
+          email,
+          identifier,
+          first_name: firstName,
+          last_name: lastName,
+          isValid,
+          validationError,
+        });
+      }
     }
 
     if (records.length === 0) {
@@ -78,17 +113,7 @@ export default function BulkImportDropzone({
   };
 
   const handleDownloadSample = (): void => {
-    const isStudent = entityType === "students";
-    const header = isStudent
-      ? "email,enrollment_number,first_name,last_name\n" +
-        "alex.carter@university.edu,STU-2026-001,Alex,Carter\n" +
-        "brooke.hayes@university.edu,STU-2026-002,Brooke,Hayes\n" +
-        "connor.reed@university.edu,STU-2026-003,Connor,Reed"
-      : "email,employee_id,first_name,last_name\n" +
-        "alan.turing@university.edu,FAC-2026-001,Alan,Turing\n" +
-        "ada.lovelace@university.edu,FAC-2026-002,Ada,Lovelace\n" +
-        "grace.hopper@university.edu,FAC-2026-003,Grace,Hopper";
-
+    const header = getSampleCsv(entityType);
     const blob = new Blob([header], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -97,6 +122,23 @@ export default function BulkImportDropzone({
     link.click();
     URL.revokeObjectURL(url);
   };
+
+  const columnGuide =
+    entityType === "classes" ? (
+      <>
+        Required columns: <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">class_name</code>,{" "}
+        <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">subject_code</code>,{" "}
+        <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">teacher_email</code>
+      </>
+    ) : (
+      <>
+        Required columns: <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">email</code>,{" "}
+        <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">
+          {entityType === "students" ? "enrollment_number" : "employee_id"}
+        </code>, <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">first_name</code>,{" "}
+        <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">last_name</code>
+      </>
+    );
 
   return (
     <div className="space-y-4">
@@ -127,13 +169,7 @@ export default function BulkImportDropzone({
           <Upload size={20} />
         </div>
         <p className="text-sm font-semibold text-foreground">Click to select or drag and drop CSV</p>
-        <p className="text-xs text-muted-foreground mt-1">
-          Required columns: <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">email</code>,{" "}
-          <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">
-            {entityType === "students" ? "enrollment_number" : "employee_id"}
-          </code>, <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">first_name</code>,{" "}
-          <code className="font-mono bg-secondary px-1.5 py-0.5 rounded text-[11px]">last_name</code>
-        </p>
+        <p className="text-xs text-muted-foreground mt-1">{columnGuide}</p>
         <input
           ref={fileInputRef}
           type="file"

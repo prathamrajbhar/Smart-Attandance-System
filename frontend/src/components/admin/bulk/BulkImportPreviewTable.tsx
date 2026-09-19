@@ -2,11 +2,11 @@
 
 import React from "react";
 import { Trash2, Mail, Layers, CheckCircle, AlertTriangle } from "lucide-react";
-import { ParsedBulkRecord } from "./bulk-types";
+import { ParsedBulkRecord, BulkImportEntityType } from "./bulk-types";
 
 interface BulkImportPreviewTableProps {
   records: ParsedBulkRecord[];
-  entityType: "students" | "teachers";
+  entityType: BulkImportEntityType;
   sendInvite: boolean;
   onSendInviteChange: (send: boolean) => void;
   onRemoveRecord: (id: string) => void;
@@ -82,9 +82,11 @@ export default function BulkImportPreviewTable({
             <thead className="bg-secondary/60 sticky top-0 z-10 border-b border-border backdrop-blur-xs">
               <tr className="text-muted-foreground font-semibold">
                 <th className="py-2 px-3 w-10 text-center">#</th>
-                <th className="py-2 px-3">Name</th>
-                <th className="py-2 px-3">{entityType === "students" ? "Enrollment No" : "Employee ID"}</th>
-                <th className="py-2 px-3">Email</th>
+                <th className="py-2 px-3">{entityType === "classes" ? "Class Name" : "Name"}</th>
+                <th className="py-2 px-3">
+                  {entityType === "students" ? "Enrollment No" : entityType === "teachers" ? "Employee ID" : "Subject Code"}
+                </th>
+                <th className="py-2 px-3">{entityType === "classes" ? "Teacher Email" : "Email"}</th>
                 <th className="py-2 px-3 w-24">Status</th>
                 <th className="py-2 px-2 w-10 text-center">Action</th>
               </tr>
@@ -94,7 +96,7 @@ export default function BulkImportPreviewTable({
                 <tr key={rec.id} className="hover:bg-secondary/20 transition-colors">
                   <td className="py-2 px-3 text-center text-muted-foreground font-mono text-[11px]">{index + 1}</td>
                   <td className="py-2 px-3 font-medium text-foreground">
-                    {rec.first_name} {rec.last_name}
+                    {entityType === "classes" ? rec.first_name : `${rec.first_name} ${rec.last_name}`}
                   </td>
                   <td className="py-2 px-3 font-mono text-[11px] text-foreground/80">{rec.identifier}</td>
                   <td className="py-2 px-3 text-muted-foreground font-mono text-[11px]">{rec.email}</td>

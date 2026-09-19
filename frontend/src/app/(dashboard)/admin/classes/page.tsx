@@ -8,6 +8,7 @@ import GlassBreadcrumb from "@/components/ui/GlassBreadcrumb";
 import GlassTable from "@/components/ui/GlassTable";
 import EnterpriseTableToolbar from "@/components/ui/EnterpriseTableToolbar";
 import EnterprisePagination from "@/components/ui/EnterprisePagination";
+import BulkImportModal from "@/components/admin/BulkImportModal";
 import { useTableQuery } from "@/hooks/useTableQuery";
 import { classColumns } from "./class-columns";
 import type { ClassResponse, SubjectResponse } from "@/types";
@@ -15,6 +16,7 @@ import type { ClassResponse, SubjectResponse } from "@/types";
 export default function ClassesPage(): React.ReactElement {
   const router = useRouter();
   const [subjects, setSubjects] = useState<{ value: string; label: string }[]>([]);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
 
   const {
     data: classes,
@@ -31,6 +33,7 @@ export default function ClassesPage(): React.ReactElement {
     setPageSize,
     handleSort,
     setFilterValue,
+    refetch,
   } = useTableQuery<ClassResponse>({
     endpoint: "/admin/classes",
     defaultPageSize: 10,
@@ -66,7 +69,7 @@ export default function ClassesPage(): React.ReactElement {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => router.push("/admin/classes/create")}
+            onClick={() => setIsBulkImportOpen(true)}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card text-xs font-medium text-foreground hover:bg-secondary transition-colors shadow-2xs"
           >
             <Upload size={13} /> Bulk Import
@@ -109,6 +112,13 @@ export default function ClassesPage(): React.ReactElement {
           itemName="classes"
         />
       </div>
+
+      <BulkImportModal
+        isOpen={isBulkImportOpen}
+        onClose={() => setIsBulkImportOpen(false)}
+        entityType="classes"
+        onSuccess={() => void refetch()}
+      />
     </div>
   );
 }

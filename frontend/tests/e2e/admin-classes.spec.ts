@@ -116,4 +116,95 @@ test.describe("Module 4: Academic Classes & Enrollment", () => {
     await page.waitForTimeout(300);
     expect(batchActionFired).toBe(true);
   });
+
+  test("Classes directory opens BulkImportModal and handles bulk class ingestion without navigating away", async ({
+    page,
+  }) => {
+    // Intercept classes list query
+    await page.route("http://localhost:8000/api/v1/admin/classes*", async (route) => {
+      if (route.request().url().includes("/bulk")) {
+        await route.fallback();
+        return;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          items: [],
+          page: 1,
+          page_size: 10,
+          total_items: 0,
+          total_pages: 1,
+          has_next: false,
+          has_prev: false,
+        }),
+      });
+    });
+
+    // Intercept bulk classes post
+    let interceptedBatchCount = 0;
+    await page.route("http://localhost:8000/api/v1/admin/classes/bulk", async (route) => {
+      const body = route.request().postDataJSON();
+      interceptedBatchCount = body?.classes?.length || 0;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          imported_count: interceptedBatchCount,
+          failed_count: 0,
+          invitations_sent: 0,
+          errors: [],
+        }),
+      });
+    });
+
+    await page.goto("/admin/classes");
+    await expect(page.locator("h1:has-text('Class & Course Directory')")).toBeVisible();
+
+    // Click Bulk Import button
+    const bulkBtn = page.getByRole("button", { name: /bulk import/i });
+    await expect(bulkBtn).toBeVisible();
+    await bulkBtn.click();
+
+    // URL should NOT change to /admin/classes/create
+    await expect(page).toHaveURL(/\/admin\/classes(\?.*)?$/);
+    expect(page.url()).not.toContain("/create");
+
+    // Modal should be visible with Bulk Ingest Classes title
+    await expect(page.locator("h3:has-text('Bulk Ingest Classes')")).toBeVisible();
+    await expect(page.getByText("Download Sample Template")).toBeVisible();
+    await page.screenshot({ path: "screenshots/bulk-classes-stage-modal.png" });
+
+    // Upload CSV
+    const csvContent =
+      "name,subject_code,teacher_email,classroom_name,semester,batch,max_students\n" +
+      "CS-101: Intro to CS,CS101,teacher@univ.edu,Room 101,1,2026,60\n" +
+      "CS-102: Data Structures,CS102,teacher@univ.edu,Room 102,2,2026,60\n";
+
+    const fileInput = page.locator('input[type="file"]');
+    await fileInput.setInputFiles({
+      name: "classes.csv",
+      mimeType: "text/csv",
+      buffer: Buffer.from(csvContent),
+    });
+
+    // Preview table
+    await expect(page.getByText("CS-101: Intro to CS")).toBeVisible();
+    await expect(page.getByText("CS-102: Data Structures")).toBeVisible();
+    await page.screenshot({ path: "screenshots/bulk-classes-stage-preview.png" });
+
+    // Commit import
+    const commitBtn = page.getByRole("button", { name: /commit import/i });
+    await expect(commitBtn).toBeVisible();
+    await commitBtn.click();
+
+    // Completion
+    await expect(page.getByText("Bulk Import Completed Successfully")).toBeVisible({ timeout: 10000 });
+    expect(interceptedBatchCount).toBe(2);
+    await page.screenshot({ path: "screenshots/bulk-classes-stage-completed.png" });
+
+    // Done button closes modal
+    await page.getByRole("button", { name: /done/i }).click();
+    await expect(page.locator("h3:has-text('Bulk Ingest Classes')")).not.toBeVisible();
+  });
 });

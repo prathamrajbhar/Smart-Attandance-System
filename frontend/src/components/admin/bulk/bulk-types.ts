@@ -1,9 +1,14 @@
+export type BulkImportEntityType = "students" | "teachers" | "classes";
+
 export interface ParsedBulkRecord {
   id: string;
   email: string;
-  identifier: string; // enrollment_number or employee_id
-  first_name: string;
-  last_name: string;
+  identifier: string; // enrollment_number, employee_id, or subject_code
+  first_name: string; // first_name or class_name
+  last_name: string; // last_name or classroom_name
+  semester?: number;
+  batch?: string;
+  max_students?: number;
   isValid: boolean;
   validationError?: string;
 }

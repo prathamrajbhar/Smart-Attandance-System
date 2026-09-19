@@ -124,6 +124,20 @@ class TeacherBulkCreateRequest(BaseModel):
     send_invite: bool = Field(default=True, description="Whether to dispatch invitation email")
 
 
+class ClassBulkItem(BaseModel):
+    name: str = Field(..., min_length=2, max_length=100)
+    subject_code: str = Field(..., min_length=1, max_length=50)
+    teacher_email: EmailStr
+    classroom_name: Optional[str] = None
+    semester: Optional[int] = Field(None, ge=1, le=8)
+    batch: Optional[str] = Field(None, max_length=20)
+    max_students: Optional[int] = Field(None, ge=1)
+
+
+class ClassBulkCreateRequest(BaseModel):
+    classes: list[ClassBulkItem] = Field(..., min_length=1, description="List of class records to ingest")
+
+
 class BulkImportResponse(BaseModel):
     imported_count: int
     failed_count: int

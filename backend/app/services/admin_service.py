@@ -835,6 +835,79 @@ class AdminService:
             "errors": errors,
         }
 
+    async def bulk_create_classes(
+        self,
+        classes: list,
+        actor: str = "system",
+        ip: Optional[str] = None,
+    ) -> dict:
+        imported_count = 0
+        failed_count = 0
+        errors = []
+
+        for idx, item in enumerate(classes):
+            try:
+                # Find Subject by code or name
+                subject = await db.subject.find_first(
+                    where={"OR": [{"code": {"equals": item.subject_code, "mode": "insensitive"}}, {"name": {"equals": item.subject_code, "mode": "insensitive"}}]}
+                )
+                if not subject:
+                    errors.append(f"Row {idx + 1} ({item.name}): Subject '{item.subject_code}' not found.")
+                    failed_count += 1
+                    continue
+
+                # Find Teacher by email
+                teacher = await db.teacher.find_first(
+                    where={"user": {"email": {"equals": item.teacher_email, "mode": "insensitive"}}},
+                    include={"user": True},
+                )
+                if not teacher:
+                    errors.append(f"Row {idx + 1} ({item.name}): Teacher with email '{item.teacher_email}' not found.")
+                    failed_count += 1
+                    continue
+
+                # Find Classroom if provided
+                classroom_id = None
+                if item.classroom_name:
+                    classroom = await db.classroom.find_first(
+                        where={"OR": [{"name": {"equals": item.classroom_name, "mode": "insensitive"}}, {"roomNumber": {"equals": item.classroom_name, "mode": "insensitive"}}]}
+                    )
+                    if classroom:
+                        classroom_id = classroom.id
+
+                await db.academicclass.create(
+                    data={
+                        "name": item.name,
+                        "subjectId": subject.id,
+                        "teacherId": teacher.id,
+                        "classroomId": classroom_id,
+                        "semester": item.semester,
+                        "batch": item.batch,
+                        "maxStudents": item.max_students,
+                    }
+                )
+                imported_count += 1
+            except Exception as e:
+                errors.append(f"Row {idx + 1} ({item.name}): {str(e)}")
+                failed_count += 1
+
+        if imported_count > 0:
+            await self._log_action(
+                "BULK_IMPORT_CLASSES",
+                "INFO",
+                actor,
+                "SYSTEM",
+                f"Bulk imported {imported_count} classes ({failed_count} failed)",
+                ip,
+            )
+
+        return {
+            "imported_count": imported_count,
+            "failed_count": failed_count,
+            "invitations_sent": 0,
+            "errors": errors,
+        }
+
     async def export_audit_logs_csv(self) -> str:
         import io
         import csv

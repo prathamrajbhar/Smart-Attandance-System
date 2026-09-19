@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { User, Mail, Building, Briefcase, Award, Shield, Lock, CheckCircle2 } from "lucide-react";
+import { User, Building, Briefcase, Award, Shield, Lock } from "lucide-react";
 import toast from "react-hot-toast";
 import api, { getApiErrorMessage } from "@/lib/api";
 import GlassPageHeader from "@/components/ui/GlassPageHeader";
@@ -15,7 +15,6 @@ import type { UserProfile } from "@/types";
 export default function TeacherProfilePage(): React.ReactElement {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
@@ -52,7 +51,6 @@ export default function TeacherProfilePage(): React.ReactElement {
           new_password: newPassword,
         });
         toast.success("Password updated successfully");
-        setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
       }

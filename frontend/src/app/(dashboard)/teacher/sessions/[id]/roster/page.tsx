@@ -16,7 +16,7 @@ import GlassLoader from "@/components/ui/GlassLoader";
 import GlassConfirmDialog from "@/components/ui/GlassConfirmDialog";
 import SmartPassScannerModal from "@/components/scanner/SmartPassScannerModal";
 import { exportRosterToCSV } from "@/utils/exportUtils";
-import type { SessionAttendanceResponse, StudentRosterItem, BulkMarkRequest, SmartPassVerifyResponse } from "@/types";
+import type { SessionAttendanceResponse, StudentRosterItem, BulkMarkRequest } from "@/types";
 
 export default function SessionRosterPage(): React.ReactElement {
   const { id } = useParams<{ id: string }>();
@@ -219,7 +219,7 @@ export default function SessionRosterPage(): React.ReactElement {
         isOpen={showScanner}
         onClose={() => setShowScanner(false)}
         sessionId={id}
-        onSuccess={(_res: SmartPassVerifyResponse) => {
+        onSuccess={() => {
           void fetchRoster();
         }}
       />

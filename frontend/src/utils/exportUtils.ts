@@ -1,4 +1,4 @@
-import type { AttendanceExportRow, StudentRosterItem } from "@/types";
+import type { StudentRosterItem } from "@/types";
 
 export function exportToCSV(filename: string, rows: Record<string, unknown>[]): void {
   if (!rows || rows.length === 0) return;

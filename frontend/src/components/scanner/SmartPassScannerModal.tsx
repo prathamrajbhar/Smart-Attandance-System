@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { QrCode, X, CheckCircle2, AlertCircle, Camera, RefreshCw } from "lucide-react";
 import api, { getApiErrorMessage } from "@/lib/api";
 import GlassButton from "@/components/ui/GlassButton";
@@ -28,21 +28,15 @@ export default function SmartPassScannerModal({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  useEffect(() => {
-    if (!isOpen) {
-      stopCamera();
-      setFeedback(null);
-      setManualToken("");
-      return;
+  const stopCamera = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
     }
-    startCamera();
-    return () => {
-      stopCamera();
-    };
-  }, [isOpen]);
+    setCameraActive(false);
+  }, []);
 
-  const startCamera = async () => {
-    setCameraError(null);
+  const startCamera = useCallback(async () => {
     try {
       if (!navigator.mediaDevices?.getUserMedia) {
         throw new Error("Camera API is not supported on this device/browser.");
@@ -56,20 +50,28 @@ export default function SmartPassScannerModal({
         await videoRef.current.play();
       }
       setCameraActive(true);
+      setCameraError(null);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to access camera";
       setCameraError(msg);
       setCameraActive(false);
     }
-  };
+  }, []);
 
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
+  useEffect(() => {
+    let unmounted = false;
+    if (isOpen) {
+      void (async () => {
+        if (!unmounted) {
+          await startCamera();
+        }
+      })();
     }
-    setCameraActive(false);
-  };
+    return () => {
+      unmounted = true;
+      stopCamera();
+    };
+  }, [isOpen, startCamera, stopCamera]);
 
   const verifyToken = async (tokenToVerify: string) => {
     const trimmed = tokenToVerify.trim();

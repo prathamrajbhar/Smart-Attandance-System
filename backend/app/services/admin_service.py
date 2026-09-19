@@ -105,7 +105,7 @@ class AdminService:
                 email=s.user.email if s.user else "", first_name=s.firstName,
                 last_name=s.lastName, phone=s.phone, gender=s.gender,
                 date_of_birth=s.dateOfBirth, department_id=s.departmentId,
-                department_name=s.department.name if student.department else None if (student := s) else None,
+                department_name=s.department.name if s.department else None,
                 semester=s.semester, batch=s.batch,
             )
             for s in students

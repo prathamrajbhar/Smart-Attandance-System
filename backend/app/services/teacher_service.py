@@ -72,17 +72,23 @@ class TeacherService:
         )
         attendance_map = {r.studentId: r for r in await db.attendance.find_many(where={"sessionId": session_id})}
 
-        roster = [
-            StudentRosterItem(
-                student_id=s.id, enrollment_number=s.enrollmentNumber,
-                full_name=self._resolve_full_name(s.firstName, s.lastName),
-                email=s.user.email,
-                status=(rec := attendance_map.get(s.id)).status if s.id in attendance_map else "Absent",
-                final_score=rec.finalAiScore if s.id in attendance_map else 0.0,
-                marked_at=rec.createdAt if s.id in attendance_map else None,
+        roster = []
+        for e in enrollments:
+            s = e.student
+            if not s:
+                continue
+            rec = attendance_map.get(s.id)
+            roster.append(
+                StudentRosterItem(
+                    student_id=s.id,
+                    enrollment_number=s.enrollmentNumber,
+                    full_name=self._resolve_full_name(s.firstName, s.lastName),
+                    email=s.user.email if s.user else "",
+                    status=rec.status if rec else "Absent",
+                    final_score=rec.finalAiScore if rec else 0.0,
+                    marked_at=rec.createdAt if rec else None,
+                )
             )
-            for e in enrollments if (s := e.student)
-        ]
         return SessionAttendanceResponse(session_id=session_id, class_name=session.academicClass.name, roster=roster)
 
     async def get_absent_students(self, session_id: str, user_id: str) -> List[AbsentStudentItem]:

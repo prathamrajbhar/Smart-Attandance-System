@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Mail, Lock, Shield } from "lucide-react";
 import toast from "react-hot-toast";
 import api, { getApiErrorMessage } from "@/lib/api";
@@ -100,6 +101,14 @@ export default function LoginPage(): React.ReactElement {
               icon={<Lock size={16} className="text-slate-400" />}
               autoComplete="current-password"
             />
+            <div className="flex justify-end pt-1">
+              <Link
+                href="/forgot-password"
+                className="text-xs font-medium text-slate-400 hover:text-emerald-400 transition-colors"
+              >
+                Forgot password?
+              </Link>
+            </div>
           </div>
 
           <div className="pt-2">

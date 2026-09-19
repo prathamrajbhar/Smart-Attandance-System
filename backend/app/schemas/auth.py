@@ -29,3 +29,25 @@ class DeviceChangeRequestCreate(BaseModel):
     password: str = Field(..., min_length=8, max_length=100, description="Plaintext password")
     new_device_uuid: str = Field(..., description="The new hardware device UUID")
     reason: Optional[str] = Field(None, description="Optional reason for changing the device")
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr = Field(..., description="Account email address")
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str = Field(..., description="Password reset token received via email")
+    new_password: str = Field(..., min_length=8, max_length=100, description="New plaintext password")
+
+
+class CompleteOnboardingRequest(BaseModel):
+    token: str = Field(..., description="Invitation token received via email")
+    password: str = Field(..., min_length=8, max_length=100, description="Chosen password")
+
+
+class VerifyTokenResponse(BaseModel):
+    valid: bool
+    email: Optional[str] = None
+    role: Optional[str] = None
+    name: Optional[str] = None
+    message: Optional[str] = None

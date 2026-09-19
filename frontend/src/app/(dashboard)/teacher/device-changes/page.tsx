@@ -22,8 +22,25 @@ export default function DeviceChangesPage(): React.ReactElement {
   }, []);
 
   useEffect(() => {
-    void fetchRequests();
-  }, [fetchRequests]);
+    let isMounted = true;
+    const load = async () => {
+      try {
+        const { data } = await api.get("/teacher/device-changes/pending");
+        if (isMounted) setRequests(data);
+      } catch {
+        if (isMounted) toast.error("Failed to load device change requests");
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    const timer = setTimeout(() => {
+      void load();
+    }, 0);
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, []);
 
   return (
     <div className="p-6 md:p-8 max-w-[1400px] mx-auto space-y-8 animate-fade-in-up">

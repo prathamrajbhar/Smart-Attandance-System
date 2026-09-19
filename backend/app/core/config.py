@@ -35,6 +35,18 @@ class Settings(BaseSettings):
     AWS_SECRET_ACCESS_KEY: str = "test"
     S3_BUCKET_NAME: str = "smartattandancesystem"
 
+    # SMTP Email Configuration
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_TLS: bool = True
+    SMTP_SSL: bool = False
+    EMAILS_FROM_EMAIL: str = "noreply@smartattendance.edu"
+    EMAILS_FROM_NAME: str = "Smart Attendance System"
+    INVITATION_TOKEN_EXPIRE_HOURS: int = 48
+    RESET_TOKEN_EXPIRE_MINUTES: int = 15
+
     FRONTEND_URL: str = Field(default="http://localhost:3000", description="Frontend URL for CORS")
     ENVIRONMENT: str = "development"
     LOG_LEVEL: str = Field(default="DEBUG", description="Logging level: DEBUG, INFO, WARNING, ERROR, CRITICAL")

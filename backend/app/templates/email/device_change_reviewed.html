@@ -1,0 +1,32 @@
+{% extends "base_email.html" %}
+
+{% block content %}
+  {% if status == "APPROVED" %}
+    <h2 class="email-heading">Device Change Request Approved</h2>
+    <p>Hello {{ recipient_name }},</p>
+    <p>Your request to update the registered mobile device for your student account has been <strong>approved</strong>.</p>
+    <p>You can now sign in from your new device to mark attendance during active sessions.</p>
+  {% else %}
+    <h2 class="email-heading">Device Change Request Rejected</h2>
+    <p>Hello {{ recipient_name }},</p>
+    <p>Your request to update your registered mobile device has been <strong>rejected</strong> by the reviewer.</p>
+    <p>If you believe this is an error, please contact your class coordinator or department office.</p>
+  {% endif %}
+
+  <table class="data-table">
+    <tr>
+      <td class="data-label">Enrollment No.</td>
+      <td class="data-value">{{ enrollment_number }}</td>
+    </tr>
+    <tr>
+      <td class="data-label">Decision Status</td>
+      <td>
+        {% if status == "APPROVED" %}
+          <span class="badge badge-approved">Approved</span>
+        {% else %}
+          <span class="badge badge-rejected">Rejected</span>
+        {% endif %}
+      </td>
+    </tr>
+  </table>
+{% endblock %}

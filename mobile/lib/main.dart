@@ -188,21 +188,37 @@ class _SmartAttendanceAppState extends ConsumerState<SmartAttendanceApp> {
     }
   }
 
-  Future<void> _initializeFcm() async {
+  Future<void> _syncFcmToken() async {
     try {
-      
       final token = await FirebaseMessaging.instance.getToken();
       if (token != null) {
-        try {
-          await ref.read(studentApiProvider).registerFcmToken(token);
-        } catch (e) {
-          AppLogger.error('FCM token registration failed: $e');
-        } 
+        await ref.read(studentApiProvider).registerFcmToken(token);
+      }
+    } catch (e) {
+      AppLogger.error('FCM token sync on auth failed: $e');
+    }
+  }
+
+  Future<void> _initializeFcm() async {
+    try {
+      final authStatus = ref.read(authProvider).status;
+      if (authStatus == AuthStatus.authenticated) {
+        final token = await FirebaseMessaging.instance.getToken();
+        if (token != null) {
+          try {
+            await ref.read(studentApiProvider).registerFcmToken(token);
+          } catch (e) {
+            AppLogger.error('FCM token registration failed: $e');
+          }
+        }
       }
 
       FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
         try {
-          await ref.read(studentApiProvider).registerFcmToken(newToken);
+          final currentAuthStatus = ref.read(authProvider).status;
+          if (currentAuthStatus == AuthStatus.authenticated) {
+            await ref.read(studentApiProvider).registerFcmToken(newToken);
+          }
         } catch (e) {
           AppLogger.error('FCM token refresh registration failed: $e');
         } 
@@ -242,12 +258,17 @@ class _SmartAttendanceAppState extends ConsumerState<SmartAttendanceApp> {
   @override
   Widget build(BuildContext context) {
     ref.listen<AuthStateData>(authProvider, (previous, next) {
-      if (next.status == AuthStatus.authenticated && _pendingRoute != null) {
-        final route = _pendingRoute!;
-        _pendingRoute = null;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          ref.read(routerProvider).push(route);
-        });
+      if (next.status == AuthStatus.authenticated) {
+        if (previous?.status != AuthStatus.authenticated) {
+          _syncFcmToken();
+        }
+        if (_pendingRoute != null) {
+          final route = _pendingRoute!;
+          _pendingRoute = null;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ref.read(routerProvider).push(route);
+          });
+        }
       }
     });
 

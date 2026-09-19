@@ -2,6 +2,7 @@ from typing import List, Optional
 
 from prisma.models import Department, AuditLog, Subject, Classroom, Designation
 
+from app.core.logging_config import get_logger
 from app.core.security import hash_password
 from app.db.client import db
 from app.repositories.user_repo import UserRepository
@@ -12,6 +13,8 @@ from app.repositories.enrollment_repo import EnrollmentRepository
 from app.schemas.student import StudentCreate, StudentResponse
 from app.schemas.teacher import TeacherCreate, TeacherResponse
 from app.schemas.admin import ClassCreate, ClassResponse
+
+logger = get_logger("app.services.admin")
 
 
 class AdminService:
@@ -53,6 +56,26 @@ class AdminService:
             include={"department": True},
         )
         await self._log_action("CREATE_STUDENT", "INFO", actor, student.id, f"Created student {data.email}", ip)
+
+        if data.send_invite:
+            try:
+                from app.services.auth_service import AuthService
+                from app.services.email_service import email_service
+                name = f"{data.first_name or ''} {data.last_name or ''}".strip() or "Student"
+                token = await AuthService().create_invitation_token(
+                    user_id=user.id, email=user.email, role="STUDENT", name=name
+                )
+                await email_service.send_invitation_email(
+                    to_email=user.email,
+                    recipient_name=name,
+                    role="STUDENT",
+                    invite_token=token,
+                    identifier_label="Enrollment Number",
+                    identifier_value=data.enrollment_number,
+                )
+            except Exception as e:
+                logger.warning("Failed to send student invitation email: %s", e)
+
         return StudentResponse(
             id=student.id, user_id=user.id, enrollment_number=student.enrollmentNumber, email=user.email,
             first_name=student.firstName, last_name=student.lastName, phone=student.phone,
@@ -117,6 +140,26 @@ class AdminService:
             include={"department": True, "designation": True},
         )
         await self._log_action("CREATE_TEACHER", "INFO", actor, teacher.id, f"Created teacher {data.email}", ip)
+
+        if data.send_invite:
+            try:
+                from app.services.auth_service import AuthService
+                from app.services.email_service import email_service
+                name = f"{data.first_name or ''} {data.last_name or ''}".strip() or "Teacher"
+                token = await AuthService().create_invitation_token(
+                    user_id=user.id, email=user.email, role="TEACHER", name=name
+                )
+                await email_service.send_invitation_email(
+                    to_email=user.email,
+                    recipient_name=name,
+                    role="TEACHER",
+                    invite_token=token,
+                    identifier_label="Employee ID",
+                    identifier_value=data.employee_id,
+                )
+            except Exception as e:
+                logger.warning("Failed to send teacher invitation email: %s", e)
+
         return TeacherResponse(
             id=teacher.id, user_id=user.id, email=user.email, employee_id=teacher.employeeId,
             first_name=teacher.firstName, last_name=teacher.lastName,

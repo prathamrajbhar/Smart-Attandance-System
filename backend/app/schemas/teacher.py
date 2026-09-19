@@ -17,6 +17,7 @@ class TeacherCreate(BaseModel):
     specialization: Optional[str] = Field(None, max_length=100, description="Area of specialization e.g. Machine Learning")
     experience_years: Optional[int] = Field(None, ge=0, description="Years of professional experience")
     joining_date: Optional[datetime] = Field(None, description="Date of joining the institution")
+    send_invite: Optional[bool] = Field(default=True, description="Whether to dispatch an invitation email")
 
 
 class TeacherUpdate(BaseModel):

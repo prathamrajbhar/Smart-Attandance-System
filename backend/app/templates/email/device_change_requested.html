@@ -1,0 +1,32 @@
+{% extends "base_email.html" %}
+
+{% block content %}
+  <h2 class="email-heading">Device Change Request Submitted</h2>
+  <p>Hello {{ recipient_name }},</p>
+  <p>A request has been recorded to bind a new mobile device to your student account. Below are the submission details:</p>
+
+  <table class="data-table">
+    <tr>
+      <td class="data-label">Enrollment No.</td>
+      <td class="data-value">{{ enrollment_number }}</td>
+    </tr>
+    <tr>
+      <td class="data-label">New Device UUID</td>
+      <td class="data-value" style="font-family: monospace; font-size: 12px;">{{ new_device_uuid }}</td>
+    </tr>
+    {% if reason %}
+    <tr>
+      <td class="data-label">Reason</td>
+      <td class="data-value">{{ reason }}</td>
+    </tr>
+    {% endif %}
+    <tr>
+      <td class="data-label">Status</td>
+      <td><span class="badge badge-pending">Pending Review</span></td>
+    </tr>
+  </table>
+
+  <p style="font-size: 13px; color: #64748b;">
+    Your request is under review by your department faculty/administrator. You will be notified via email once a decision is made. If you did not initiate this request, notify your administrator immediately.
+  </p>
+{% endblock %}

@@ -16,6 +16,7 @@ class StudentCreate(BaseModel):
     semester: Optional[int] = Field(None, ge=1, le=8, description="Current academic semester (1–8)")
     batch: Optional[str] = Field(None, max_length=20, description="Batch year range e.g. 2022-2026")
     department_id: Optional[str] = Field(None, description="UUID of the student's department")
+    send_invite: Optional[bool] = Field(default=True, description="Whether to dispatch an invitation email")
 
 
 class StudentUpdate(BaseModel):

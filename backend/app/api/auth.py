@@ -10,7 +10,16 @@ from app.core.security import decode_access_token
 from app.db.client import db
 from app.db.redis import get_redis
 from app.repositories.student_repo import StudentRepository
-from app.schemas.auth import Token, UserLogin, UserProfileResponse, DeviceChangeRequestCreate
+from app.schemas.auth import (
+    Token,
+    UserLogin,
+    UserProfileResponse,
+    DeviceChangeRequestCreate,
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
+    CompleteOnboardingRequest,
+    VerifyTokenResponse,
+)
 from app.schemas.student import StudentCreate, StudentResponse
 from app.schemas.teacher import TeacherCreate, TeacherResponse
 from app.services.auth_service import AuthService
@@ -128,6 +137,62 @@ async def request_device_change(
     await _rate_limit(request)
     await device_change_service.request_device_change(data)
     return {"status": "success", "message": "Device change request submitted successfully."}
+
+
+@router.post("/forgot-password", status_code=status.HTTP_200_OK)
+async def forgot_password(
+    data: ForgotPasswordRequest,
+    request: Request,
+    auth_service: AuthService = Depends(),
+) -> dict:
+    await _rate_limit(request)
+    await auth_service.request_password_reset(data.email)
+    return {"status": "success", "message": "If the email is registered, a password reset link has been dispatched."}
+
+
+@router.post("/reset-password", status_code=status.HTTP_200_OK)
+async def reset_password(
+    data: ResetPasswordRequest,
+    request: Request,
+    auth_service: AuthService = Depends(),
+) -> dict:
+    await _rate_limit(request)
+    await auth_service.reset_password(token=data.token, new_password=data.new_password)
+    return {"status": "success", "message": "Password reset successfully. You can now login with your new credentials."}
+
+
+@router.get("/verify-token", response_model=VerifyTokenResponse)
+async def verify_token(
+    token: str,
+    token_type: str = "invite",
+    auth_service: AuthService = Depends(),
+) -> VerifyTokenResponse:
+    if token_type == "invite":
+        data = await auth_service.verify_invitation_token(token)
+    elif token_type == "reset":
+        data = await auth_service.verify_reset_token(token)
+    else:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid token type.")
+
+    if not data:
+        return VerifyTokenResponse(valid=False, message="Link has expired or is invalid.")
+    return VerifyTokenResponse(
+        valid=True,
+        email=data.get("email"),
+        role=data.get("role"),
+        name=data.get("name"),
+    )
+
+
+@router.post("/complete-onboarding", status_code=status.HTTP_200_OK)
+async def complete_onboarding(
+    data: CompleteOnboardingRequest,
+    request: Request,
+    auth_service: AuthService = Depends(),
+) -> dict:
+    await _rate_limit(request)
+    await auth_service.complete_onboarding(token=data.token, password=data.password)
+    return {"status": "success", "message": "Account onboarding completed. You may now login."}
 
 
 # --- System Config (Public) ---

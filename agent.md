@@ -17,3 +17,6 @@
 - **File Length Limit**: Keep every file concise (under 200 lines). If a file exceeds this, break it down logically into modular components/services.
 - **Strict Typing & Diagnostics**: Avoid `any` in TypeScript. Ensure Python code complies with strict typing and ruff/flake8 standards.
 - **No Residual Debug Code**: Remove all temporary `console.log`, arbitrary `print()` statements, and one-off debug test routes before finalizing production releases.
+
+## 5. Version Control & Automated Delivery
+- **Commit & Push on Major Changes**: Whenever a major feature, architectural update, security improvement, or core third-party integration is completed and verified, create a clear semantic git commit and push the changes directly to the remote repository (`origin/main`).

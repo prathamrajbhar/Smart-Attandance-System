@@ -23,6 +23,22 @@ final dioProvider = Provider<Dio>((ref) {
       if (token != null) {
         options.headers['Authorization'] = 'Bearer $token';
       }
+
+      // Preserve baseUrl path prefix (e.g. /api/v1) when endpoints start with '/'
+      if (options.path.startsWith('/') && options.baseUrl.isNotEmpty) {
+        final baseUri = Uri.tryParse(options.baseUrl);
+        if (baseUri != null && baseUri.path.isNotEmpty && baseUri.path != '/') {
+          final cleanBasePath = baseUri.path.endsWith('/')
+              ? baseUri.path.substring(0, baseUri.path.length - 1)
+              : baseUri.path;
+          if (!options.path.startsWith(cleanBasePath)) {
+            options.path = '$cleanBasePath${options.path}';
+            final portStr = baseUri.hasPort ? ':${baseUri.port}' : '';
+            options.baseUrl = '${baseUri.scheme}://${baseUri.host}$portStr';
+          }
+        }
+      }
+
       handler.next(options);
     },
     onResponse: (response, handler) {

@@ -1,23 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_attendance_app/app/theme.dart';
-import 'package:smart_attendance_app/core/attendance_constants.dart';
 import 'package:smart_attendance_app/data/local/notification_service.dart';
 import 'package:smart_attendance_app/features/notifications/widgets/notification_tile.dart';
 import 'package:smart_attendance_app/shared/widgets/animated_background.dart';
 import 'package:smart_attendance_app/shared/widgets/glass_app_bar.dart';
 import 'package:smart_attendance_app/shared/widgets/glass_card.dart';
 
-class NotificationsScreen extends ConsumerWidget {
+class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<NotificationsScreen> createState() => _NotificationsScreenState();
+}
+
+class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
+  String _selectedFilter = 'all';
+
+  @override
+  Widget build(BuildContext context) {
     final notifications = ref.watch(notificationsProvider);
     final isLoading = ref.watch(notificationsLoadingProvider);
-    final pushList = notifications.where((n) => n.source == kAttendanceTypePush).toList();
-    final localList = notifications.where((n) => n.source == kAttendanceTypeLocal).toList();
     final unread = notifications.where((n) => !n.isRead).length;
+
+    final filtered = notifications.where((n) {
+      if (_selectedFilter == 'broadcasts') return n.source == 'broadcast' || n.category == 'broadcast';
+      if (_selectedFilter == 'unread') return !n.isRead;
+      return true;
+    }).toList();
 
     return Scaffold(
       appBar: GlassAppBar(
@@ -50,45 +60,80 @@ class NotificationsScreen extends ConsumerWidget {
       ),
       body: AnimatedBackground(
         child: SafeArea(
-          child: RefreshIndicator(
-            color: SasColors.accentEmerald,
-            backgroundColor: SasColors.bgSecondary,
-            onRefresh: () => ref.read(notificationsProvider.notifier).load(),
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                if (isLoading)
-                  const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator(color: SasColors.accentEmerald)))
-                else if (notifications.isEmpty)
-                  _buildEmpty()
-                else ...[
-                  if (pushList.isNotEmpty) ...[
-                    _buildSectionHeader(Icons.campaign_rounded, 'System & Push Alerts', SasColors.warning),
-                    const SizedBox(height: 6),
-                    ...pushList.map((n) => NotificationTile(notification: n, isPush: true)),
-                    const SizedBox(height: 14),
-                  ],
-                  if (localList.isNotEmpty) ...[
-                    _buildSectionHeader(Icons.cloud_sync_rounded, 'Sync & Attendance Events', SasColors.textMuted),
-                    const SizedBox(height: 6),
-                    ...localList.map((n) => NotificationTile(notification: n, isPush: false)),
-                  ],
-                ],
-              ],
-            ),
+          child: Column(
+            children: [
+              _buildFilterChips(notifications),
+              Expanded(
+                child: RefreshIndicator(
+                  color: SasColors.accentEmerald,
+                  backgroundColor: SasColors.bgSecondary,
+                  onRefresh: () => ref.read(notificationsProvider.notifier).load(),
+                  child: ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    children: [
+                      if (isLoading && notifications.isEmpty)
+                        const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator(color: SasColors.accentEmerald)))
+                      else if (filtered.isEmpty)
+                        _buildEmpty()
+                      else
+                        ...filtered.map((n) => NotificationTile(
+                              notification: n,
+                              onMarkRead: () => ref.read(notificationsProvider.notifier).markRead(n.id),
+                              onDelete: () => ref.read(notificationsProvider.notifier).deleteNotification(n.id),
+                            )),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildSectionHeader(IconData icon, String title, Color color) {
-    return Row(
-      children: [
-        Icon(icon, size: 15, color: color),
-        const SizedBox(width: 6),
-        Text(title, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700)),
-      ],
+  Widget _buildFilterChips(List<LocalNotification> all) {
+    final broadcastCount = all.where((n) => n.source == 'broadcast' || n.category == 'broadcast').length;
+    final unreadCount = all.where((n) => !n.isRead).length;
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: Row(
+        children: [
+          _buildFilterChip('all', 'All (${all.length})'),
+          const SizedBox(width: 8),
+          _buildFilterChip('broadcasts', 'Broadcasts ($broadcastCount)'),
+          const SizedBox(width: 8),
+          _buildFilterChip('unread', 'Unread ($unreadCount)'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String key, String label) {
+    final isSelected = _selectedFilter == key;
+    return InkWell(
+      onTap: () => setState(() => _selectedFilter = key),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? SasColors.accentEmerald : SasColors.bgSecondary,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? SasColors.accentEmerald : SasColors.glassBorder,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : SasColors.textSecondary,
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+          ),
+        ),
+      ),
     );
   }
 
@@ -99,9 +144,9 @@ class NotificationsScreen extends ConsumerWidget {
         children: [
           Icon(Icons.notifications_none_rounded, size: 44, color: SasColors.textMuted),
           SizedBox(height: 10),
-          Text('No notifications yet', style: TextStyle(color: SasColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w700)),
+          Text('No notifications', style: TextStyle(color: SasColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w700)),
           SizedBox(height: 4),
-          Text('Attendance sync updates and classroom alerts will appear here.',
+          Text('Broadcast announcements and classroom alerts will appear here.',
               textAlign: TextAlign.center, style: TextStyle(color: SasColors.textMuted, fontSize: 12)),
         ],
       ),

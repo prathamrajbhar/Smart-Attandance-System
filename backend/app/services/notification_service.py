@@ -209,7 +209,7 @@ async def broadcast_announcement(
     link: Optional[str] = None,
 ) -> Dict[str, Any]:
     role_enum = target_role if target_role and target_role != "ALL" else None
-    return await create_in_app_notification(
+    notif = await create_in_app_notification(
         title=title,
         message=message,
         role=role_enum,
@@ -217,6 +217,22 @@ async def broadcast_announcement(
         category=category,
         link=link,
     )
+    if role_enum in (None, "STUDENT"):
+        try:
+            students = await db.student.find_many(where={"fcmToken": {"not": None}})
+            for st in students:
+                if st.fcmToken:
+                    asyncio.create_task(
+                        send_push_notification(
+                            token=st.fcmToken,
+                            title=title,
+                            body=message,
+                            data={"route": "/notifications", "type": type, "category": category},
+                        )
+                    )
+        except Exception as fcm_err:
+            logger.debug("Broadcast push dispatch error: %s", fcm_err)
+    return notif
 
 
 async def notify_student_attendance_flagged(student_fcm_token: str, student_name: str, class_name: str, attendance_id: str):

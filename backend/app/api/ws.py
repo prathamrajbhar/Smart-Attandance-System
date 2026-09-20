@@ -17,105 +17,95 @@ _PONG_TIMEOUT = 15
 
 class ConnectionManager:
     def __init__(self):
+        self.user_connections: Dict[str, Set[WebSocket]] = {}
+        self.role_connections: Dict[str, Set[WebSocket]] = {"STUDENT": set(), "TEACHER": set(), "ADMIN": set()}
         self.student_connections: Dict[str, Set[WebSocket]] = {}
         self.teacher_connections: Dict[str, Set[WebSocket]] = {}
         self._heartbeat_task: asyncio.Task | None = None
 
-    async def connect_student(self, websocket: WebSocket, student_id: str):
-        await websocket.accept()
-        self.student_connections.setdefault(student_id, set()).add(websocket)
-        logger.info("WebSocket student connected: %s", student_id)
+    async def connect_client(self, websocket: WebSocket, user_id: str, role: str, profile_id: str | None = None):
+        self.user_connections.setdefault(user_id, set()).add(websocket)
+        self.role_connections.setdefault(role, set()).add(websocket)
+        if role == "STUDENT" and profile_id:
+            self.student_connections.setdefault(profile_id, set()).add(websocket)
+        elif role == "TEACHER" and profile_id:
+            self.teacher_connections.setdefault(profile_id, set()).add(websocket)
+        logger.info("WebSocket connected: user=%s role=%s profile=%s", user_id, role, profile_id)
 
-    async def connect_teacher(self, websocket: WebSocket, teacher_id: str):
-        await websocket.accept()
-        self.teacher_connections.setdefault(teacher_id, set()).add(websocket)
-        logger.info("WebSocket teacher connected: %s", teacher_id)
+    def disconnect_client(self, websocket: WebSocket, user_id: str, role: str, profile_id: str | None = None):
+        if user_id in self.user_connections:
+            self.user_connections[user_id].discard(websocket)
+            if not self.user_connections[user_id]:
+                del self.user_connections[user_id]
+        if role in self.role_connections:
+            self.role_connections[role].discard(websocket)
+        if role == "STUDENT" and profile_id and profile_id in self.student_connections:
+            self.student_connections[profile_id].discard(websocket)
+            if not self.student_connections[profile_id]:
+                del self.student_connections[profile_id]
+        elif role == "TEACHER" and profile_id and profile_id in self.teacher_connections:
+            self.teacher_connections[profile_id].discard(websocket)
+            if not self.teacher_connections[profile_id]:
+                del self.teacher_connections[profile_id]
+        logger.info("WebSocket disconnected: user=%s role=%s", user_id, role)
 
-    def disconnect(self, websocket: WebSocket, user_type: str, user_id: str):
-        connections = self.student_connections if user_type == "student" else self.teacher_connections
-        if user_id in connections:
-            connections[user_id].discard(websocket)
-            if not connections[user_id]:
-                del connections[user_id]
-        logger.info("WebSocket %s disconnected: %s", user_type, user_id)
-
-    async def send_personal_message(self, message: dict, student_id: str):
-        conns = self.student_connections.get(student_id)
-        if not conns:
-            return
+    async def send_personal_message(self, message: dict, target_id: str):
+        conns = self.user_connections.get(target_id) or self.student_connections.get(target_id) or self.teacher_connections.get(target_id) or set()
         disconnected = set()
-        for connection in conns:
+        for connection in list(conns):
             try:
                 await connection.send_json(message)
             except Exception as e:
-                logger.warning("Failed to send message to %s: %s", student_id, e)
+                logger.warning("Failed to send message to %s: %s", target_id, e)
                 disconnected.add(connection)
         for conn in disconnected:
-            self.student_connections[student_id].discard(conn)
+            conns.discard(conn)
+
+    async def broadcast(self, message: dict, target_role: str | None = None):
+        targets: Set[WebSocket] = set()
+        if target_role and target_role in self.role_connections:
+            targets.update(self.role_connections[target_role])
+        else:
+            for role_set in self.role_connections.values():
+                targets.update(role_set)
+
+        disconnected = set()
+        for conn in list(targets):
+            try:
+                await conn.send_json(message)
+            except Exception:
+                disconnected.add(conn)
+        for dead in disconnected:
+            for s in self.role_connections.values():
+                s.discard(dead)
 
     async def broadcast_to_teachers(self, message: dict):
-        disconnected = set()
-        for teacher_id, conns in self.teacher_connections.items():
-            for conn in conns:
-                try:
-                    await conn.send_json(message)
-                except Exception as e:
-                    logger.warning("Failed to send to teacher %s: %s", teacher_id, e)
-                    disconnected.add(conn)
-        for conn in disconnected:
-            for teacher_id, conns in self.teacher_connections.items():
-                conns.discard(conn)
-                if not conns:
-                    del self.teacher_connections[teacher_id]
+        await self.broadcast(message, target_role="TEACHER")
 
     async def _heartbeat_loop(self):
         while True:
             await asyncio.sleep(_PING_INTERVAL)
             ping = {"type": "ping"}
-            disconnected = set()
-
-            for sid, conns in list(self.student_connections.items()):
+            for role, conns in list(self.role_connections.items()):
                 for conn in list(conns):
                     try:
-                        await asyncio.wait_for(
-                            conn.send_json(ping), timeout=_PONG_TIMEOUT
-                        )
+                        await asyncio.wait_for(conn.send_json(ping), timeout=_PONG_TIMEOUT)
                     except Exception:
-                        disconnected.add((conn, "student", sid))
-
-            for tid, conns in list(self.teacher_connections.items()):
-                for conn in list(conns):
-                    try:
-                        await asyncio.wait_for(
-                            conn.send_json(ping), timeout=_PONG_TIMEOUT
-                        )
-                    except Exception:
-                        disconnected.add((conn, "teacher", tid))
-
-            for conn, utype, uid in disconnected:
-                self.disconnect(conn, utype, uid)
-
-            if disconnected:
-                logger.info(
-                    "Heartbeat cleaned %d stale connections", len(disconnected)
-                )
+                        conns.discard(conn)
 
     def start_heartbeat(self):
         if self._heartbeat_task is None:
             self._heartbeat_task = asyncio.create_task(self._heartbeat_loop())
-            logger.info("WebSocket heartbeat started")
 
     def stop_heartbeat(self):
         if self._heartbeat_task is not None:
             self._heartbeat_task.cancel()
             self._heartbeat_task = None
-            logger.info("WebSocket heartbeat stopped")
 
     @property
     def total_connections(self) -> int:
-        student_count = sum(len(c) for c in self.student_connections.values())
-        teacher_count = sum(len(c) for c in self.teacher_connections.values())
-        return student_count + teacher_count
+        return sum(len(c) for c in self.user_connections.values())
+
 
 manager = ConnectionManager()
 
@@ -136,36 +126,21 @@ async def websocket_endpoint(websocket: WebSocket):
             await websocket.close(code=1008, reason="Unauthorized")
             return
 
-        if user.role == "STUDENT" and user.student:
-            student_id = user.student.id
-            await manager.connect_student(websocket, student_id)
-            await websocket.send_json({"type": "connected", "message": "WebSocket connection established", "user_id": student_id, "role": "student"})
-            try:
-                while True:
-                    data = await asyncio.wait_for(websocket.receive_text(), timeout=_PING_INTERVAL)
-                    if data == "ping":
-                        await websocket.send_json({"type": "pong"})
-            except asyncio.TimeoutError:
-                logger.info("WebSocket ping timeout for student %s", student_id)
-            except WebSocketDisconnect:
-                manager.disconnect(websocket, "student", student_id)
+        profile_id = user.student.id if (user.role == "STUDENT" and user.student) else (user.teacher.id if (user.role == "TEACHER" and user.teacher) else None)
+        await manager.connect_client(websocket, user.id, user.role, profile_id)
+        await websocket.send_json({"type": "connected", "message": "WebSocket connection established", "user_id": user.id, "role": user.role.lower()})
 
-        elif user.role == "TEACHER" and user.teacher:
-            teacher_id = user.teacher.id
-            await manager.connect_teacher(websocket, teacher_id)
-            await websocket.send_json({"type": "connected", "message": "WebSocket connection established", "user_id": teacher_id, "role": "teacher"})
-            try:
-                while True:
-                    data = await asyncio.wait_for(websocket.receive_text(), timeout=_PING_INTERVAL)
-                    if data == "ping":
-                        await websocket.send_json({"type": "pong"})
-            except asyncio.TimeoutError:
-                logger.info("WebSocket ping timeout for teacher %s", teacher_id)
-            except WebSocketDisconnect:
-                manager.disconnect(websocket, "teacher", teacher_id)
-
-        else:
-            await websocket.close(code=1008, reason="Unauthorized: Student or Teacher profile required")
+        try:
+            while True:
+                data = await asyncio.wait_for(websocket.receive_text(), timeout=_PING_INTERVAL)
+                if data == "ping" or '"type":"ping"' in data:
+                    await websocket.send_json({"type": "pong"})
+        except asyncio.TimeoutError:
+            pass
+        except WebSocketDisconnect:
+            pass
+        finally:
+            manager.disconnect_client(websocket, user.id, user.role, profile_id)
 
     except Exception as e:
         logger.error("WebSocket error: %s", e, exc_info=True)

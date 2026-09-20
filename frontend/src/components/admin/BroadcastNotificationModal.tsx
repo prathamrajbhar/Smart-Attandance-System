@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Megaphone, X, Send, Loader2 } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
-import type { NotificationBroadcastCreate } from "@/types/notification";
+import type { NotificationBroadcastCreate, NotificationCategory, NotificationType } from "@/types/notification";
 
 interface BroadcastNotificationModalProps {
   isOpen: boolean;
@@ -12,19 +12,21 @@ interface BroadcastNotificationModalProps {
   onSuccess?: () => void;
 }
 
+const INITIAL_FORM: NotificationBroadcastCreate = {
+  title: "",
+  message: "",
+  target_role: "ALL",
+  type: "info",
+  category: "system",
+  link: "",
+};
+
 export default function BroadcastNotificationModal({
   isOpen,
   onClose,
   onSuccess,
 }: BroadcastNotificationModalProps): React.ReactElement | null {
-  const [formData, setFormData] = useState<NotificationBroadcastCreate>({
-    title: "",
-    message: "",
-    target_role: "ALL",
-    type: "info",
-    category: "system",
-    link: "",
-  });
+  const [formData, setFormData] = useState<NotificationBroadcastCreate>(INITIAL_FORM);
   const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
@@ -48,14 +50,7 @@ export default function BroadcastNotificationModal({
       });
 
       toast.success("Broadcast announcement sent successfully!");
-      setFormData({
-        title: "",
-        message: "",
-        target_role: "ALL",
-        type: "info",
-        category: "system",
-        link: "",
-      });
+      setFormData(INITIAL_FORM);
       if (onSuccess) onSuccess();
       onClose();
     } catch {
@@ -78,10 +73,7 @@ export default function BroadcastNotificationModal({
               <p className="text-[11px] text-muted-foreground">Send an urgent alert to selected users</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-secondary transition-colors"
-          >
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-secondary transition-colors">
             <X size={15} />
           </button>
         </div>
@@ -91,12 +83,7 @@ export default function BroadcastNotificationModal({
             <label className="block text-xs font-semibold text-foreground mb-1">Target Audience</label>
             <select
               value={formData.target_role}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  target_role: e.target.value as "ALL" | "TEACHER" | "STUDENT" | "ADMIN",
-                }))
-              }
+              onChange={(e) => setFormData((prev) => ({ ...prev, target_role: e.target.value as "ALL" | "TEACHER" | "STUDENT" | "ADMIN" }))}
               className="w-full h-9 px-3 rounded-lg border border-border bg-secondary/30 text-xs text-foreground focus:ring-1 focus:ring-primary outline-none"
             >
               <option value="ALL">All Campus (Everyone)</option>
@@ -135,12 +122,7 @@ export default function BroadcastNotificationModal({
               <label className="block text-xs font-semibold text-foreground mb-1">Severity / Type</label>
               <select
                 value={formData.type}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    type: e.target.value as "info" | "success" | "warning" | "danger",
-                  }))
-                }
+                onChange={(e) => setFormData((prev) => ({ ...prev, type: e.target.value as NotificationType }))}
                 className="w-full h-9 px-2.5 rounded-lg border border-border bg-secondary/30 text-xs text-foreground focus:ring-1 focus:ring-primary outline-none"
               >
                 <option value="info">Info (Blue)</option>
@@ -154,12 +136,7 @@ export default function BroadcastNotificationModal({
               <label className="block text-xs font-semibold text-foreground mb-1">Category</label>
               <select
                 value={formData.category}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    category: e.target.value as "attendance" | "leave" | "device" | "security" | "system",
-                  }))
-                }
+                onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value as NotificationCategory }))}
                 className="w-full h-9 px-2.5 rounded-lg border border-border bg-secondary/30 text-xs text-foreground focus:ring-1 focus:ring-primary outline-none"
               >
                 <option value="system">System</option>
@@ -182,11 +159,7 @@ export default function BroadcastNotificationModal({
           </div>
 
           <div className="pt-2 flex items-center justify-end gap-2 border-t border-border">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-            >
+            <button type="button" onClick={onClose} className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
               Cancel
             </button>
             <button

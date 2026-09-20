@@ -33,7 +33,7 @@ export default function NotificationPopover({
 
   if (!isOpen) return null;
 
-  const isAdmin = user?.role === "ADMIN";
+  const canBroadcast = user?.role === "ADMIN" || user?.role === "TEACHER";
 
   return (
     <>
@@ -114,7 +114,7 @@ export default function NotificationPopover({
         {/* Footer */}
         <div className="p-2.5 border-t border-border bg-secondary/20 flex items-center justify-between text-[11px] text-muted-foreground shrink-0">
           <span className="text-[10px] font-medium">Real-time alerts active</span>
-          {isAdmin && (
+          {canBroadcast && (
             <button
               type="button"
               onClick={() => setIsBroadcastOpen(true)}
@@ -127,7 +127,7 @@ export default function NotificationPopover({
         </div>
       </div>
 
-      {isAdmin && (
+      {canBroadcast && (
         <BroadcastNotificationModal
           isOpen={isBroadcastOpen}
           onClose={() => setIsBroadcastOpen(false)}

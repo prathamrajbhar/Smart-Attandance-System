@@ -106,9 +106,9 @@ def test_mark_all_read():
     app.dependency_overrides.clear()
 
 
-def test_admin_broadcast_forbidden_for_teacher():
-    mock_teacher = MockUser()
-    app.dependency_overrides[get_current_user] = lambda: mock_teacher
+def test_student_broadcast_forbidden():
+    mock_student = MockUser(user_id="student_123", role="STUDENT", email="student@test.com")
+    app.dependency_overrides[get_current_user] = lambda: mock_student
 
     response = client.post("/api/v1/notifications/broadcast", json={
         "title": "Campus Closed",
@@ -121,12 +121,31 @@ def test_admin_broadcast_forbidden_for_teacher():
     app.dependency_overrides.clear()
 
 
+def test_teacher_broadcast_success():
+    mock_teacher = MockUser(user_id="teacher_123", role="TEACHER", email="teacher@test.com")
+    app.dependency_overrides[get_current_user] = lambda: mock_teacher
+
+    with patch("app.api.notifications.broadcast_announcement", new_callable=AsyncMock) as mock_bcast:
+        mock_bcast.return_value = {"id": "n1"}
+        response = client.post("/api/v1/notifications/broadcast", json={
+            "title": "Faculty Meeting",
+            "message": "Tomorrow at 10 AM",
+            "target_role": "STUDENT",
+            "type": "info"
+        })
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "success"
+
+    app.dependency_overrides.clear()
+
+
 def test_admin_broadcast_success():
     mock_admin = MockAdminUser()
     app.dependency_overrides[get_current_user] = lambda: mock_admin
 
     with patch("app.api.notifications.broadcast_announcement", new_callable=AsyncMock) as mock_bcast:
-        mock_bcast.return_value = 10
+        mock_bcast.return_value = {"id": "n2"}
         response = client.post("/api/v1/notifications/broadcast", json={
             "title": "Campus Closed",
             "message": "Heavy rain tomorrow",

@@ -73,12 +73,15 @@ async def remove_notification(
     return ActionSuccessResponse(success=True, message="Notification deleted")
 
 
-@router.post("/broadcast", response_model=ActionSuccessResponse, dependencies=[Depends(require_admin)])
+require_broadcast_sender = RoleChecker(["ADMIN", "TEACHER"])
+
+
+@router.post("/broadcast", response_model=ActionSuccessResponse, dependencies=[Depends(require_broadcast_sender)])
 async def broadcast_notification(
     payload: NotificationBroadcastCreate,
     current_user: User = Depends(get_current_user),
 ):
-    """Admin-only endpoint to broadcast an announcement to teachers, students, or campus-wide."""
+    """Endpoint for Admins and Faculty Teachers to broadcast announcements to students or campus-wide."""
     await broadcast_announcement(
         title=payload.title,
         message=payload.message,
@@ -88,3 +91,4 @@ async def broadcast_notification(
         link=payload.link,
     )
     return ActionSuccessResponse(success=True, message="Broadcast announcement dispatched successfully")
+

@@ -108,7 +108,7 @@ async def get_health_status(response: Response) -> HealthResponse:
         status=overall_status,
         app_name=settings.PROJECT_NAME,
         environment=settings.ENVIRONMENT,
-        version="1.0.0",
+        version="1.0.1",
         timestamp=datetime.now(timezone.utc),
         services=services,
     )

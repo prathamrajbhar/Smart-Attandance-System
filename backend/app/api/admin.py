@@ -207,10 +207,12 @@ async def get_students(
     sort_order: str = "asc",
     q: str | None = None,
     department_id: str | None = None,
+    semester: int | None = None,
+    batch: str | None = None,
     admin_service: AdminService = Depends(),
 ):
     return await admin_service.get_all_students(
-        page=page, page_size=min(page_size, 100), sort_by=sort_by, sort_order=sort_order, q=q, department_id=department_id
+        page=page, page_size=min(page_size, 1000), sort_by=sort_by, sort_order=sort_order, q=q, department_id=department_id, semester=semester, batch=batch
     )
 
 

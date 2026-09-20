@@ -134,10 +134,16 @@ class AdminService:
         sort_order: str = "asc",
         q: Optional[str] = None,
         department_id: Optional[str] = None,
+        semester: Optional[int] = None,
+        batch: Optional[str] = None,
     ) -> dict:
         where: dict = {}
         if department_id and department_id != "all":
             where["departmentId"] = department_id
+        if semester is not None and semester > 0:
+            where["semester"] = semester
+        if batch and batch.strip() and batch != "all":
+            where["batch"] = batch.strip()
 
         if q and q.strip():
             query_str = q.strip()

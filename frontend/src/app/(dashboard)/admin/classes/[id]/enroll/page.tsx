@@ -9,7 +9,7 @@ import GlassLoader from "@/components/ui/GlassLoader";
 import EnrollStudentRow from "./EnrollStudentRow";
 import EnrollStudentFilters from "./EnrollStudentFilters";
 import EnrollHeader from "./EnrollHeader";
-import type { StudentResponse, ClassResponse } from "@/types";
+import type { StudentResponse, ClassResponse, DepartmentResponse } from "@/types";
 
 export default function EnrollStudentsPage(): React.ReactElement {
   const { id } = useParams<{ id: string }>();
@@ -17,6 +17,7 @@ export default function EnrollStudentsPage(): React.ReactElement {
   
   const [cls, setCls] = useState<ClassResponse | null>(null);
   const [students, setStudents] = useState<StudentResponse[]>([]);
+  const [departments, setDepartments] = useState<DepartmentResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState("");
@@ -28,25 +29,29 @@ export default function EnrollStudentsPage(): React.ReactElement {
   useEffect(() => {
     async function fetchData(): Promise<void> {
       try {
-        let foundCls: ClassResponse | null = null;
-        try {
-          const res = await api.get<ClassResponse>(`/admin/classes/${id}`);
-          foundCls = res.data;
-        } catch {
-          const res = await api.get<ClassResponse[] | { items: ClassResponse[] }>("/admin/classes");
-          const list = Array.isArray(res.data) ? res.data : (res.data as { items?: ClassResponse[] })?.items || [];
-          foundCls = list.find(c => c.id === id) || null;
-        }
-        setCls(foundCls);
+        const [clsRes, studentRes, deptRes] = await Promise.allSettled([
+          api.get<ClassResponse>(`/admin/classes/${id}`),
+          api.get<StudentResponse[] | { items: StudentResponse[] }>(
+            "/admin/users/students?page_size=1000&sort_by=created_at&sort_order=desc"
+          ),
+          api.get<DepartmentResponse[]>("/admin/departments"),
+        ]);
 
-        let studentList: StudentResponse[] = [];
-        try {
-          const res = await api.get<StudentResponse[] | { items: StudentResponse[] }>("/admin/users/students");
-          studentList = Array.isArray(res.data) ? res.data : (res.data as { items?: StudentResponse[] })?.items || [];
-        } catch {
-          // fallback
+        if (clsRes.status === "fulfilled") {
+          setCls(clsRes.value.data);
+        } else {
+          const fallback = await api.get<ClassResponse[] | { items: ClassResponse[] }>("/admin/classes");
+          const list = Array.isArray(fallback.data) ? fallback.data : fallback.data.items || [];
+          setCls(list.find((c) => c.id === id) || null);
         }
-        setStudents(studentList);
+
+        if (studentRes.status === "fulfilled") {
+          const data = studentRes.value.data;
+          setStudents(Array.isArray(data) ? data : data.items || []);
+        }
+        if (deptRes.status === "fulfilled") {
+          setDepartments(Array.isArray(deptRes.value.data) ? deptRes.value.data : []);
+        }
       } catch {
         toast.error("Failed to load data");
       } finally {
@@ -81,20 +86,20 @@ export default function EnrollStudentsPage(): React.ReactElement {
     nonEnrolledFilteredStudents.every((s) => selectedIds.has(s.id));
 
   const filterOptions = useMemo(() => {
-    const departments = new Set<string>();
-    const semesters = new Set<string>();
+    const deptSet = new Set<string>(departments.map((d) => d.name));
+    const semesters = new Set<string>(["1", "2", "3", "4", "5", "6", "7", "8"]);
     const batches = new Set<string>();
     for (const s of students) {
-      if (s.department_name) departments.add(s.department_name);
+      if (s.department_name) deptSet.add(s.department_name);
       if (s.semester) semesters.add(String(s.semester));
       if (s.batch) batches.add(s.batch);
     }
     return {
-      uniqueDepartments: Array.from(departments).sort(),
-      uniqueSemesters: Array.from(semesters).sort(),
-      uniqueBatches: Array.from(batches).sort(),
+      uniqueDepartments: Array.from(deptSet).filter(Boolean).sort(),
+      uniqueSemesters: Array.from(semesters).sort((a, b) => Number(a) - Number(b)),
+      uniqueBatches: Array.from(batches).filter(Boolean).sort(),
     };
-  }, [students]);
+  }, [students, departments]);
 
   const toggleSelect = (studentId: string) => {
     if (cls?.enrolled_student_ids?.includes(studentId)) return;

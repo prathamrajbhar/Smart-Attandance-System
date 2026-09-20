@@ -98,7 +98,7 @@ export default function EditClassroomPage(): React.ReactElement {
           <GlassInput
             label="Student Capacity"
             type="number"
-            {...register("capacity")}
+            {...register("capacity", { valueAsNumber: true })}
             error={errors.capacity?.message}
           />
           <div className="flex justify-end gap-3 pt-4">

@@ -38,5 +38,6 @@ Thumbs.db
 # Playwright & Screenshots
 test-results/
 screenshots/
+e2e-screenshots/
 playwright-report/
 blob-report/

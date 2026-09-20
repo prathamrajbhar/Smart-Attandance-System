@@ -73,9 +73,9 @@ export default function CreateClassPage(): React.ReactElement {
         subject_id: formData.subject_id,
         teacher_id: formData.teacher_id,
         classroom_id: formData.classroom_id || undefined,
-        semester: formData.semester,
+        semester: formData.semester ? Number(formData.semester) : undefined,
         batch: formData.batch ? formData.batch.trim() : undefined,
-        max_students: formData.max_students,
+        max_students: formData.max_students !== undefined && formData.max_students !== null && formData.max_students !== ("" as unknown) ? Number(formData.max_students) : undefined,
       });
       toast.success("Class created successfully");
       router.push("/admin/classes");

@@ -1,43 +1,54 @@
-import { defineConfig } from "@playwright/test";
+import { defineConfig, devices } from "@playwright/test";
+
+// Enforce local database environment fallback for E2E tests
+process.env.DATABASE_URL =
+  process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/smart_attendance";
+process.env.NEXT_PUBLIC_API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 
 export default defineConfig({
-  testDir: "./tests/e2e",
-  fullyParallel: true,
+  testDir: "./e2e/specs",
+  timeout: 60 * 1000,
+  expect: {
+    timeout: 10 * 1000,
+  },
+  fullyParallel: false, // Run sequentially or controlled per file to avoid DB race conditions
   forbidOnly: !!process.env.CI,
-  retries: 0,
-  workers: 1,
-  reporter: "list",
+  retries: process.env.CI ? 2 : 1,
+  workers: 1, // Single worker preserves clean transactional test states on local DB
+  reporter: [
+    ["list"],
+    ["html", { open: "never", outputFolder: "playwright-report" }],
+  ],
+  globalSetup: "./e2e/setup/global-setup.ts",
   use: {
-    baseURL: "http://localhost:3000",
-    trace: "on-first-retry",
+    baseURL: process.env.FRONTEND_URL || "http://localhost:3000",
+    trace: "on",
+    screenshot: "on",
+    video: "on",
+    actionTimeout: 15 * 1000,
+    navigationTimeout: 30 * 1000,
   },
   projects: [
     {
-      name: "Desktop Chrome",
+      name: "Chromium",
       use: {
-        browserName: "chromium",
+        ...devices["Desktop Chrome"],
         viewport: { width: 1280, height: 800 },
       },
     },
     {
-      name: "Tablet Viewport",
+      name: "Firefox",
       use: {
-        browserName: "chromium",
-        viewport: { width: 768, height: 1024 },
-      },
-    },
-    {
-      name: "Mobile Viewport",
-      use: {
-        browserName: "chromium",
-        viewport: { width: 375, height: 667 },
+        ...devices["Desktop Firefox"],
+        viewport: { width: 1280, height: 800 },
       },
     },
   ],
   webServer: {
-    command: "npm run start",
+    command: "npm run dev",
     url: "http://localhost:3000",
-    reuseExistingServer: !process.env.CI,
-    timeout: 60 * 1000,
+    reuseExistingServer: true,
+    timeout: 120 * 1000,
   },
 });

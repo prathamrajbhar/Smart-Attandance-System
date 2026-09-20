@@ -76,7 +76,7 @@ export default function CreateClassroomPage(): React.ReactElement {
             label="Student Capacity (optional)"
             placeholder="e.g. 60"
             type="number"
-            {...register("capacity")}
+            {...register("capacity", { valueAsNumber: true })}
             error={errors.capacity?.message}
           />
           <div className="flex justify-end gap-3 pt-4">

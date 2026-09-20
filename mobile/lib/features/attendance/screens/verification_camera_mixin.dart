@@ -53,10 +53,19 @@ mixin VerificationCameraMixin<T extends ConsumerStatefulWidget> on ConsumerState
       HapticFeedback.mediumImpact();
       if (!mounted) return;
       ref.read(attendanceVerificationProvider.notifier).setImagePath(file.path);
-      setState(() { isAnalyzingQuality = true; brightnessScore = null; blurScore = null; });
+      setState(() {
+        isAnalyzingQuality = true;
+        brightnessScore = null;
+        blurScore = null;
+      });
+      disposeCamera();
       compute(computeImageQuality, file.path).then((q) {
         if (mounted) {
-          setState(() { brightnessScore = q.brightness; blurScore = q.blur; isAnalyzingQuality = false; });
+          setState(() {
+            brightnessScore = q.brightness;
+            blurScore = q.blur;
+            isAnalyzingQuality = false;
+          });
         }
       });
     } catch (e) {
@@ -65,8 +74,9 @@ mixin VerificationCameraMixin<T extends ConsumerStatefulWidget> on ConsumerState
   }
 
   void disposeCamera() {
-    camera?.dispose().catchError((e) => null);
+    final ctrl = camera;
     camera = null;
     isCameraReady = false;
+    ctrl?.dispose().catchError((_) {});
   }
 }

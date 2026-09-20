@@ -41,15 +41,19 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _checkFirstUse();
-    Future.microtask(() => ref.read(configRepositoryProvider).fetchAndCacheConfig());
+    Future.microtask(() {
+      if (!mounted) return;
+      ref.read(configRepositoryProvider).fetchAndCacheConfig();
+      _handleLocationVerify();
+    });
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    disposeCamera();
     _aiStepTimer?.cancel();
     _transitionTimer?.cancel();
+    disposeCamera();
     super.dispose();
   }
 
@@ -63,11 +67,14 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!mounted) return;
     if (state == AppLifecycleState.inactive || state == AppLifecycleState.paused) {
       if (mounted) setState(() => isCameraReady = false);
       disposeCamera();
     } else if (state == AppLifecycleState.resumed) {
-      initCamera();
+      if (ref.read(attendanceVerificationProvider).step == VerificationStep.camera) {
+        initCamera();
+      }
     }
   }
 
@@ -86,12 +93,14 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen>
 
   void _retakePhoto() {
     disposeCamera();
-    if (mounted) setState(() { cameraError = null; });
+    if (mounted) setState(() { cameraError = null; isCameraReady = false; });
     ref.read(attendanceVerificationProvider.notifier).reset();
     ref.read(geofenceVerificationProvider.notifier).reset();
+    initCamera();
   }
 
   void _handleLocationVerify() {
+    if (!mounted) return;
     final session = ref.read(sessionProvider).sessions.where((s) => s.sessionId == widget.sessionId).firstOrNull;
     if (session?.latitude != null && session?.longitude != null) {
       ref.read(geofenceVerificationProvider.notifier).verifyLocation(
@@ -107,14 +116,12 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen>
     final vState = ref.watch(attendanceVerificationProvider);
     final geoState = ref.watch(geofenceVerificationProvider);
 
-    if (vState.step == VerificationStep.gps && geoState.status == GeofenceStatus.idle) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _handleLocationVerify());
-    }
-
     ref.listen<AttendanceVerificationState>(attendanceVerificationProvider, (prev, next) {
       if (next.step == VerificationStep.reviewing) _aiStepTimer?.cancel();
       if (next.step == VerificationStep.done && prev?.step != VerificationStep.done) {
         _aiStepTimer?.cancel();
+        _transitionTimer?.cancel();
+        disposeCamera();
         final submittedId = ref.read(attendanceVerificationProvider.notifier).lastSubmittedSessionId;
         if (submittedId != null) ref.read(sessionProvider.notifier).markSessionSubmitted(submittedId);
         if (mounted) context.go('/result');

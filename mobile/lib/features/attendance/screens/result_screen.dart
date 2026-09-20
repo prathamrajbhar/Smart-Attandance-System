@@ -79,8 +79,10 @@ class ResultScreen extends ConsumerWidget {
                     isExpanded: true,
                     icon: Icons.info_outline_rounded,
                     onPressed: () {
-                      ref.read(attendanceVerificationProvider.notifier).reset();
-                      context.go('/attendance');
+                      context.go('/history');
+                      Future.microtask(() {
+                        ref.read(attendanceVerificationProvider.notifier).reset();
+                      });
                     },
                   ),
                   const SizedBox(height: 10),
@@ -91,8 +93,10 @@ class ResultScreen extends ConsumerWidget {
                   variant: isFlagged ? GlassButtonVariant.secondary : GlassButtonVariant.primary,
                   icon: Icons.home_rounded,
                   onPressed: () {
-                    ref.read(attendanceVerificationProvider.notifier).reset();
                     context.go('/home');
+                    Future.microtask(() {
+                      ref.read(attendanceVerificationProvider.notifier).reset();
+                    });
                   },
                 ),
               ],

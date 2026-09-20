@@ -272,8 +272,9 @@ async def create_leave_request(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid date format. Use YYYY-MM-DD.")
     if e_date < s_date:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="End date must be after or equal to start date.")
-    if len(reason) < 10 or len(reason) > 500:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Reason must be between 10 and 500 characters.")
+    reason = reason.strip()
+    if len(reason) < 5 or len(reason) > 500:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Reason must be between 5 and 500 characters.")
 
     document_url = None
     if document and document.filename:

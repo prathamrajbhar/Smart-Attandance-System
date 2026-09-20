@@ -1,4 +1,5 @@
 import mimetypes
+import os
 import uuid
 from typing import Optional
 import boto3
@@ -77,11 +78,13 @@ class S3Service:
     async def upload_uploadfile(self, upload_file: UploadFile, folder: str) -> tuple[str, str, bytes]:
         contents = await upload_file.read()
         await upload_file.seek(0)
-        ext = mimetypes.guess_extension(upload_file.content_type or "") or ".jpg"
+        ext = os.path.splitext(upload_file.filename)[1].lower() if upload_file.filename else (mimetypes.guess_extension(upload_file.content_type or "") or ".jpg")
         if ext == ".jpe":
             ext = ".jpg"
+        if not ext:
+            ext = ".jpg"
         key = f"{folder}/{uuid.uuid4()}{ext}"
-        content_type = upload_file.content_type or "image/jpeg"
+        content_type = upload_file.content_type or mimetypes.guess_type(upload_file.filename or "")[0] or "application/octet-stream"
         url = self.upload_bytes(contents, key, content_type=content_type)
         return key, url, contents
 

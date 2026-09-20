@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:path/path.dart' as p;
 import 'package:smart_attendance_app/data/api/dio_client.dart';
 import 'package:smart_attendance_app/domain/models/attendance.dart';
 import 'package:smart_attendance_app/domain/models/leaderboard.dart';
@@ -135,15 +136,32 @@ class StudentApi {
     required String reason,
     String? documentPath,
   }) async {
+    MultipartFile? file;
+    if (documentPath != null && documentPath.isNotEmpty) {
+      final ext = p.extension(documentPath).toLowerCase();
+      final filename = p.basename(documentPath);
+      MediaType mediaType;
+      if (ext == '.png') {
+        mediaType = MediaType('image', 'png');
+      } else if (ext == '.pdf') {
+        mediaType = MediaType('application', 'pdf');
+      } else if (ext == '.webp') {
+        mediaType = MediaType('image', 'webp');
+      } else {
+        mediaType = MediaType('image', 'jpeg');
+      }
+      file = await MultipartFile.fromFile(
+        documentPath,
+        filename: filename,
+        contentType: mediaType,
+      );
+    }
+
     final formData = FormData.fromMap({
       'start_date': startDate.toIso8601String().split('T')[0],
       'end_date': endDate.toIso8601String().split('T')[0],
       'reason': reason,
-      if (documentPath != null)
-        'document': await MultipartFile.fromFile(
-          documentPath,
-          contentType: MediaType('image', 'jpeg'),
-        ),
+      if (file != null) 'document': file,
     });
     final response = await _dio.post<Map<String, dynamic>>(
       '/student/leaves',

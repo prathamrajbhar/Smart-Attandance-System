@@ -85,7 +85,7 @@ class _LeaveRequestsScreenState extends ConsumerState<LeaveRequestsScreen> {
     }
 
     final notes = _notesController.text.trim();
-    final reason = notes.isEmpty ? _selectedReason : '$_selectedReason: $notes';
+    final reason = notes.isEmpty ? '$_selectedReason Leave Request' : '$_selectedReason: $notes';
 
     setState(() => _isSubmitting = true);
     try {

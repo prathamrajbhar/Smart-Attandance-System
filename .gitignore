@@ -43,3 +43,11 @@ firebase-credentials*.json
 google-services*.json
 .vercel
 .reticle/
+
+# Python & Testing Caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/

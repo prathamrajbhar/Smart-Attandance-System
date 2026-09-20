@@ -714,12 +714,13 @@ class AdminService:
                     failed_count += 1
                     continue
 
-                plain_password = generate_temporary_password()
+                plain_password = getattr(item, "password", None) or generate_temporary_password()
+                must_change = not bool(getattr(item, "password", None))
                 user = await db.user.create(data={
                     "email": item.email,
                     "hashedPassword": hash_password(plain_password),
                     "role": "STUDENT",
-                    "mustChangePassword": True,
+                    "mustChangePassword": must_change,
                 })
                 await db.student.create(
                     data={k: v for k, v in {
@@ -820,12 +821,13 @@ class AdminService:
                     default_desig_id = created_desig.id
                     desig_id = default_desig_id
 
-                plain_password = generate_temporary_password()
+                plain_password = getattr(item, "password", None) or generate_temporary_password()
+                must_change = not bool(getattr(item, "password", None))
                 user = await db.user.create(data={
                     "email": item.email,
                     "hashedPassword": hash_password(plain_password),
                     "role": "TEACHER",
-                    "mustChangePassword": True,
+                    "mustChangePassword": must_change,
                 })
                 await db.teacher.create(
                     data={k: v for k, v in {

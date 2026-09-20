@@ -26,16 +26,16 @@ import { TeacherProfilePage } from "../pages/teacher/teacher-profile.page";
 
 export const TEST_CREDENTIALS = {
   admin: {
-    email: "admin@smartattendance.edu.in",
-    password: "Admin@123",
+    email: process.env.TEST_ADMIN_EMAIL || "admin@smartattendance.edu.in",
+    password: process.env.TEST_ADMIN_PASSWORD || "Admin@123",
   },
   teacher: {
-    email: "emp001@smartattendance.edu.in",
-    password: "Teacher@123",
+    email: process.env.TEST_TEACHER_EMAIL || "prof.aarav.sharma@yopmail.com",
+    password: process.env.TEST_TEACHER_PASSWORD || "Teacher@123",
   },
   student: {
-    email: "cse2025001@smartattendance.edu.in",
-    password: "Student@123",
+    email: process.env.TEST_STUDENT_EMAIL || "aarav.patel.2026@yopmail.com",
+    password: process.env.TEST_STUDENT_PASSWORD || "Student@123",
   },
 };
 

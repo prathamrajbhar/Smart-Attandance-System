@@ -541,7 +541,16 @@ async def scan_absentee_anomalies(
                 "enrollment_number": r.student.enrollmentNumber,
             }
 
-    rows = [{"student_id": r.studentId, "status": r.status, "day_of_week": r.createdAt.strftime("%A")} for r in records]
+    rows = []
+    for r in records:
+        if r.session and getattr(r.session, "sessionDate", None):
+            day_str = r.session.sessionDate.strftime("%A")
+        elif r.createdAt:
+            day_str = r.createdAt.strftime("%A")
+        else:
+            day_str = "Monday"
+        rows.append({"student_id": r.studentId, "status": r.status, "day_of_week": day_str})
+
     try:
         flagged = await run_absentee_scan(attendance_records=rows, contamination=contamination)
         for item in flagged:

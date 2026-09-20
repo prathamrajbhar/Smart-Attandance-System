@@ -72,5 +72,7 @@ export interface AnomalyResult {
   total_absences: number;
   student_name?: string;
   enrollment_number?: string;
+  primary_pattern?: string;
+  day_breakdown?: Record<string, number>;
   [key: string]: unknown;
 }

@@ -145,6 +145,7 @@ class StudentBulkItem(BaseModel):
     semester: Optional[int] = Field(None, ge=1, le=8)
     batch: Optional[str] = Field(None, max_length=20)
     phone: Optional[str] = Field(None, max_length=20)
+    password: Optional[str] = Field(None, min_length=6, max_length=100)
 
     @field_validator("email", mode="before")
     @classmethod
@@ -164,9 +165,13 @@ class TeacherBulkItem(BaseModel):
     employee_id: str = Field(..., min_length=3, max_length=30)
     first_name: str = Field(..., min_length=1, max_length=100)
     last_name: str = Field(..., min_length=1, max_length=100)
-    department_id: Optional[str] = Field(None, max_length=64)
-    designation_id: Optional[str] = Field(None, max_length=64)
+    department_id: str = Field(..., min_length=1, max_length=64)
+    designation_id: str = Field(..., min_length=1, max_length=64)
+    qualification: Optional[str] = Field(None, max_length=100)
+    specialization: Optional[str] = Field(None, max_length=100)
+    experience_years: Optional[int] = Field(None, ge=0, le=70)
     phone: Optional[str] = Field(None, max_length=20)
+    password: Optional[str] = Field(None, min_length=6, max_length=100)
 
     @field_validator("email", mode="before")
     @classmethod
@@ -268,3 +273,5 @@ class AbsenteeAnomalyItem(BaseModel):
     enrollment_number: str
     total_absences: int
     anomaly_score: float
+    primary_pattern: Optional[str] = None
+    day_breakdown: Optional[dict[str, int]] = None

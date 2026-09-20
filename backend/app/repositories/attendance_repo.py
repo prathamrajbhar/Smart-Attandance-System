@@ -38,7 +38,8 @@ class AttendanceRepository:
 
     async def get_all_absences(self) -> List[Attendance]:
         return await db.attendance.find_many(
-            where={"status": {"in": ["Absent", "Rejected"]}}, include={"student": True}
+            where={"status": {"in": ["Absent", "Rejected"]}},
+            include={"student": True, "session": True},
         )
 
     async def get_by_student_id(self, student_id: str) -> List[Attendance]:

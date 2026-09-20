@@ -11,6 +11,33 @@ logger = get_logger("app.ai.scanner")
 _REQUIRED_COLS = {'student_id', 'status', 'day_of_week'}
 
 
+def _detect_pattern(row: Dict[str, Any], total_absences: int) -> tuple[str, Dict[str, int]]:
+    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    breakdown = {}
+    for d in days:
+        cnt = int(row.get(d, 0))
+        short_name = d[:3]
+        breakdown[short_name] = cnt
+
+    if total_absences <= 0:
+        return "Regular Attendance", breakdown
+
+    mon_fri = int(row.get("Monday", 0)) + int(row.get("Friday", 0))
+    if mon_fri / total_absences >= 0.50 and total_absences >= 4:
+        return "Long-Weekend Pattern (Mon/Fri)", breakdown
+
+    for d in days:
+        cnt = int(row.get(d, 0))
+        if cnt / total_absences >= 0.40 and cnt >= 3:
+            pct = int((cnt / total_absences) * 100)
+            return f"{d} Concentrated ({pct}%)", breakdown
+
+    if total_absences >= 20:
+        return "Chronic High-Volume Defaulter", breakdown
+
+    return "Irregular Multi-Day Skipping", breakdown
+
+
 def _run_isolation_forest(attendance_records: List[Dict[str, Any]], contamination: float) -> List[Dict[str, Any]]:
     try:
         if not attendance_records:
@@ -38,7 +65,20 @@ def _run_isolation_forest(attendance_records: List[Dict[str, Any]], contaminatio
 
         flagged = profile[profile['pred'] == -1].copy()
         flagged = flagged.sort_values(by='total_absences', ascending=False).drop(columns=['pred'])
-        return flagged.to_dict(orient='records')
+
+        raw_records = flagged.to_dict(orient='records')
+        enriched_results = []
+        for rec in raw_records:
+            tot = int(rec.get("total_absences", 0))
+            pattern_label, day_map = _detect_pattern(rec, tot)
+            enriched_results.append({
+                "student_id": rec["student_id"],
+                "total_absences": tot,
+                "anomaly_score": float(rec.get("anomaly_score", 0.0)),
+                "primary_pattern": pattern_label,
+                "day_breakdown": day_map,
+            })
+        return enriched_results
 
     except Exception as e:
         logger.error("Error in IsolationForest absentee scan: %s", e, exc_info=True)

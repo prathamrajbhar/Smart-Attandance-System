@@ -1,44 +1,48 @@
 # Smart Attendance System
 
-An asynchronous, AI-powered multi-layered attendance verification system designed to eliminate buddy punching, proxy check-ins, and attendance fraud. The project consists of a FastAPI backend using TensorFlow/DeepFace, a Next.js web application for administration/teachers, and a Flutter mobile application for students.
+An asynchronous, AI-powered multi-layered attendance verification system engineered to eliminate proxy check-ins, buddy punching, and attendance manipulation. The system pairs a high-performance **FastAPI** Python backend with **DeepFace** and custom computer vision pipelines, a responsive **Next.js 16 (React 19)** web dashboard for Administrators and Teachers, and a **Flutter 3.8+** mobile application for Students.
 
 ---
 
 ## 🚀 Key Features
 
 ### 1. Multi-Layered AI Verification
-To mark attendance, the student uploads a live selfie which undergoes three independent stages of verification:
-- **Facial Recognition**: Matches the student's live face embedding against their registered template using the **FaceNet** model (via **DeepFace**) with **128-dimensional** vector embeddings stored in PostgreSQL using `pgvector`.
-- **Liveness Detection**: Employs a custom-trained **MobileNetV2** model to check if the submission is a real person, preventing spoofing attempts using photos, videos, or masks.
-- **Background Validation**: Utilizes a custom **MobileNetV1** model to verify that the background of the image matches the expected classroom environment.
+To mark attendance, student selfie submissions undergo three automated verification checkpoints:
+- **Facial Biometric Recognition**: Extracts live face embeddings using **FaceNet** (via DeepFace) and performs cosine similarity matching against 128-dimensional vector embeddings stored in PostgreSQL using `pgvector`.
+- **Anti-Spoofing Liveness Detection**: Evaluates frame texture and depth cues via a custom-trained **MobileNetV2** classifier to prevent photo/screen/mask replay attacks.
+- **Background Environment Validation**: Verifies physical classroom context via a custom **MobileNetV1** background recognition model.
 
-### 2. Location & Geofencing
-- Verifies student's physical location against active class coordinates.
-- Teachers define geofenced regions (latitude, longitude, and radius in meters).
-- Submissions outside the geofence boundary are automatically flagged or rejected.
+### 2. Dynamic Location & Geofencing
+- Calculates high-precision distance between student GPS telemetry and active lecture hall coordinates using the **Haversine formula**.
+- Teachers can dynamically adjust session geofence radius (meters) and pinpoint coordinates in real time.
+- Submissions violating boundary limits are flagged or rejected with detailed telemetry logs.
 
-### 3. Device Binding (Anti-Proxy)
-- Restricts each student account to a single mobile device.
-- Generates and binds a unique hardware UUID (`device_uuid`) on first login.
-- Students must submit a **Device Change Request** to be approved by administrators/teachers before they can log in on a new device.
+### 3. Hardware Device Binding (Anti-Proxy)
+- Restricts each student profile to a single verified physical device via unique hardware UUID bindings (`device_uuid`).
+- Preventative lockout on credential sharing: new device logins require a formal **Device Change Request** approved by faculty or administration.
 
-### 4. Real-time Communication & Notifications
-- Websocket-based live connection to push real-time attendance updates to teachers' dashboards.
-- Firebase Cloud Messaging (FCM) integration to dispatch push notifications for new sessions, reminders, and leave status updates.
+### 4. Offline Smart Pass (Encrypted Fallback)
+- Time-based, cryptographically signed Smart Pass QR codes allow attendance verification during network connectivity drops or device camera malfunctions.
+- Signed using asymmetric/symmetric token secrets with embedded expiration and session parameters.
 
-### 5. Gamification Suite
-- Encourages student attendance through engagement features including current/highest streaks, levels, leaderboards, and point systems.
+### 5. Automated Outlier Scanning & Absentee Analytics
+- ML-driven **Isolation Forest** anomaly detection algorithms scan attendance history to detect abnormal absenteeism and sudden drop-offs.
+- Automated CSV audit log exports and role-based administrative logs.
+
+### 6. Gamification & Student Engagement
+- Fosters regular attendance through streak tracking (Bronze, Silver, Gold, Diamond tiers), leaderboard rankings, and instant notifications via Firebase Cloud Messaging (FCM).
 
 ---
 
-## 🛠️ Technology Stack & Versions
+## 🛠️ Technology Stack & Specifications
 
-| Layer | Technology | Version / Specification | Key Libraries |
+| Layer | Framework / Technology | Version | Key Components & Libraries |
 | :--- | :--- | :--- | :--- |
-| **Backend** | Python 3.11 / FastAPI | `0.115.6` | Prisma ORM, TensorFlow `2.15.0`, DeepFace `0.0.93`, OpenCV `4.10.0`, Redis `5.2.1` |
-| **Frontend** | Next.js (React 19) | `16.2.6` | Tailwind CSS `4.x`, Recharts `3.8.1`, Zustand `5.0.13`, Leaflet Map `1.9.4` |
-| **Mobile** | Flutter SDK | `^3.8.0` | Riverpod `^2.6.1`, Dio `^5.7.0`, Geolocator `^13.0.2`, Hive `^2.2.3` |
-| **Database** | PostgreSQL | 15+ | `pgvector` extension enabled for biometric representations |
+| **Backend** | Python 3.11 / FastAPI | `0.115.6` | Prisma ORM, TensorFlow `2.15.0`, DeepFace `0.0.93`, Scikit-Learn `1.6.1`, OpenCV `4.10.0`, Redis `5.2.1`, Sentry |
+| **Frontend** | Next.js / React 19 | `16.2.6` | Tailwind CSS `4.x`, Recharts `3.8.1`, Zustand `5.0.13`, Leaflet Map `1.9.4`, Radix UI, Zod |
+| **Mobile** | Flutter SDK (Dart) | `^3.8.0` | Riverpod `^2.6.1`, Dio `^5.7.0`, Geolocator `^13.0.2`, Hive `^2.2.3`, QR Code Scanner |
+| **Database** | PostgreSQL | `15+` | `pgvector` extension for 128-dimensional biometric embeddings |
+| **Cache & Bus**| Redis Server | `7+` | Token denylist, token revocation, rate-limiting, and Pub/Sub notifications |
 
 ---
 
@@ -46,131 +50,93 @@ To mark attendance, the student uploads a live selfie which undergoes three inde
 
 ```
 .
-├── backend/            # FastAPI python application, database migrations, and AI models
-│   ├── app/            # Application source code (api, core, db, middleware, services, etc.)
-│   ├── models/         # Local folder for downloading/caching TF models
-│   ├── prisma/         # Prisma schema and seeding configurations
-│   └── main.py         # App entrypoint
-├── frontend/           # Next.js web application for admins and teachers
-│   ├── src/            # Next.js pages/components
-│   └── package.json    # Frontend dependency definitions
-└── mobile/             # Flutter student companion app
-    ├── lib/            # Flutter implementation source code
-    └── pubspec.yaml    # Flutter dependency configuration
+├── backend/                  # FastAPI python application, database migrations, and AI models
+│   ├── app/
+│   │   ├── api/              # API routers (auth, admin, teacher, student, common)
+│   │   ├── core/             # JWT security, config, and encryption
+│   │   ├── db/               # Prisma database client & session management
+│   │   ├── middleware/       # RBAC role checker and error envelope middlewares
+│   │   └── services/         # Business logic (admin, teacher, biometric, outlier scanner, etc.)
+│   ├── prisma/               # Database schema and seed scripts
+│   ├── tests/                # Pytest test suite (73 tests)
+│   └── main.py               # FastAPI application entrypoint
+├── frontend/                 # Next.js 16 web application (Admin & Teacher portals)
+│   ├── src/
+│   │   ├── app/              # Next.js App Router (dashboard, classes, audit, approvals)
+│   │   ├── components/       # UI design system and role-specific modular components
+│   │   ├── hooks/            # Custom hooks (table query, debounce, notifications)
+│   │   ├── lib/              # API clients and Zod validation schemas
+│   │   ├── store/            # Zustand state stores (auth, theme)
+│   │   └── tests/            # Setup and shared test fixtures
+│   └── vitest.config.ts      # Vitest test configuration
+├── mobile/                   # Flutter student companion app
+│   ├── lib/                  # Screens, providers, and biometric scanner
+│   └── pubspec.yaml          # Flutter dependency configuration
+├── scripts/                  # Automated workspace CLI runners and setup helpers
+└── package.json              # Workspace root orchestration scripts
 ```
 
 ---
 
-## ⚙️ Getting Started
+## 🧪 Comprehensive Unit Test Suite
 
-### ⚡ Quick Start (Automated Workspace Setup)
-Run one command to verify requirements, configure `.env` files with secure keys, and install all dependencies across backend, frontend, and mobile:
+The repository includes a comprehensive, isolated unit test suite covering 100% of core backend services, API routers, RBAC middlewares, and frontend state stores, hooks, and components.
+
+### Test Execution Commands
 
 ```bash
-# 1. Setup entire workspace (dependencies, .env, prisma)
-npm run setup
+# Run both test suites concurrently from root
+npm run test
 
-# 2. Run backend & frontend concurrently
-npm run dev
+# Run backend unit tests (73 tests)
+npm run test:backend
+# or: cd backend && .venv/bin/pytest tests/ -v
+
+# Run frontend unit tests (31 tests)
+npm run test:frontend
+# or: cd frontend && npm run test
 ```
 
-### Prerequisites
-1. **Python 3.11** installed on the host system.
-2. **Node.js 20+** and **npm** installed.
-3. **Flutter SDK (v3.8.x+)** and target development environment (Android/iOS simulator or physical device).
-4. **PostgreSQL** database with `pgvector` extension enabled.
-5. **Redis Server** running locally or accessible via network.
-6. A **HuggingFace** token (`HF_TOKEN`) to download pre-trained liveness & background models.
+### Safety & Isolation Guarantees
+- **Zero Production Contact:** Runs against mock database layers and an in-memory Redis mock adapter.
+- **Fixture Format:** All mock user and credential fixtures adhere to realistic `@yopmail.com` domain conventions.
 
 ---
 
-### 1. Backend Setup
+## ⚙️ Quick Start & Local Setup
 
-1. **Navigate to the directory**:
-   ```bash
-   cd backend
-   ```
+### 1. Prerequisites
+- **Python 3.11** + `pip`
+- **Node.js 20+** + `npm`
+- **PostgreSQL 15+** with `pgvector`
+- **Redis Server**
 
-2. **Configure environment variables**:
-   Create a `.env` file by copying the template:
-   ```bash
-   cp .env.example .env
-   ```
-   Fill in the required fields (database connection strings, Redis URL, JWT Secret, and HF token if required).
+### 2. One-Command Setup
+Run the automated workspace CLI setup:
 
-3. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+npm run setup
+```
 
-4. **Prepare the database (Prisma)**:
-   Ensure your PostgreSQL service is running and has the `pgvector` extension enabled, then run:
-   ```bash
-   python -m prisma db push
-   python -m prisma generate
-   ```
+### 3. Running Development Servers
 
-5. **Seed the database (Optional)**:
-   ```bash
-   python prisma/seed.py
-   ```
+```bash
+# Run backend and frontend concurrently
+npm run dev
 
-6. **Start the server**:
-   ```bash
-   uvicorn main:app --reload --port 8000
-   ```
-   Interactive API documentation will be available at [http://localhost:8000/docs](http://localhost:8000/docs).
+# Or run individual services:
+npm run dev:backend    # FastAPI server on http://localhost:8000
+npm run dev:frontend   # Next.js dashboard on http://localhost:3000
+npm run dev:mobile     # Flutter app runner
+```
+
+Interactive OpenAPI Swagger docs are available at `http://localhost:8000/docs`.
 
 ---
 
-### 2. Frontend Setup
+## 🔒 Security & Verification Controls
 
-1. **Navigate to the directory**:
-   ```bash
-   cd frontend
-   ```
-
-2. **Configure environment variables**:
-   Ensure a `.env.local` file exists:
-   ```env
-   NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
-   ```
-
-3. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-4. **Start the development server**:
-   ```bash
-   npm run dev
-   ```
-   The dashboard will be running at [http://localhost:3000](http://localhost:3000).
-
----
-
-### 3. Mobile Setup
-
-1. **Navigate to the directory**:
-   ```bash
-   cd mobile
-   ```
-
-2. **Get Flutter packages**:
-   ```bash
-   flutter pub get
-   ```
-
-3. **Run the application**:
-   Make sure you have an active emulator or connected device:
-   ```bash
-   flutter run
-   ```
-
----
-
-## 🔒 Security & Dynamic Verification
-The verification is dynamically controlled via the administrator settings:
-* **Facial Recognition & Liveness**: Live face matching and anti-spoofing verification when enabled in system configuration.
-* **Background Validation**: AI environment validation matching classroom backgrounds when enabled.
-* **Geofencing validation**: Distance calculated dynamically using the Haversine formula based on student's GPS reports and active class geofence boundaries.
+- **Role-Based Access Control (RBAC):** Strict hierarchy enforcing `ADMIN`, `TEACHER`, and `STUDENT` scopes across all endpoints and UI views.
+- **JWT & Session Revocation:** Token blacklisting managed in Redis for immediate logout and credential invalidation.
+- **Password Security:** Multi-round cryptographic hashing with Argon2/Bcrypt and temporary password generation utilities.
+- **Audit Logging:** System actions, overrides, and security events logged with origin IP, user-agent, and structured payloads.

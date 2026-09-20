@@ -83,7 +83,20 @@ export function useBulkImportProcessor(entityType: BulkImportEntityType, onSucce
 
         if (data.errors && data.errors.length > 0) {
           allCollectedErrors.push(...data.errors);
-          slice.forEach((s) => failedItems.push({ ...s, validationError: data.errors[0] }));
+          slice.forEach((s, itemIdx) => {
+            const rowPrefix = `Row ${itemIdx + 1}`;
+            const matchedErr = data.errors.find(
+              (errStr) =>
+                errStr.startsWith(rowPrefix) ||
+                (s.email && errStr.includes(s.email)) ||
+                (s.identifier && errStr.includes(s.identifier))
+            );
+            if (matchedErr) {
+              failedItems.push({ ...s, validationError: matchedErr });
+            } else if (data.failed_count === slice.length) {
+              failedItems.push({ ...s, validationError: data.errors[0] });
+            }
+          });
         }
 
         setBatches((prev) =>

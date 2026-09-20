@@ -1,3 +1,4 @@
+import asyncio
 from typing import List, Optional
 
 from prisma.models import Department, AuditLog, Subject, Classroom, Designation
@@ -35,6 +36,34 @@ class AdminService:
             "description": description,
             "ipAddress": ip,
         })
+
+    @staticmethod
+    async def _dispatch_invitation(
+        role: str,
+        user_id: str,
+        email: str,
+        name: str,
+        identifier_label: str,
+        identifier_value: str,
+        temp_password: str,
+    ) -> None:
+        try:
+            from app.services.auth_service import AuthService
+            from app.services.email_service import email_service
+            token = await AuthService().create_invitation_token(
+                user_id=user_id, email=email, role=role, name=name
+            )
+            await email_service.send_invitation_email(
+                to_email=email,
+                recipient_name=name,
+                role=role,
+                invite_token=token,
+                identifier_label=identifier_label,
+                identifier_value=identifier_value,
+                temp_password=temp_password,
+            )
+        except Exception as invite_err:
+            logger.warning("Failed to send %s invite email to %s: %s", role, email, invite_err)
 
     # --- Students ---
 
@@ -701,25 +730,19 @@ class AdminService:
                 imported_count += 1
 
                 if send_invite:
-                    try:
-                        from app.services.auth_service import AuthService
-                        from app.services.email_service import email_service
-                        name = f"{item.first_name or ''} {item.last_name or ''}".strip() or "Student"
-                        token = await AuthService().create_invitation_token(
-                            user_id=user.id, email=user.email, role="STUDENT", name=name
-                        )
-                        await email_service.send_invitation_email(
-                            to_email=user.email,
-                            recipient_name=name,
+                    name = f"{item.first_name or ''} {item.last_name or ''}".strip() or "Student"
+                    asyncio.create_task(
+                        self._dispatch_invitation(
                             role="STUDENT",
-                            invite_token=token,
+                            user_id=user.id,
+                            email=user.email,
+                            name=name,
                             identifier_label="Enrollment Number",
                             identifier_value=item.enrollment_number,
                             temp_password=plain_password,
                         )
-                        invitations_sent += 1
-                    except Exception as invite_err:
-                        logger.warning("Failed to send student invite email to %s: %s", item.email, invite_err)
+                    )
+                    invitations_sent += 1
 
             except Exception as e:
                 errors.append(f"Row {idx + 1} ({item.email}): {str(e)}")
@@ -812,25 +835,19 @@ class AdminService:
                 imported_count += 1
 
                 if send_invite:
-                    try:
-                        from app.services.auth_service import AuthService
-                        from app.services.email_service import email_service
-                        name = f"{item.first_name or ''} {item.last_name or ''}".strip() or "Faculty"
-                        token = await AuthService().create_invitation_token(
-                            user_id=user.id, email=user.email, role="TEACHER", name=name
-                        )
-                        await email_service.send_invitation_email(
-                            to_email=user.email,
-                            recipient_name=name,
+                    name = f"{item.first_name or ''} {item.last_name or ''}".strip() or "Faculty"
+                    asyncio.create_task(
+                        self._dispatch_invitation(
                             role="TEACHER",
-                            invite_token=token,
+                            user_id=user.id,
+                            email=user.email,
+                            name=name,
                             identifier_label="Employee ID",
                             identifier_value=item.employee_id,
                             temp_password=plain_password,
                         )
-                        invitations_sent += 1
-                    except Exception as invite_err:
-                        logger.warning("Failed to send faculty invite email to %s: %s", item.email, invite_err)
+                    )
+                    invitations_sent += 1
 
             except Exception as e:
                 errors.append(f"Row {idx + 1} ({item.email}): {str(e)}")

@@ -29,7 +29,7 @@ jobs:
       - name: Run Backend Unit Tests
         run: |
           cd backend
-          python tests/run_tests.py
+          pytest tests/ -v
 
   frontend-checks:
     name: Frontend TypeScript & Build
@@ -47,7 +47,12 @@ jobs:
       - name: Install Frontend Dependencies
         run: |
           cd frontend
-          npm ci
+          npm ci --legacy-peer-deps
+
+      - name: Run Frontend Unit Tests
+        run: |
+          cd frontend
+          npm run test
 
       - name: Type Check & Production Build
         run: |

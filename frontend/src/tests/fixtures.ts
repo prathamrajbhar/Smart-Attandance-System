@@ -1,43 +1,44 @@
-import { UserProfile, Role } from "@/types/auth";
+import type { UserProfile } from "@/types";
+
+export type Role = "ADMIN" | "TEACHER" | "STUDENT";
 
 export const mockAdminProfile: UserProfile = {
   id: "usr-adm-101",
   email: "admin.sarah@yopmail.com",
-  role: "ADMIN" as Role,
+  role: "ADMIN",
   is_active: true,
   must_change_password: false,
+  student_profile: null,
+  teacher_profile: null,
 };
 
 export const mockTeacherProfile: UserProfile = {
   id: "usr-tch-202",
   email: "prof.rajesh@yopmail.com",
-  role: "TEACHER" as Role,
+  role: "TEACHER",
   is_active: true,
   must_change_password: false,
+  student_profile: null,
   teacher_profile: {
     id: "tch-profile-202",
     first_name: "Rajesh",
     last_name: "Sharma",
     employee_id: "EMP-CS-2024",
     department: "Computer Science",
-    department_id: "dept-cs-01",
     designation: "Associate Professor",
-    designation_id: "desig-prof-01",
   },
 };
 
 export const mockStudentProfile: UserProfile = {
   id: "usr-stu-303",
   email: "student.rahul@yopmail.com",
-  role: "STUDENT" as Role,
+  role: "STUDENT",
   is_active: true,
   must_change_password: false,
+  teacher_profile: null,
   student_profile: {
     id: "stu-profile-303",
-    first_name: "Rahul",
-    last_name: "Verma",
     enrollment_number: "CS-2024-0042",
-    face_registered: true,
   },
 };
 

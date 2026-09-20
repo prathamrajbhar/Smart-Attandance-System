@@ -32,74 +32,85 @@ class ResultScreen extends ConsumerWidget {
 
     final isFlagged = result is OnlineResult && result.result.isFlagged;
 
-    return Scaffold(
-      body: AnimatedBackground(
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                const Spacer(flex: 1),
-                ResultHeroIcon(config: config),
-                const SizedBox(height: 20),
-                Text(
-                  config.title,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: SasColors.textPrimary,
-                    letterSpacing: -0.5,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: config.color.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: config.color.withValues(alpha: 0.2)),
-                  ),
-                  child: Text(
-                    config.subtitle,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          context.go('/home');
+          Future.microtask(() {
+            ref.read(attendanceVerificationProvider.notifier).reset();
+          });
+        }
+      },
+      child: Scaffold(
+        body: AnimatedBackground(
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  const Spacer(flex: 1),
+                  ResultHeroIcon(config: config),
+                  const SizedBox(height: 20),
+                  Text(
+                    config.title,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: SasColors.textPrimary,
+                      letterSpacing: -0.5,
+                    ),
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: config.color,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: config.color.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: config.color.withValues(alpha: 0.2)),
+                    ),
+                    child: Text(
+                      config.subtitle,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: config.color,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                ),
-                const Spacer(flex: 1),
-                if (config.scores != null) ResultMetricsCard(scores: config.scores!),
-                const Spacer(flex: 2),
-                if (isFlagged) ...[
+                  const Spacer(flex: 1),
+                  if (config.scores != null) ResultMetricsCard(scores: config.scores!),
+                  const Spacer(flex: 2),
+                  if (isFlagged) ...[
+                    GlassButton(
+                      label: 'View Flagged Details',
+                      isExpanded: true,
+                      icon: Icons.info_outline_rounded,
+                      onPressed: () {
+                        context.go('/history');
+                        Future.microtask(() {
+                          ref.read(attendanceVerificationProvider.notifier).reset();
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                  ],
                   GlassButton(
-                    label: 'View Flagged Details',
+                    label: 'Back to Dashboard',
                     isExpanded: true,
-                    icon: Icons.info_outline_rounded,
+                    variant: isFlagged ? GlassButtonVariant.secondary : GlassButtonVariant.primary,
+                    icon: Icons.home_rounded,
                     onPressed: () {
-                      context.go('/history');
+                      context.go('/home');
                       Future.microtask(() {
                         ref.read(attendanceVerificationProvider.notifier).reset();
                       });
                     },
                   ),
-                  const SizedBox(height: 10),
                 ],
-                GlassButton(
-                  label: 'Back to Dashboard',
-                  isExpanded: true,
-                  variant: isFlagged ? GlassButtonVariant.secondary : GlassButtonVariant.primary,
-                  icon: Icons.home_rounded,
-                  onPressed: () {
-                    context.go('/home');
-                    Future.microtask(() {
-                      ref.read(attendanceVerificationProvider.notifier).reset();
-                    });
-                  },
-                ),
-              ],
+              ),
             ),
           ),
         ),

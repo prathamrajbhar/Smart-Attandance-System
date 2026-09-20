@@ -34,7 +34,13 @@ class VerificationStepBottomBar extends StatelessWidget {
           onPrimaryPressed: isCameraReady ? onCapture : null,
           secondaryLabel: 'Cancel',
           isSecondaryGhost: true,
-          onSecondaryPressed: () => context.pop(),
+          onSecondaryPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/home');
+            }
+          },
         ),
       );
     }

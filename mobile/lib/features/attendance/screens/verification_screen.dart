@@ -29,12 +29,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen>
   Timer? _transitionTimer;
   bool _showTips = false;
 
-  static const _aiSteps = [
-    'Checking face identity...',
-    'Verifying liveness...',
-    'Analyzing background...',
-    'Computing final score...',
-  ];
+  static const _aiSteps = ['Checking face identity...', 'Verifying liveness...', 'Analyzing background...', 'Computing final score...'];
 
   @override
   void initState() {
@@ -42,9 +37,10 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen>
     WidgetsBinding.instance.addObserver(this);
     _checkFirstUse();
     Future.microtask(() {
-      if (!mounted) return;
-      ref.read(configRepositoryProvider).fetchAndCacheConfig();
-      _handleLocationVerify();
+      if (mounted) {
+        ref.read(configRepositoryProvider).fetchAndCacheConfig();
+        _handleLocationVerify();
+      }
     });
   }
 
@@ -71,10 +67,8 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen>
     if (state == AppLifecycleState.inactive || state == AppLifecycleState.paused) {
       if (mounted) setState(() => isCameraReady = false);
       disposeCamera();
-    } else if (state == AppLifecycleState.resumed) {
-      if (ref.read(attendanceVerificationProvider).step == VerificationStep.camera) {
-        initCamera();
-      }
+    } else if (state == AppLifecycleState.resumed && ref.read(attendanceVerificationProvider).step == VerificationStep.camera) {
+      initCamera();
     }
   }
 
@@ -124,7 +118,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen>
         disposeCamera();
         final submittedId = ref.read(attendanceVerificationProvider.notifier).lastSubmittedSessionId;
         if (submittedId != null) ref.read(sessionProvider.notifier).markSessionSubmitted(submittedId);
-        if (mounted) context.go('/result');
+        if (mounted) context.pushReplacement('/result');
       }
     });
 
@@ -135,9 +129,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen>
           if (!mounted) return;
           final config = ref.read(hiveServiceProvider).getSystemConfig();
           ref.read(attendanceVerificationProvider.notifier).setGpsLocation(
-            next.position!.latitude,
-            next.position!.longitude,
-            next.position!.accuracy,
+            next.position!.latitude, next.position!.longitude, next.position!.accuracy,
           );
           if (config.isFaceRecognitionEnabled) {
             initCamera();
@@ -149,46 +141,55 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen>
       }
     });
 
-    return Scaffold(
-      body: AnimatedBackground(
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                VerificationStepIndicator(current: vState.step),
-                const SizedBox(height: 24),
-                VerificationStepContent(
-                  step: vState.step,
-                  geoState: geoState,
-                  onRetryGeo: _handleLocationVerify,
-                  camera: camera,
-                  isCameraReady: isCameraReady,
-                  cameraError: cameraError,
-                  showTips: _showTips,
-                  onDismissTips: () => setState(() => _showTips = false),
-                  onRetryCamera: () {
-                    setState(() { cameraError = null; isCameraReady = false; });
-                    initCamera();
-                  },
-                  imagePath: vState.imagePath,
-                  isAnalyzingQuality: isAnalyzingQuality,
-                  brightnessScore: brightnessScore,
-                  blurScore: blurScore,
-                  aiStepIndex: _aiStepIndex,
-                  aiSteps: _aiSteps,
-                  analysisResult: vState.analysisResult,
-                ),
-                VerificationStepBottomBar(
-                  step: vState.step,
-                  showTips: _showTips,
-                  isCameraReady: isCameraReady,
-                  onCapture: capturePhoto,
-                  onRetake: _retakePhoto,
-                  onAnalyze: _analyzePhoto,
-                  onSubmit: () => ref.read(attendanceVerificationProvider.notifier).confirm(widget.sessionId),
-                ),
-              ],
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, _) {
+        _aiStepTimer?.cancel();
+        _transitionTimer?.cancel();
+        disposeCamera();
+        ref.read(attendanceVerificationProvider.notifier).reset();
+      },
+      child: Scaffold(
+        body: AnimatedBackground(
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  VerificationStepIndicator(current: vState.step),
+                  const SizedBox(height: 24),
+                  VerificationStepContent(
+                    step: vState.step,
+                    geoState: geoState,
+                    onRetryGeo: _handleLocationVerify,
+                    camera: camera,
+                    isCameraReady: isCameraReady,
+                    cameraError: cameraError,
+                    showTips: _showTips,
+                    onDismissTips: () => setState(() => _showTips = false),
+                    onRetryCamera: () {
+                      setState(() { cameraError = null; isCameraReady = false; });
+                      initCamera();
+                    },
+                    imagePath: vState.imagePath,
+                    isAnalyzingQuality: isAnalyzingQuality,
+                    brightnessScore: brightnessScore,
+                    blurScore: blurScore,
+                    aiStepIndex: _aiStepIndex,
+                    aiSteps: _aiSteps,
+                    analysisResult: vState.analysisResult,
+                  ),
+                  VerificationStepBottomBar(
+                    step: vState.step,
+                    showTips: _showTips,
+                    isCameraReady: isCameraReady,
+                    onCapture: capturePhoto,
+                    onRetake: _retakePhoto,
+                    onAnalyze: _analyzePhoto,
+                    onSubmit: () => ref.read(attendanceVerificationProvider.notifier).confirm(widget.sessionId),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

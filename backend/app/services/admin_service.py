@@ -905,7 +905,7 @@ class AdminService:
                 classroom_id = None
                 if item.classroom_name:
                     classroom = await db.classroom.find_first(
-                        where={"OR": [{"name": {"equals": item.classroom_name, "mode": "insensitive"}}, {"roomNumber": {"equals": item.classroom_name, "mode": "insensitive"}}]}
+                        where={"name": {"equals": item.classroom_name, "mode": "insensitive"}}
                     )
                     if classroom:
                         classroom_id = classroom.id

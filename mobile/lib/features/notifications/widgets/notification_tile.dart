@@ -37,7 +37,12 @@ class NotificationTile extends StatelessWidget {
     if (notification.link != null && notification.link!.isNotEmpty) {
       final link = notification.link!;
       if (link.startsWith('/')) {
-        context.push(link);
+        const shellRoutes = {'/home', '/history', '/analytics', '/more'};
+        if (shellRoutes.contains(link)) {
+          context.go(link);
+        } else {
+          context.push(link);
+        }
       }
     }
   }

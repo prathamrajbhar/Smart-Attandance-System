@@ -12,14 +12,14 @@ class RoleEnum(str, Enum):
 class UserLogin(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    email: EmailStr = Field(..., description="Unique email address of the user")
+    email: str = Field(..., min_length=2, max_length=255, description="Unique email address or institutional Login ID / Enrollment Number")
     password: str = Field(..., min_length=8, max_length=128, description="Plaintext password")
     device_uuid: Optional[str] = Field(None, max_length=128, description="Hardware device UUID for student device binding")
 
     @field_validator("email", mode="before")
     @classmethod
     def strip_email(cls, v: str) -> str:
-        return v.strip().lower() if isinstance(v, str) else v
+        return v.strip() if isinstance(v, str) else v
 
 
 class Token(BaseModel):

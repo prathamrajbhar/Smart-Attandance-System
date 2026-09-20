@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:smart_attendance_app/app/theme.dart';
 
-/// Consolidates _ShimmerLoadingPlaceholder, _ShimmerCalendar,
-/// _ShimmerNotifications, and _ShimmerAnalytics into a single configurable widget.
+/// Consolidates loading placeholder skeletons with light-mode shimmer.
 class ShimmerPlaceholder extends StatelessWidget {
   final int itemCount;
   final double itemHeight;
@@ -19,8 +18,8 @@ class ShimmerPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: SasColors.glassBg,
-      highlightColor: SasColors.glassBgHover,
+      baseColor: const Color(0xFFE2E8F0),
+      highlightColor: const Color(0xFFF8FAFC),
       child: Column(
         children: List.generate(
           itemCount,
@@ -29,8 +28,8 @@ class ShimmerPlaceholder extends StatelessWidget {
             child: Container(
               height: itemHeight,
               decoration: BoxDecoration(
-                color: SasColors.glassBg,
-                borderRadius: SasRadius.xlAll,
+                color: Colors.white,
+                borderRadius: SasRadius.lgAll,
               ),
             ),
           ),
@@ -47,15 +46,15 @@ class ShimmerCalendarPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: SasColors.glassBg,
-      highlightColor: SasColors.glassBgHover,
+      baseColor: const Color(0xFFE2E8F0),
+      highlightColor: const Color(0xFFF8FAFC),
       child: Column(
         children: [
           Container(
             height: 280,
             decoration: BoxDecoration(
-              color: SasColors.glassBg,
-              borderRadius: SasRadius.xlAll,
+              color: Colors.white,
+              borderRadius: SasRadius.lgAll,
             ),
           ),
           const SizedBox(height: SasSpacing.md),
@@ -66,8 +65,8 @@ class ShimmerCalendarPlaceholder extends StatelessWidget {
               child: Container(
                 height: 60,
                 decoration: BoxDecoration(
-                  color: SasColors.glassBg,
-                  borderRadius: SasRadius.xlAll,
+                  color: Colors.white,
+                  borderRadius: SasRadius.lgAll,
                 ),
               ),
             ),

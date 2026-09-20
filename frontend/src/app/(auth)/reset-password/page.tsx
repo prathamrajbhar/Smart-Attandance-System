@@ -14,6 +14,7 @@ import GlassButton from "@/components/ui/GlassButton";
 import GlassLoader from "@/components/ui/GlassLoader";
 import PasswordRequirementsChecklist from "@/components/auth/PasswordRequirementsChecklist";
 import ResetPasswordStatusCard from "@/components/auth/ResetPasswordStatusCard";
+import StudentMobileAppCallout from "@/components/auth/StudentMobileAppCallout";
 
 interface VerifyData {
   valid: boolean;
@@ -120,6 +121,8 @@ function ResetPasswordContent(): React.ReactElement {
             : `Resetting password for ${tokenData.email}`}
         </p>
       </div>
+
+      {tokenData.role === "STUDENT" && <StudentMobileAppCallout token={token} />}
 
       <div className="space-y-3">
         <GlassInput

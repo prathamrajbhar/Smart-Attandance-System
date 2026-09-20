@@ -1,4 +1,3 @@
-
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:smart_attendance_app/app/theme.dart';
@@ -12,21 +11,29 @@ class LoadingOverlay extends StatelessWidget {
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
       child: Container(
-        color: const Color(0xB303040C),
+        color: const Color(0xB3FFFFFF),
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SizedBox(
-                width: 40, height: 40,
+              const SizedBox(
+                width: 40,
+                height: 40,
                 child: CircularProgressIndicator(
                   strokeWidth: 3,
-                  valueColor: const AlwaysStoppedAnimation<Color>(SasColors.accentEmerald),
+                  valueColor: AlwaysStoppedAnimation<Color>(SasColors.accentEmerald),
                 ),
               ),
               if (message != null) ...[
                 const SizedBox(height: 16),
-                Text(message!, style: const TextStyle(color: SasColors.textSecondary, fontSize: 14)),
+                Text(
+                  message!,
+                  style: const TextStyle(
+                    color: SasColors.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ],
             ],
           ),

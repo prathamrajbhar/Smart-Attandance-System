@@ -29,6 +29,24 @@ def test_login_success():
         assert data["role"] == "ADMIN"
         assert data["must_change_password"] is False
 
+def test_login_with_student_enrollment_id():
+    with patch("app.services.auth_service.AuthService.authenticate", new_callable=AsyncMock) as mock_auth:
+        mock_auth.return_value = Token(
+            access_token="student-enrollment-jwt-token",
+            token_type="bearer",
+            role="STUDENT",
+            must_change_password=False,
+            user_id="usr-stu-202",
+        )
+        response = client.post("/api/v1/auth/login", json={
+            "email": "STU-2026-001",
+            "password": "StudentPassword123!",
+        })
+        assert response.status_code == 200
+        data = response.json()
+        assert data["access_token"] == "student-enrollment-jwt-token"
+        assert data["role"] == "STUDENT"
+
 def test_login_invalid_credentials():
     with patch("app.services.auth_service.AuthService.authenticate", new_callable=AsyncMock) as mock_auth:
         mock_auth.return_value = None

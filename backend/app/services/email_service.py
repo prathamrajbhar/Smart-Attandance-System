@@ -121,13 +121,15 @@ class EmailService:
         to_email: str,
         recipient_name: str,
         reset_token: str,
+        role: Optional[str] = None,
         frontend_url: Optional[str] = None,
     ) -> bool:
         base_url = frontend_url or resolve_frontend_url()
         reset_url = f"{base_url}/reset-password?token={reset_token}"
+        app_reset_url = f"smartattendance://reset-password?token={reset_token}"
 
         if settings.ENVIRONMENT != "production":
-            logger.info("DEV MODE - Password reset link for %s: %s", to_email, reset_url)
+            logger.info("DEV MODE - Password reset link for %s: %s (app: %s)", to_email, reset_url, app_reset_url)
 
         return await self.send_email(
             to_email=to_email,
@@ -138,6 +140,9 @@ class EmailService:
                 "recipient_name": recipient_name,
                 "email": to_email,
                 "reset_url": reset_url,
+                "app_reset_url": app_reset_url,
+                "role": role,
+                "is_student": role == "STUDENT",
                 "expire_minutes": settings.RESET_TOKEN_EXPIRE_MINUTES,
             },
         )

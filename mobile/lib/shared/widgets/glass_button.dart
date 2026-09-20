@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:smart_attendance_app/app/theme.dart';
 
@@ -35,54 +34,48 @@ class GlassButton extends StatelessWidget {
       children: [
         if (isLoading) ...[
           SizedBox(
-            width: 18,
-            height: 18,
+            width: 16,
+            height: 16,
             child: CircularProgressIndicator(
-              strokeWidth: 2.5,
+              strokeWidth: 2.0,
               valueColor: AlwaysStoppedAnimation<Color>(colors.foreground),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
         ] else if (icon != null) ...[
-          Icon(icon, size: 18, color: colors.foreground),
+          Icon(icon, size: 17, color: colors.foreground),
           const SizedBox(width: 8),
         ],
         Text(
           label,
           style: TextStyle(
-            fontSize: 15,
+            fontSize: 14,
             fontWeight: FontWeight.w600,
             color: colors.foreground,
+            letterSpacing: -0.01,
           ),
         ),
       ],
     );
 
     return AnimatedOpacity(
-      opacity: disabled ? 0.45 : 1.0,
-      duration: const Duration(milliseconds: 200),
+      opacity: disabled ? 0.5 : 1.0,
+      duration: SasDurations.fast,
       child: Material(
         color: Colors.transparent,
+        borderRadius: BorderRadius.circular(10),
         child: InkWell(
           onTap: disabled ? null : onPressed,
-          borderRadius: BorderRadius.circular(12),
-          splashColor: Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(10),
+          splashColor: colors.foreground.withValues(alpha: 0.1),
           child: Container(
-            height: height ?? 48,
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+            height: height ?? 46,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             decoration: BoxDecoration(
               color: colors.background,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
               border: Border.all(color: colors.border),
-              boxShadow: variant == GlassButtonVariant.ghost
-                  ? null
-                  : [
-                      const BoxShadow(
-                        color: Color(0x80000000),
-                        blurRadius: 18,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
+              boxShadow: colors.shadow,
             ),
             child: child,
           ),
@@ -94,28 +87,50 @@ class GlassButton extends StatelessWidget {
   _ButtonColors _resolveColors() {
     switch (variant) {
       case GlassButtonVariant.primary:
-        return _ButtonColors(
-          background: const Color(0x1AFFFFFF), 
+        return const _ButtonColors(
+          background: SasColors.accentEmerald,
           foreground: Colors.white,
-          border: const Color(0x33FFFFFF), 
+          border: Colors.transparent,
+          shadow: [
+            BoxShadow(
+              color: Color(0x18059669),
+              blurRadius: 4,
+              offset: Offset(0, 1),
+            ),
+          ],
         );
       case GlassButtonVariant.secondary:
-        return _ButtonColors(
-          background: SasColors.glassBg,
+        return const _ButtonColors(
+          background: SasColors.bgSecondary,
           foreground: SasColors.textPrimary,
           border: SasColors.glassBorder,
+          shadow: [
+            BoxShadow(
+              color: Color(0x06000000),
+              blurRadius: 2,
+              offset: Offset(0, 1),
+            ),
+          ],
         );
       case GlassButtonVariant.danger:
-        return _ButtonColors(
-          background: SasColors.accentPink.withValues(alpha: 0.15),
+        return const _ButtonColors(
+          background: SasColors.danger,
           foreground: Colors.white,
-          border: SasColors.accentPink.withValues(alpha: 0.4),
+          border: Colors.transparent,
+          shadow: [
+            BoxShadow(
+              color: Color(0x18DC2626),
+              blurRadius: 4,
+              offset: Offset(0, 1),
+            ),
+          ],
         );
       case GlassButtonVariant.ghost:
-        return _ButtonColors(
+        return const _ButtonColors(
           background: Colors.transparent,
           foreground: SasColors.textSecondary,
           border: Colors.transparent,
+          shadow: null,
         );
     }
   }
@@ -125,10 +140,12 @@ class _ButtonColors {
   final Color background;
   final Color foreground;
   final Color border;
+  final List<BoxShadow>? shadow;
 
   const _ButtonColors({
     required this.background,
     required this.foreground,
     required this.border,
+    this.shadow,
   });
 }

@@ -47,4 +47,28 @@ class AuthApi {
       },
     );
   }
+
+  Future<Map<String, dynamic>> verifyResetToken(String token) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/auth/verify-token',
+      queryParameters: {
+        'token': token,
+        'token_type': 'reset',
+      },
+    );
+    return response.data ?? {};
+  }
+
+  Future<void> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async {
+    await _dio.post<Map<String, dynamic>>(
+      '/auth/reset-password',
+      data: {
+        'token': token,
+        'new_password': newPassword,
+      },
+    );
+  }
 }

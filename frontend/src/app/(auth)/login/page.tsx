@@ -51,6 +51,14 @@ export default function LoginPage(): React.ReactElement {
         headers: { Authorization: `Bearer ${tokenData.access_token}` },
       });
 
+      if (profile.role === "STUDENT") {
+        setError("email", {
+          message: "Student accounts must access via the Smart Attendance Mobile App.",
+        });
+        toast.error("Access Restricted: Student accounts must use the Mobile App.");
+        return;
+      }
+
       login(tokenData.access_token, profile);
 
       if (tokenData.must_change_password || profile.must_change_password) {

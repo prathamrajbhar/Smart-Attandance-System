@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:smart_attendance_app/app/theme.dart';
 
@@ -26,15 +25,10 @@ class StreakCounter extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            SasColors.accentEmerald.withValues(alpha: 0.2),
-            SasColors.accentTeal.withValues(alpha: 0.2),
-          ],
-        ),
+        color: SasColors.accentEmerald.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: SasColors.accentEmerald.withValues(alpha: 0.3),
+          color: SasColors.accentEmerald.withValues(alpha: 0.25),
         ),
       ),
       child: Row(
@@ -55,6 +49,7 @@ class StreakCounter extends StatelessWidget {
             'day streak',
             style: TextStyle(
               fontSize: 12,
+              fontWeight: FontWeight.w500,
               color: SasColors.textMuted,
             ),
           ),
@@ -67,18 +62,18 @@ class StreakCounter extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            SasColors.accentEmerald.withValues(alpha: 0.2),
-            SasColors.accentTeal.withValues(alpha: 0.2),
-          ],
-        ),
+        color: SasColors.bgSecondary,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: SasColors.accentEmerald.withValues(alpha: 0.3),
+          color: SasColors.accentEmerald.withValues(alpha: 0.25),
         ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x080F172A),
+            blurRadius: 16,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,10 +83,13 @@ class StreakCounter extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: SasColors.accentEmerald.withValues(alpha: 0.2),
+                  color: SasColors.accentEmerald.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: SasColors.accentEmerald.withValues(alpha: 0.2),
+                  ),
                 ),
-                child: const Text('🔥', style: TextStyle(fontSize: 32)),
+                child: const Text('🔥', style: TextStyle(fontSize: 30)),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -101,12 +99,12 @@ class StreakCounter extends StatelessWidget {
                     const Text(
                       'Attendance Streak',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 13,
                         color: SasColors.textMuted,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.baseline,
                       textBaseline: TextBaseline.alphabetic,
@@ -114,7 +112,7 @@ class StreakCounter extends StatelessWidget {
                         Text(
                           '$currentStreak',
                           style: const TextStyle(
-                            fontSize: 36,
+                            fontSize: 32,
                             fontWeight: FontWeight.w900,
                             color: SasColors.accentEmerald,
                             height: 1,
@@ -124,7 +122,8 @@ class StreakCounter extends StatelessWidget {
                         Text(
                           currentStreak == 1 ? 'day' : 'days',
                           style: const TextStyle(
-                            fontSize: 16,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
                             color: SasColors.textSecondary,
                           ),
                         ),
@@ -140,8 +139,9 @@ class StreakCounter extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: SasColors.glassBg,
+                color: SasColors.bgSurface,
                 borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: SasColors.glassBorder),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -153,7 +153,7 @@ class StreakCounter extends StatelessWidget {
                     'Best: $highestStreak ${highestStreak == 1 ? 'day' : 'days'}',
                     style: const TextStyle(
                       fontSize: 12,
-                      color: SasColors.textMuted,
+                      color: SasColors.textSecondary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

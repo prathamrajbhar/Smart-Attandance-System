@@ -27,7 +27,18 @@ class AuthService:
         self.teacher_repo = TeacherRepository()
 
     async def authenticate(self, login_data: UserLogin) -> Optional[Token]:
-        user = await self.user_repo.get_by_email(login_data.email)
+        identifier = login_data.email.strip()
+        user = None
+        if "@" in identifier:
+            user = await self.user_repo.get_by_email(identifier.lower())
+        else:
+            student = await self.student_repo.get_by_enrollment(identifier)
+            if student and student.user:
+                user = student.user
+            else:
+                teacher = await self.teacher_repo.get_by_employee_id(identifier)
+                user = teacher.user if (teacher and teacher.user) else await self.user_repo.get_by_email(identifier.lower())
+
         if not user or not verify_password(login_data.password, user.hashedPassword):
             return None
 
@@ -154,6 +165,7 @@ class AuthService:
             to_email=user.email,
             recipient_name=name,
             reset_token=token,
+            role=user.role,
             frontend_url=frontend_url,
         )
         return True

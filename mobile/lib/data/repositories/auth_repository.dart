@@ -122,4 +122,23 @@ class AuthRepository {
   }
 
   UserProfile? getCachedProfile() => _hive.getCachedProfile();
+
+  Future<Map<String, dynamic>> verifyResetToken(String token) async {
+    try {
+      return await _authApi.verifyResetToken(token);
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  Future<void> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async {
+    try {
+      await _authApi.resetPassword(token: token, newPassword: newPassword);
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
 }

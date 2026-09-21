@@ -394,3 +394,48 @@ class TeacherService:
             message=f"Successfully verified {student_full_name} ({student.enrollmentNumber})."
         )
 
+    async def generate_session_smart_pass(self, user_id: str, session_id: str):
+        import uuid
+        from datetime import timedelta
+        from app.core.security import create_access_token
+        from app.schemas.teacher import TeacherSmartPassResponse
+
+        teacher = await self.get_teacher_by_user_id(user_id)
+        session = await self._get_session_with_auth(session_id, teacher.id)
+
+        now = datetime.now(timezone.utc)
+        sess_end = session.endTime.replace(tzinfo=timezone.utc) if session.endTime.tzinfo is None else session.endTime
+        if not session.isActive or sess_end <= now:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Session is closed or has expired.")
+
+        class_name = session.academicClass.name if session.academicClass else "Class"
+        subject_name = (
+            session.academicClass.subject.name
+            if session.academicClass and session.academicClass.subject
+            else class_name
+        )
+
+        expires_delta = timedelta(seconds=35)
+        qr_token = create_access_token(
+            subject=teacher.userId,
+            role="TEACHER",
+            expires_delta=expires_delta,
+            extra_data={
+                "session_id": session.id,
+                "academic_class_id": session.academicClassId,
+                "teacher_id": teacher.id,
+                "type": "teacher_smart_pass",
+                "nonce": uuid.uuid4().hex[:12],
+            },
+        )
+
+        return TeacherSmartPassResponse(
+            qr_token=qr_token,
+            session_id=session.id,
+            class_name=class_name,
+            subject=subject_name,
+            expires_at=(now + expires_delta).isoformat(),
+            refresh_interval_seconds=30,
+        )
+
+

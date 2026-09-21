@@ -148,6 +148,16 @@ export interface SmartPassVerifyResponse {
   message: string;
 }
 
+export interface TeacherSmartPassResponse {
+  qr_token: string;
+  session_id: string;
+  class_name: string;
+  subject: string;
+  expires_at: string;
+  refresh_interval_seconds: number;
+}
+
+
 export interface PaginatedResponse<T> {
   items: T[];
   page: number;

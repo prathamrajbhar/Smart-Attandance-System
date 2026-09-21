@@ -13,6 +13,7 @@ import GlassButton from "@/components/ui/GlassButton";
 import GlassStatCard from "@/components/ui/GlassStatCard";
 import GlassLoader from "@/components/ui/GlassLoader";
 import GlassConfirmDialog from "@/components/ui/GlassConfirmDialog";
+import SmartPassGeneratorModal from "@/components/scanner/SmartPassGeneratorModal";
 import SmartPassScannerModal from "@/components/scanner/SmartPassScannerModal";
 import { exportRosterToCSV } from "@/utils/exportUtils";
 import { getRosterColumns } from "./roster-columns";
@@ -25,8 +26,10 @@ export default function SessionRosterPage(): React.ReactElement {
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
   const [showConfirmBulk, setShowConfirmBulk] = useState(false);
+  const [showQrModal, setShowQrModal] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
 
   const fetchRoster = useCallback(async (): Promise<void> => {
     try {
@@ -122,9 +125,9 @@ export default function SessionRosterPage(): React.ReactElement {
             <GlassButton
               variant="primary"
               icon={<QrCode size={14} />}
-              onClick={() => setShowScanner(true)}
+              onClick={() => setShowQrModal(true)}
             >
-              Smart Pass Scanner
+              Smart Pass QR
             </GlassButton>
             <GlassButton
               variant="secondary"
@@ -171,6 +174,16 @@ export default function SessionRosterPage(): React.ReactElement {
         pageSize={20}
       />
 
+      <SmartPassGeneratorModal
+        isOpen={showQrModal}
+        onClose={() => setShowQrModal(false)}
+        sessionId={id}
+        className={roster.class_name}
+        onStudentVerified={() => {
+          void fetchRoster();
+        }}
+      />
+
       <SmartPassScannerModal
         isOpen={showScanner}
         onClose={() => setShowScanner(false)}
@@ -179,6 +192,7 @@ export default function SessionRosterPage(): React.ReactElement {
           void fetchRoster();
         }}
       />
+
 
       <GlassConfirmDialog
         isOpen={showConfirmBulk}

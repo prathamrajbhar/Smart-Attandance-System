@@ -9,7 +9,7 @@ from app.api.dependencies import get_current_user, get_current_teacher
 from app.schemas.teacher import (
     SessionResponse, GeofenceResponse, AcademicClassWithGeofenceResponse,
     SessionAttendanceResponse, ClassStatsResponse, SessionWithClassResponse,
-    AbsentStudentItem, DeviceChangeResponse, SmartPassVerifyResponse,
+    AbsentStudentItem, DeviceChangeResponse, SmartPassVerifyResponse, TeacherSmartPassResponse,
 )
 from app.schemas.leave import LeaveRequestResponse
 from app.schemas.attendance import FlaggedAttendanceResponse
@@ -172,4 +172,25 @@ def test_verify_smart_pass(mock_teacher_user, mock_teacher_profile):
         assert data["status"] == "success"
         assert data["student_name"] == "Rahul Verma"
         assert data["enrollment_number"] == "CS-2024-0042"
+    app.dependency_overrides.clear()
+
+def test_get_session_smart_pass(mock_teacher_user, mock_teacher_profile):
+    app.dependency_overrides[get_current_user] = lambda: mock_teacher_user
+    app.dependency_overrides[get_current_teacher] = lambda: mock_teacher_profile
+
+    with patch("app.services.teacher_service.TeacherService.generate_session_smart_pass", new_callable=AsyncMock) as mock_gen:
+        mock_gen.return_value = TeacherSmartPassResponse(
+            qr_token="jwt-teacher-session-token",
+            session_id="ses-101",
+            class_name="CS-101",
+            subject="Algorithms",
+            expires_at=datetime.now(timezone.utc).isoformat(),
+            refresh_interval_seconds=30,
+        )
+        response = client.get("/api/v1/teacher/sessions/ses-101/smart-pass")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["qr_token"] == "jwt-teacher-session-token"
+        assert data["session_id"] == "ses-101"
+        assert data["refresh_interval_seconds"] == 30
     app.dependency_overrides.clear()

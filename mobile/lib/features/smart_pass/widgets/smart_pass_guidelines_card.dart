@@ -28,7 +28,7 @@ class SmartPassGuidelinesCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               const Text(
-                'Verification Protocol',
+                'Smart Pass Verification Protocol',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
@@ -38,10 +38,10 @@ class SmartPassGuidelinesCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          _item('Present dynamic QR code at campus access checkpoints.'),
-          _item('QR code automatically regenerates every 30 seconds.'),
-          _item('Static screenshots are invalid and will be rejected.'),
-          _item('Valid only when presented within this official app.'),
+          _item('Scan the rotating Smart Pass QR displayed on the teacher screen.'),
+          _item('Verifies GPS telemetry against classroom geofence.'),
+          _item('Validates registered device hardware UUID binding.'),
+          _item('Confirms class enrollment and records Present status instantly.'),
         ],
       ),
     );

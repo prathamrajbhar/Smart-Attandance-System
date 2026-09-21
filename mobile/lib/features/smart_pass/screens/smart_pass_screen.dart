@@ -1,7 +1,5 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:smart_attendance_app/app/theme.dart';
 import 'package:smart_attendance_app/domain/models/smart_pass.dart';
 import 'package:smart_attendance_app/features/smart_pass/providers/smart_pass_provider.dart';
@@ -10,6 +8,7 @@ import 'package:smart_attendance_app/shared/widgets/animated_background.dart';
 import 'package:smart_attendance_app/shared/widgets/glass_app_bar.dart';
 import 'package:smart_attendance_app/shared/widgets/glass_button.dart';
 import 'package:smart_attendance_app/shared/widgets/glass_card.dart';
+import 'package:smart_attendance_app/shared/widgets/glass_input.dart';
 
 class SmartPassScreen extends ConsumerStatefulWidget {
   const SmartPassScreen({super.key});
@@ -19,37 +18,19 @@ class SmartPassScreen extends ConsumerStatefulWidget {
 }
 
 class _SmartPassScreenState extends ConsumerState<SmartPassScreen> {
-  Timer? _countdownTimer;
-  int _secondsRemaining = 30;
-
-  @override
-  void initState() {
-    super.initState();
-    Future.microtask(() {
-      ref.read(smartPassProvider.notifier).generatePass();
-      ref.read(smartPassProvider.notifier).startAutoRefresh();
-    });
-    _startCountdown();
-  }
-
-  void _startCountdown() {
-    _countdownTimer?.cancel();
-    _secondsRemaining = 30;
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) {
-        setState(() {
-          _secondsRemaining = (_secondsRemaining - 1).clamp(0, 30);
-          if (_secondsRemaining == 0) _secondsRemaining = 30;
-        });
-      }
-    });
-  }
+  final TextEditingController _tokenController = TextEditingController();
 
   @override
   void dispose() {
-    _countdownTimer?.cancel();
-    ref.read(smartPassProvider.notifier).stopAutoRefresh();
+    _tokenController.dispose();
     super.dispose();
+  }
+
+  void _onVerifyPressed() {
+    final token = _tokenController.text.trim();
+    if (token.isEmpty) return;
+    FocusScope.of(context).unfocus();
+    ref.read(smartPassProvider.notifier).scanAndVerifyPass(token);
   }
 
   @override
@@ -57,39 +38,23 @@ class _SmartPassScreenState extends ConsumerState<SmartPassScreen> {
     final passState = ref.watch(smartPassProvider);
 
     return Scaffold(
-      appBar: const GlassAppBar(title: 'Smart Pass', showBack: true),
+      appBar: const GlassAppBar(title: 'Smart Pass Scanner', showBack: true),
       body: AnimatedBackground(
         child: SafeArea(
-          child: passState.isLoading && passState.pass == null
-              ? const Center(child: CircularProgressIndicator(color: SasColors.accentEmerald))
-              : passState.errorMessage != null
-                  ? _buildError(passState.errorMessage!)
-                  : passState.pass != null
-                      ? _buildContent(passState.pass!)
-                      : const SizedBox.shrink(),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildError(String error) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: GlassCard(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
             children: [
-              const Icon(Icons.error_outline_rounded, size: 40, color: SasColors.danger),
-              const SizedBox(height: 10),
-              Text(error, textAlign: TextAlign.center, style: const TextStyle(color: SasColors.textSecondary, fontSize: 13)),
-              const SizedBox(height: 14),
-              GlassButton(
-                label: 'Regenerate Pass',
-                icon: Icons.refresh_rounded,
-                onPressed: () => ref.read(smartPassProvider.notifier).generatePass(),
-              ),
+              if (passState.scanResult != null)
+                _buildSuccessCard(passState.scanResult!)
+              else ...[
+                _buildScannerViewfinder(passState.isLoading),
+                const SizedBox(height: 16),
+                if (passState.errorMessage != null)
+                  _buildErrorBanner(passState.errorMessage!),
+                _buildManualInputSection(passState.isLoading),
+              ],
+              const SizedBox(height: 16),
+              const SmartPassGuidelinesCard(),
             ],
           ),
         ),
@@ -97,66 +62,162 @@ class _SmartPassScreenState extends ConsumerState<SmartPassScreen> {
     );
   }
 
-  Widget _buildContent(SmartPass pass) {
-    final isExpiringSoon = _secondsRemaining <= 8;
+  Widget _buildScannerViewfinder(bool isLoading) {
+    return GlassCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          Container(
+            height: 180,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: SasColors.accentEmerald.withValues(alpha: 0.3)),
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                const Icon(Icons.qr_code_scanner_rounded, size: 64, color: SasColors.accentEmerald),
+                if (isLoading)
+                  const CircularProgressIndicator(color: SasColors.accentEmerald),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Point camera at Teacher\'s Smart Pass QR code',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: SasColors.textPrimary),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Automatic GPS and Device Verification will execute instantly',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 11, color: SasColors.textMuted),
+          ),
+        ],
+      ),
+    );
+  }
 
-    return ListView(
+  Widget _buildManualInputSection(bool isLoading) {
+    return GlassCard(
       padding: const EdgeInsets.all(16),
-      children: [
-        GlassCard(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: SasColors.glassBorder),
-                ),
-                child: QrImageView(
-                  data: pass.qrToken,
-                  version: QrVersions.auto,
-                  size: 190,
-                  backgroundColor: Colors.white,
-                  eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: SasColors.textPrimary),
-                  dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: SasColors.textPrimary),
-                ),
-              ),
-              const SizedBox(height: 14),
-              Text(pass.studentName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: SasColors.textPrimary)),
-              const SizedBox(height: 2),
-              Text(pass.enrollmentNumber, style: const TextStyle(fontSize: 12, color: SasColors.textMuted, fontWeight: FontWeight.w500)),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: (isExpiringSoon ? SasColors.danger : SasColors.accentEmerald).withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: (isExpiringSoon ? SasColors.danger : SasColors.accentEmerald).withValues(alpha: 0.2)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.timer_outlined, size: 14, color: isExpiringSoon ? SasColors.danger : SasColors.accentEmerald),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Refreshes in $_secondsRemaining s',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: isExpiringSoon ? SasColors.danger : SasColors.accentEmerald,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Manual Token Verification',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: SasColors.textPrimary),
           ),
+          const SizedBox(height: 10),
+          GlassInput(
+            controller: _tokenController,
+            hint: 'Paste session QR security token...',
+            prefixIcon: Icons.key_rounded,
+          ),
+          const SizedBox(height: 12),
+          GlassButton(
+            label: 'Verify & Mark Attendance',
+            icon: Icons.check_circle_outline_rounded,
+            isLoading: isLoading,
+            onPressed: isLoading ? null : _onVerifyPressed,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorBanner(String error) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: SasColors.danger.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: SasColors.danger.withValues(alpha: 0.3)),
         ),
-        const SizedBox(height: 14),
-        const SmartPassGuidelinesCard(),
-      ],
+        child: Row(
+          children: [
+            const Icon(Icons.error_outline_rounded, size: 18, color: SasColors.danger),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(error, style: const TextStyle(fontSize: 12, color: SasColors.danger, fontWeight: FontWeight.w500)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSuccessCard(SmartPassScanResult result) {
+    return GlassCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: SasColors.accentEmerald.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.check_circle_rounded, size: 48, color: SasColors.accentEmerald),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            result.message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: SasColors.textPrimary),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: SasColors.bgSurface,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              children: [
+                _infoRow('Class', result.className),
+                _infoRow('Subject', result.subject),
+                _infoRow('Student', result.studentName),
+                _infoRow('Status', result.attendanceStatus, isHighlight: true),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          GlassButton(
+            label: 'Scan Another Code',
+            icon: Icons.qr_code_scanner_rounded,
+            onPressed: () {
+              _tokenController.clear();
+              ref.read(smartPassProvider.notifier).resetScan();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _infoRow(String label, String value, {bool isHighlight = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 12, color: SasColors.textMuted)),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: isHighlight ? FontWeight.w800 : FontWeight.w600,
+              color: isHighlight ? SasColors.accentEmerald : SasColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

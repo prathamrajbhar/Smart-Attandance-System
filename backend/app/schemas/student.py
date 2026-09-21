@@ -137,6 +137,31 @@ class SmartPassResponse(BaseModel):
     enrollment_number: str = Field(..., description="Enrollment identifier")
 
 
+class StudentSmartPassScanRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    qr_token: str = Field(..., min_length=1, description="Teacher dynamic session QR token")
+    latitude: float = Field(..., ge=-90.0, le=90.0, description="Student GPS latitude")
+    longitude: float = Field(..., ge=-180.0, le=180.0, description="Student GPS longitude")
+    accuracy: float = Field(..., ge=0.0, description="GPS horizontal accuracy in meters")
+    device_uuid: str = Field(..., min_length=1, max_length=128, description="Hardware device UUID")
+
+
+class StudentSmartPassScanResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    status: str = Field(..., description="Status (success, already_marked)")
+    session_id: str = Field(..., description="Session UUID")
+    class_name: str = Field(..., description="Class name")
+    subject: str = Field(..., description="Subject name")
+    attendance_status: str = Field("Present", description="Resulting status")
+    student_name: str = Field(..., description="Student full name")
+    enrollment_number: str = Field(..., description="Student enrollment number")
+    marked_at: str = Field(..., description="ISO timestamp")
+    message: str = Field(..., description="Feedback message")
+
+
+
 class StudentStatsResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

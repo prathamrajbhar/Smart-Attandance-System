@@ -19,11 +19,12 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _emailController = TextEditingController(text: 'diya.mehta.010@yopmail.com');
+  final _passwordController = TextEditingController(text: 'Student@123');
   final _emailFocusNode = FocusNode();
   final _passwordFocusNode = FocusNode();
   bool _obscurePassword = true;
+
 
   @override
   void dispose() {

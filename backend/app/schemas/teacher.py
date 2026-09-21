@@ -237,6 +237,17 @@ class SmartPassVerifyResponse(BaseModel):
     message: str = Field(..., description="User feedback message")
 
 
+class TeacherSmartPassResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    qr_token: str = Field(..., description="Rotating cryptographically signed session JWT token")
+    session_id: str = Field(..., description="Active session UUID")
+    class_name: str = Field(..., description="Academic class name")
+    subject: str = Field(..., description="Subject name")
+    expires_at: str = Field(..., description="ISO 8601 expiry timestamp")
+    refresh_interval_seconds: int = Field(30, description="Recommended token rotation interval in seconds")
+
+
 class ClassAttendanceExportItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -250,3 +261,4 @@ class ClassAttendanceExportItem(BaseModel):
     status: str
     final_ai_score: float
     remarks: str
+

@@ -61,23 +61,28 @@ class GlassButton extends StatelessWidget {
     return AnimatedOpacity(
       opacity: disabled ? 0.5 : 1.0,
       duration: SasDurations.fast,
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(10),
-        child: InkWell(
-          onTap: disabled ? null : onPressed,
-          borderRadius: BorderRadius.circular(10),
-          splashColor: colors.foreground.withValues(alpha: 0.1),
-          child: Container(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: disabled ? null : onPressed,
+        child: Material(
+          color: Colors.transparent,
+          child: Ink(
             height: height ?? 46,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
             decoration: BoxDecoration(
               color: colors.background,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: colors.border),
               boxShadow: colors.shadow,
             ),
-            child: child,
+            child: InkWell(
+              onTap: disabled ? null : onPressed,
+              borderRadius: BorderRadius.circular(10),
+              splashColor: colors.foreground.withValues(alpha: 0.1),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: child,
+              ),
+            ),
           ),
         ),
       ),

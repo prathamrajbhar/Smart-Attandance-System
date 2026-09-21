@@ -10,7 +10,7 @@ from app.api.dependencies import get_current_user, get_current_student
 from app.schemas.attendance import AttendanceMarkResponse
 from app.schemas.student import (
     StudentAttendanceHistoryResponse, StudentClassResponse,
-    SmartPassResponse, StudentStatsResponse, LeaderboardResponse, LeaderboardEntry,
+    SmartPassResponse, StudentSmartPassScanResponse, StudentStatsResponse, LeaderboardResponse, LeaderboardEntry,
 )
 from app.schemas.leave import LeaveRequestResponse, LeaveRequestListResponse
 
@@ -211,3 +211,35 @@ def test_student_gamification_stats_and_leaderboard(mock_student_user, mock_stud
         assert res_board.json()["user_rank"] == 3
         assert len(res_board.json()["leaderboard"]) == 3
     app.dependency_overrides.clear()
+
+
+def test_scan_smart_pass(mock_student_user, mock_student_profile):
+    app.dependency_overrides[get_current_user] = lambda: mock_student_user
+    app.dependency_overrides[get_current_student] = lambda: mock_student_profile
+
+    with patch("app.services.student_service.StudentService.verify_teacher_smart_pass_and_mark", new_callable=AsyncMock) as mock_scan:
+        mock_scan.return_value = StudentSmartPassScanResponse(
+            status="success",
+            session_id="ses-101",
+            class_name="CS-101",
+            subject="Algorithms",
+            attendance_status="Present",
+            student_name="Rahul Verma",
+            enrollment_number="CS-2024-0042",
+            marked_at=datetime.now(timezone.utc).isoformat(),
+            message="Attendance marked Present for CS-101 (Algorithms).",
+        )
+        response = client.post("/api/v1/student/smart-pass/scan", json={
+            "qr_token": "valid-teacher-qr-token",
+            "latitude": 19.0760,
+            "longitude": 72.8777,
+            "accuracy": 5.0,
+            "device_uuid": "mock-device-uuid-123",
+        })
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "success"
+        assert data["attendance_status"] == "Present"
+        assert data["class_name"] == "CS-101"
+    app.dependency_overrides.clear()
+

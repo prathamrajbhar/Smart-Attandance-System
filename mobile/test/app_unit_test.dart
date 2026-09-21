@@ -125,7 +125,28 @@ void main() {
       expect(pass.qrToken, 'PASS-2026-XYZ');
       expect(pass.studentName, 'Aarav Sharma');
     });
+
+    test('SmartPassScanResult model validation', () {
+      final scanJson = {
+        'status': 'success',
+        'session_id': 'sess_999',
+        'class_name': 'CS-401',
+        'subject': 'Data Structures',
+        'attendance_status': 'Present',
+        'student_name': 'Aarav Sharma',
+        'enrollment_number': 'CSE2025001',
+        'marked_at': '2026-09-21T10:00:00.000Z',
+        'message': 'Attendance marked Present for CS-401 (Data Structures).',
+      };
+
+      final result = SmartPassScanResult.fromJson(scanJson);
+      expect(result.status, 'success');
+      expect(result.sessionId, 'sess_999');
+      expect(result.attendanceStatus, 'Present');
+      expect(result.className, 'CS-401');
+    });
   });
+
 
   group('Attendance Utility & Math Logic Tests', () {
     test('calculateStreak counts consecutive present entries', () {

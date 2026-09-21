@@ -13,7 +13,7 @@ from app.schemas.teacher import (
     AcademicClassWithGeofenceResponse, SessionAttendanceResponse,
     ClassStatsResponse, AttendanceManualOverride, SessionWithClassResponse,
     BulkMarkRequest, AbsentStudentItem, DeviceChangeResponse, DeviceChangeApprove,
-    SmartPassVerifyRequest, SmartPassVerifyResponse, ClassAttendanceExportItem,
+    SmartPassVerifyRequest, SmartPassVerifyResponse, TeacherSmartPassResponse, ClassAttendanceExportItem,
 )
 from app.schemas.common import MessageResponse, BulkActionCountResponse
 from app.schemas.attendance import AttendanceReview, FlaggedAttendanceResponse
@@ -249,6 +249,18 @@ async def approve_device_change(
     return MessageResponse(status="success", message=f"Device change request {data.status.lower()} successfully.")
 
 
+@router.get("/sessions/{id}/smart-pass", response_model=TeacherSmartPassResponse, status_code=status.HTTP_200_OK)
+async def get_session_smart_pass(
+    id: str,
+    teacher: Teacher = Depends(get_current_teacher),
+    teacher_service: TeacherService = Depends(),
+) -> TeacherSmartPassResponse:
+    return await teacher_service.generate_session_smart_pass(
+        user_id=teacher.userId,
+        session_id=id,
+    )
+
+
 @router.post("/smart-pass/verify", response_model=SmartPassVerifyResponse, status_code=status.HTTP_200_OK)
 async def verify_smart_pass(
     data: SmartPassVerifyRequest,
@@ -260,3 +272,4 @@ async def verify_smart_pass(
         session_id=data.session_id,
         qr_token=data.qr_token,
     )
+

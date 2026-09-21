@@ -16,6 +16,8 @@ from app.schemas.student import (
     FcmTokenRequest,
     StudentAttendanceNoteRequest,
     SmartPassResponse,
+    StudentSmartPassScanRequest,
+    StudentSmartPassScanResponse,
     StudentStatsResponse,
     LeaderboardResponse,
 )
@@ -334,6 +336,24 @@ async def get_smart_pass(student: Student = Depends(get_current_student)) -> Sma
         student_name=_student_name(student),
         enrollment_number=student.enrollmentNumber,
     )
+
+
+@router.post("/smart-pass/scan", response_model=StudentSmartPassScanResponse, status_code=status.HTTP_200_OK)
+async def scan_smart_pass(
+    data: StudentSmartPassScanRequest,
+    student: Student = Depends(get_current_student),
+    student_service: StudentService = Depends(),
+) -> StudentSmartPassScanResponse:
+    await _rate_limit_student(student.id, max_requests=15, window_seconds=60)
+    return await student_service.verify_teacher_smart_pass_and_mark(
+        student=student,
+        qr_token=data.qr_token,
+        latitude=data.latitude,
+        longitude=data.longitude,
+        accuracy=data.accuracy,
+        device_uuid=data.device_uuid,
+    )
+
 
 
 @router.get("/stats", response_model=StudentStatsResponse)

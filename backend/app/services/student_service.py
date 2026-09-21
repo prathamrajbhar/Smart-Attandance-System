@@ -107,3 +107,183 @@ class StudentService:
                 for r in records if (ac := r.session.academicClass)
             ],
         )
+
+    async def verify_teacher_smart_pass_and_mark(
+        self,
+        student,
+        qr_token: str,
+        latitude: float,
+        longitude: float,
+        accuracy: float,
+        device_uuid: str,
+    ):
+        from datetime import datetime, timezone
+        from app.core.security import decode_access_token
+        from app.services.gamification_service import GamificationService
+        from app.services.system_config_service import SystemConfigService
+        from app.repositories.geofence_repo import GeofenceRepository
+        from app.utils.geofencing import GPSCoordinate, calculate_haversine_distance, is_within_geofence
+        from app.api.ws import manager
+        from app.schemas.student import StudentSmartPassScanResponse
+
+        payload = decode_access_token(qr_token)
+        if not payload or payload.get("type") != "teacher_smart_pass":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired Teacher Smart Pass QR code. Please scan the current code displayed on the screen.",
+            )
+
+        session_id = payload.get("session_id")
+        if not session_id:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Corrupted QR pass token payload.")
+
+        session = await db.session.find_unique(
+            where={"id": session_id},
+            include={"academicClass": {"include": {"subject": True, "teacher": {"include": {"user": True}}}}},
+        )
+        if not session:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attendance session not found.")
+
+        now = datetime.now(timezone.utc)
+        sess_end = session.endTime.replace(tzinfo=timezone.utc) if session.endTime.tzinfo is None else session.endTime
+        if not session.isActive or sess_end <= now:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Attendance session is closed or has expired.")
+
+        enrollment = await db.enrollment.find_first(
+            where={"studentId": student.id, "academicClassId": session.academicClassId}
+        )
+        if not enrollment:
+            class_title = session.academicClass.name if session.academicClass else "this class"
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Student {student.enrollmentNumber} is not enrolled in {class_title}.",
+            )
+
+        # Device Binding Check
+        if student.deviceUuid:
+            if student.deviceUuid != device_uuid:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Device mismatch: This student profile is bound to another device. Please submit a Device Change Request.",
+                )
+        else:
+            await db.student.update(where={"id": student.id}, data={"deviceUuid": device_uuid})
+
+        # Geofence Validation
+        config = await SystemConfigService().get_config()
+        if config.isGpsVerificationEnabled:
+            geofence = await GeofenceRepository().get_by_class_id(session.academicClassId)
+            if geofence:
+                student_coord = GPSCoordinate(latitude, longitude)
+                classroom_coord = GPSCoordinate(geofence.latitude, geofence.longitude)
+                is_inside = is_within_geofence(
+                    student_coord=student_coord,
+                    classroom_coord=classroom_coord,
+                    base_radius=geofence.radiusMeters,
+                    student_accuracy=accuracy,
+                )
+                if not is_inside:
+                    distance = calculate_haversine_distance(student_coord, classroom_coord)
+                    effective_radius = geofence.radiusMeters + accuracy
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Location verification failed: Outside geofence by {distance - effective_radius:.1f}m.",
+                    )
+
+        student_name = f"{student.firstName or ''} {student.lastName or ''}".strip() or "Student"
+        class_name = session.academicClass.name if session.academicClass else "Class"
+        subject_name = (
+            session.academicClass.subject.name
+            if session.academicClass and session.academicClass.subject
+            else class_name
+        )
+
+        existing = await db.attendance.find_first(
+            where={"studentId": student.id, "sessionId": session_id}
+        )
+
+        marked_time = now.isoformat()
+        if existing and existing.status == "Present":
+            return StudentSmartPassScanResponse(
+                status="already_marked",
+                session_id=session_id,
+                class_name=class_name,
+                subject=subject_name,
+                attendance_status="Present",
+                student_name=student_name,
+                enrollment_number=student.enrollmentNumber,
+                marked_at=existing.createdAt.isoformat() if existing.createdAt else marked_time,
+                message=f"Attendance already marked Present for {class_name}.",
+            )
+
+        if existing:
+            await db.attendance.update(
+                where={"id": existing.id},
+                data={
+                    "status": "Present",
+                    "finalAiScore": 1.0,
+                    "gpsLatitude": latitude,
+                    "gpsLongitude": longitude,
+                    "remarks": "Verified via Teacher Smart Pass QR",
+                },
+            )
+        else:
+            await db.attendance.create(
+                data={
+                    "studentId": student.id,
+                    "sessionId": session_id,
+                    "status": "Present",
+                    "faceScore": 1.0,
+                    "livenessScore": 1.0,
+                    "backgroundScore": 1.0,
+                    "finalAiScore": 1.0,
+                    "gpsLatitude": latitude,
+                    "gpsLongitude": longitude,
+                    "remarks": "Verified via Teacher Smart Pass QR",
+                }
+            )
+
+        try:
+            await GamificationService().recalculate_student_streak(student.id)
+        except Exception:
+            pass
+
+        try:
+            msg = {
+                "type": "attendance_updated",
+                "session_id": session_id,
+                "status": "Present",
+                "student_id": student.id,
+                "student_name": student_name,
+                "enrollment_number": student.enrollmentNumber,
+            }
+            await manager.send_personal_message(msg, student_id=student.id)
+            await manager.broadcast_to_teachers(msg)
+        except Exception:
+            pass
+
+        try:
+            await db.auditlog.create(
+                data={
+                    "eventType": "SMART_PASS_SCAN_VERIFY",
+                    "severity": "INFO",
+                    "actor": student.user.email if student.user and student.user.email else student.enrollmentNumber,
+                    "target": f"session:{session_id}",
+                    "description": f"Student {student_name} ({student.enrollmentNumber}) verified via Teacher Smart Pass QR for {class_name}",
+                }
+            )
+        except Exception:
+            pass
+
+        return StudentSmartPassScanResponse(
+            status="success",
+            session_id=session_id,
+            class_name=class_name,
+            subject=subject_name,
+            attendance_status="Present",
+            student_name=student_name,
+            enrollment_number=student.enrollmentNumber,
+            marked_at=marked_time,
+            message=f"Attendance marked Present for {class_name} ({subject_name}).",
+        )
+

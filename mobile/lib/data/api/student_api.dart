@@ -175,10 +175,31 @@ class StudentApi {
     return response.data!;
   }
 
+  Future<Map<String, dynamic>> scanSmartPass({
+    required String qrToken,
+    required double latitude,
+    required double longitude,
+    required double accuracy,
+    required String deviceUuid,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/student/smart-pass/scan',
+      data: {
+        'qr_token': qrToken,
+        'latitude': latitude,
+        'longitude': longitude,
+        'accuracy': accuracy,
+        'device_uuid': deviceUuid,
+      },
+    );
+    return response.data!;
+  }
+
   Future<Map<String, dynamic>> getMyStats() async {
     final response = await _dio.get<Map<String, dynamic>>('/student/stats');
     return response.data!;
   }
+
 
   Future<LeaderboardResponse> getLeaderboard() async {
     final response = await _dio.get<Map<String, dynamic>>('/student/leaderboard');

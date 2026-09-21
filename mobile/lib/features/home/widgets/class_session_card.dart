@@ -152,10 +152,10 @@ class _ClassSessionCardState extends State<ClassSessionCard> {
             if (_canMark) ...[
               const SizedBox(height: 10),
               GlassButton(
-                label: 'Mark Attendance',
-                icon: Icons.fingerprint_rounded,
+                label: 'Scan Smart Pass QR',
+                icon: Icons.qr_code_scanner_rounded,
                 isExpanded: true,
-                onPressed: () => context.push('/verify/${widget.session.sessionId}'),
+                onPressed: () => context.push('/smart-pass'),
               ),
             ],
           ],

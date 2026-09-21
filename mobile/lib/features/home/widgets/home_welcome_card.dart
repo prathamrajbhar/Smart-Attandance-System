@@ -144,29 +144,6 @@ class HomeWelcomeCard extends ConsumerWidget {
           visualDensity: VisualDensity.compact,
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-          icon: Container(
-            padding: const EdgeInsets.all(7),
-            decoration: BoxDecoration(
-              color: SasColors.accentEmerald.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: SasColors.accentEmerald.withValues(alpha: 0.35),
-              ),
-            ),
-            child: const Icon(
-              Icons.qr_code_scanner_rounded,
-              size: 18,
-              color: SasColors.accentEmerald,
-            ),
-          ),
-          onPressed: () => context.push('/smart-pass'),
-          tooltip: 'Smart Pass Scanner',
-        ),
-        const SizedBox(width: 6),
-        IconButton(
-          visualDensity: VisualDensity.compact,
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
           icon: Badge(
             isLabelVisible: unreadCount > 0,
             label: Text('$unreadCount', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold)),

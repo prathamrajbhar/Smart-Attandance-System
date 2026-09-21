@@ -1026,15 +1026,15 @@
     "semantic_hash": ""
   },
   "frontend/src/app/(dashboard)/teacher/classes/[id]/page.tsx": {
-    "mtime": 1789831908.2824197,
-    "seen": 1789993711.0953436,
-    "ast_hash": "21c76cd667f2ed3d896c015392d0a1df",
+    "mtime": 1789995253.622077,
+    "seen": 1789995303.8229208,
+    "ast_hash": "cde7b01e47ba8001cbfa226a8efc42bb",
     "semantic_hash": ""
   },
   "frontend/src/app/(dashboard)/teacher/classes/page.tsx": {
-    "mtime": 1789833614.3968167,
-    "seen": 1789993711.0953448,
-    "ast_hash": "c0ac8c1110a37ea998314471c4eeecd8",
+    "mtime": 1789995242.3463295,
+    "seen": 1789995303.822925,
+    "ast_hash": "89124f25ba20569ab8d2da0046564a26",
     "semantic_hash": ""
   },
   "frontend/src/app/(dashboard)/teacher/dashboard/ActiveSessionBanner.tsx": {
@@ -1116,9 +1116,9 @@
     "semantic_hash": ""
   },
   "frontend/src/app/(dashboard)/teacher/sessions/ActiveSessionsCard.tsx": {
-    "mtime": 1789834067.7601433,
-    "seen": 1789993711.095363,
-    "ast_hash": "bae413100070073957afe8fcd6752377",
+    "mtime": 1789995213.997137,
+    "seen": 1789995303.8233817,
+    "ast_hash": "77bfec2156a248c276946a959ac9dea6",
     "semantic_hash": ""
   },
   "frontend/src/app/(dashboard)/teacher/sessions/PastSessionsTable.tsx": {
@@ -1170,9 +1170,9 @@
     "semantic_hash": ""
   },
   "frontend/src/app/(dashboard)/teacher/sessions/page.tsx": {
-    "mtime": 1789834073.6936898,
-    "seen": 1789993711.095374,
-    "ast_hash": "b52cd884c15e1c956511ff3b096b9fa0",
+    "mtime": 1789995230.3756819,
+    "seen": 1789995303.8236794,
+    "ast_hash": "887b5f4cdfb35ccf60051c944deaf713",
     "semantic_hash": ""
   },
   "frontend/src/app/layout.tsx": {
@@ -2148,9 +2148,9 @@
     "semantic_hash": ""
   },
   "mobile/lib/features/attendance/providers/geofence_verification_provider.dart": {
-    "mtime": 1779908827.754823,
-    "seen": 1789993711.0955818,
-    "ast_hash": "26204580942d425f093a06c9fae87450",
+    "mtime": 1789995149.3971822,
+    "seen": 1789995303.8273904,
+    "ast_hash": "7da34e709c5755c1680e6890485e0e8b",
     "semantic_hash": ""
   },
   "mobile/lib/features/attendance/providers/location_provider.dart": {
@@ -2316,9 +2316,9 @@
     "semantic_hash": ""
   },
   "mobile/lib/features/auth/screens/login_screen.dart": {
-    "mtime": 1789988945.2760355,
-    "seen": 1789993711.0956166,
-    "ast_hash": "8fbd4fd168c147e4c9579c3e53aac101",
+    "mtime": 1789995141.9654446,
+    "seen": 1789995303.8279872,
+    "ast_hash": "5b046a9eb5d244630f92e351bd00b62f",
     "semantic_hash": ""
   },
   "mobile/lib/features/auth/screens/reset_password_screen.dart": {
@@ -2592,9 +2592,9 @@
     "semantic_hash": ""
   },
   "mobile/lib/features/smart_pass/screens/smart_pass_screen.dart": {
-    "mtime": 1789988383.4504294,
-    "seen": 1789993711.0956721,
-    "ast_hash": "abc66990dc0f423ce9515956b70fdc80",
+    "mtime": 1789995180.7941368,
+    "seen": 1789995303.8289218,
+    "ast_hash": "535640cd9c4ada1fac3c6ec9d05929bf",
     "semantic_hash": ""
   },
   "mobile/lib/features/smart_pass/widgets/smart_pass_guidelines_card.dart": {

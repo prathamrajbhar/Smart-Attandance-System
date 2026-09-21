@@ -354,9 +354,9 @@
     "semantic_hash": ""
   },
   "backend/main.py": {
-    "mtime": 1789881518.6885185,
-    "seen": 1789993711.095187,
-    "ast_hash": "22d18cdee6999698ae64f4cc6e5df80e",
+    "mtime": 1790012286.324943,
+    "seen": 1790012614.3502579,
+    "ast_hash": "a0a6b831aad5d337117d8b2cc3d6dfcb",
     "semantic_hash": ""
   },
   "backend/scripts/__init__.py": {
@@ -1386,9 +1386,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/ui/CommandPaletteModal.tsx": {
-    "mtime": 1789840417.1089544,
-    "seen": 1789993711.0954182,
-    "ast_hash": "5bb24ef8376f47e0c9e57ad9a3f7d848",
+    "mtime": 1790012376.4036553,
+    "seen": 1790012614.3539479,
+    "ast_hash": "c355282dee48c91619d8be8eeeaf01f6",
     "semantic_hash": ""
   },
   "frontend/src/components/ui/EnterprisePagination.tsx": {
@@ -1776,9 +1776,9 @@
     "semantic_hash": ""
   },
   "frontend/src/types/index.ts": {
-    "mtime": 1789988051.6372585,
-    "seen": 1789993711.0955024,
-    "ast_hash": "0f6326d2232afda1de2e4e928bdbb9f0",
+    "mtime": 1790012358.6025038,
+    "seen": 1790012614.3551521,
+    "ast_hash": "ff3286a8743dff62649140b08a1c4990",
     "semantic_hash": ""
   },
   "frontend/src/types/models.ts": {
@@ -3483,6 +3483,66 @@
     "mtime": 1790011904.5126655,
     "seen": 1790011953.9160008,
     "ast_hash": "d6178c521111a98922502c150a286803",
+    "semantic_hash": ""
+  },
+  "backend/app/api/search.py": {
+    "mtime": 1790012273.785454,
+    "seen": 1790012614.3492587,
+    "ast_hash": "cfd0157ec2d77be3069bc4d13e06012c",
+    "semantic_hash": ""
+  },
+  "backend/app/schemas/search.py": {
+    "mtime": 1790012231.7228024,
+    "seen": 1790012614.3498616,
+    "ast_hash": "9626824e3616d14f2f0854f901bd8593",
+    "semantic_hash": ""
+  },
+  "backend/app/services/search_service.py": {
+    "mtime": 1790012247.4135487,
+    "seen": 1790012614.3501494,
+    "ast_hash": "03d1d2b2f6a24d816c47c46b21fbc5d0",
+    "semantic_hash": ""
+  },
+  "backend/tests/test_api_search.py": {
+    "mtime": 1790012318.531465,
+    "seen": 1790012614.3504076,
+    "ast_hash": "05d140f7a6ffc5befe2e05fe32bfc1ad",
+    "semantic_hash": ""
+  },
+  "frontend/src/components/ui/command-icons.tsx": {
+    "mtime": 1790012365.0258098,
+    "seen": 1790012614.3544605,
+    "ast_hash": "74505f671ddec7ceb01dffe40c3bdaa2",
+    "semantic_hash": ""
+  },
+  "scripts/test_global_search_playwright.mjs": {
+    "mtime": 1790012570.8087254,
+    "seen": 1790012614.3586495,
+    "ast_hash": "7b9b16cd0f5bcf05e3aaec26b576130e",
+    "semantic_hash": ""
+  },
+  "screenshots/search_palette_admin_faculty.png": {
+    "mtime": 1790012587.3881443,
+    "seen": 1790012614.360013,
+    "ast_hash": "5e7ddd5c06a242c9a1d918335f2001ab",
+    "semantic_hash": ""
+  },
+  "screenshots/search_palette_class.png": {
+    "mtime": 1790012583.3882527,
+    "seen": 1790012614.3600144,
+    "ast_hash": "30a81f25c158f7e0b2edc5fb6b086908",
+    "semantic_hash": ""
+  },
+  "screenshots/search_palette_default.png": {
+    "mtime": 1790012581.155436,
+    "seen": 1790012614.3600152,
+    "ast_hash": "5f612ff1d161c40083bfde1544dedab7",
+    "semantic_hash": ""
+  },
+  "screenshots/search_palette_student.png": {
+    "mtime": 1790012582.27163,
+    "seen": 1790012614.3600156,
+    "ast_hash": "0c333c6e1564a87643a2e7a8c92c6a15",
     "semantic_hash": ""
   }
 }

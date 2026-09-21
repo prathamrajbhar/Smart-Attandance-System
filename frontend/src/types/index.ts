@@ -174,3 +174,21 @@ export interface BulkImportResponse {
   invitations_sent: number;
   errors: string[];
 }
+
+export type SearchCategory = "student" | "faculty" | "class" | "session" | "action" | "navigation";
+
+export interface SearchResultItem {
+  id: string;
+  title: string;
+  subtitle?: string | null;
+  category: SearchCategory;
+  href: string;
+  badge?: string | null;
+  icon_type?: string | null;
+}
+
+export interface GlobalSearchResponse {
+  query: string;
+  total_results: number;
+  results: SearchResultItem[];
+}

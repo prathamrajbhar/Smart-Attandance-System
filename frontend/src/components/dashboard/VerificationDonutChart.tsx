@@ -21,7 +21,7 @@ export default function VerificationDonutChart(): React.ReactElement {
   const totalCount = breakdownData.reduce((acc, item) => acc + item.count, 0);
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5 shadow-xs flex flex-col justify-between">
+    <div className="rounded-xl border border-border bg-card p-5 shadow-xs flex flex-col justify-between h-full">
       {/* Header */}
       <div className="flex items-center justify-between gap-2 mb-2">
         <div>

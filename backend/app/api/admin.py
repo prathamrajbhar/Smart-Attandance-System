@@ -497,10 +497,19 @@ async def get_audit_logs(
     sort_order: str = "desc",
     q: str | None = None,
     severity: str | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
     admin_service: AdminService = Depends(),
 ):
     return await admin_service.get_audit_logs(
-        page=page, page_size=min(page_size, 100), sort_by=sort_by, sort_order=sort_order, q=q, severity=severity
+        page=page,
+        page_size=min(page_size, 100),
+        sort_by=sort_by,
+        sort_order=sort_order,
+        q=q,
+        severity=severity,
+        start_date=start_date,
+        end_date=end_date,
     )
 
 

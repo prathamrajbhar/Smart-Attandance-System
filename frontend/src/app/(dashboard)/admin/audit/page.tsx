@@ -1,28 +1,22 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Download } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "@/lib/api";
 import GlassBreadcrumb from "@/components/ui/GlassBreadcrumb";
 import GlassPageHeader from "@/components/ui/GlassPageHeader";
-import GlassTable, { type TableColumn } from "@/components/ui/GlassTable";
-import EnterpriseTableToolbar from "@/components/ui/EnterpriseTableToolbar";
-import EnterprisePagination from "@/components/ui/EnterprisePagination";
-import GlassBadge from "@/components/ui/GlassBadge";
-import { useTableQuery } from "@/hooks/useTableQuery";
+import ActivityFilterBar, { type ActivityCategory } from "@/components/admin/ActivityFilterBar";
+import ActivityLogTable, { formatEventName } from "@/components/admin/ActivityLogTable";
+import ActivityDetailModal from "@/components/admin/ActivityDetailModal";
+import { useAuditTableQuery } from "@/hooks/useAuditTableQuery";
 import type { AuditLogResponse } from "@/types";
-import type { BadgeVariant } from "@/components/ui/GlassBadge";
-
-const SEVERITY_VARIANT: Record<string, BadgeVariant> = {
-  HIGH: "danger",
-  CRITICAL: "danger",
-  MEDIUM: "warning",
-  LOW: "info",
-};
 
 export default function AuditPage(): React.ReactElement {
   const [exporting, setExporting] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<ActivityCategory>("ALL");
+  const [selectedEvent, setSelectedEvent] = useState<(AuditLogResponse & Record<string, unknown>) | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const {
     data: logs,
@@ -34,18 +28,32 @@ export default function AuditPage(): React.ReactElement {
     sortBy,
     sortOrder,
     filterValue,
+    timePreset,
+    startDate,
+    endDate,
     setSearchQuery,
     setCurrentPage,
     setPageSize,
     handleSort,
     setFilterValue,
-  } = useTableQuery<AuditLogResponse>({
-    endpoint: "/admin/audit",
-    defaultPageSize: 15,
-    defaultSortBy: "timestamp",
-    defaultSortOrder: "desc",
-    filterKey: "severity",
-  });
+    refetch,
+    handleTimePresetChange,
+    handleDateRangeChange,
+    handleResetTimeFilter,
+  } = useAuditTableQuery();
+
+  const filteredLogs = useMemo(() => {
+    const rawList = logs as (AuditLogResponse & Record<string, unknown>)[];
+    if (selectedCategory === "ALL") return rawList;
+    return rawList.filter((item) => {
+      const type = String(item.eventType || item.action || "").toUpperCase();
+      if (selectedCategory === "USERS") return type.includes("STUDENT") || type.includes("TEACHER") || type.includes("USER");
+      if (selectedCategory === "CLASSES") return type.includes("CLASS") || type.includes("ENROLL");
+      if (selectedCategory === "SECURITY") return type.includes("AUTH") || type.includes("LOGIN") || type.includes("SCAN");
+      if (selectedCategory === "CONFIG") return type.includes("CONFIG") || type.includes("SETTING");
+      return true;
+    });
+  }, [logs, selectedCategory]);
 
   const handleExportCSV = async (): Promise<void> => {
     try {
@@ -55,104 +63,84 @@ export default function AuditPage(): React.ReactElement {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", `system-audit-logs-${new Date().toISOString().slice(0, 10)}.csv`);
+      link.setAttribute("download", `system-activity-logs-${new Date().toISOString().slice(0, 10)}.csv`);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      toast.success("Audit log CSV exported successfully");
+      toast.success("Activity log CSV exported successfully");
     } catch {
-      toast.error("Failed to export audit log");
+      toast.error("Failed to export log");
     } finally {
       setExporting(false);
     }
   };
 
-  const columns: TableColumn<AuditLogResponse & Record<string, unknown>>[] = [
-    {
-      key: "timestamp",
-      header: "Timestamp",
-      sortable: true,
-      render: (r) => (
-        <span className="text-xs font-mono text-muted-foreground">
-          {new Date(String(r.timestamp)).toLocaleString()}
-        </span>
-      ),
-    },
-    { key: "eventType", header: "Event Type", sortable: true },
-    {
-      key: "severity",
-      header: "Severity",
-      render: (r) => (
-        <GlassBadge variant={SEVERITY_VARIANT[String(r.severity)] ?? "info"}>
-          {String(r.severity)}
-        </GlassBadge>
-      ),
-    },
-    { key: "actor", header: "Actor" },
-    { key: "target", header: "Target" },
-    {
-      key: "description",
-      header: "Description",
-      render: (r) => (
-        <span className="text-xs text-foreground max-w-xs truncate block">
-          {String(r.description)}
-        </span>
-      ),
-    },
-  ];
+  const openInspector = (record: AuditLogResponse & Record<string, unknown>) => {
+    setSelectedEvent(record);
+    setIsModalOpen(true);
+  };
 
   return (
-    <div className="space-y-4">
-      <GlassBreadcrumb items={[{ label: "Admin", href: "/admin/dashboard" }, { label: "Audit Log" }]} />
+    <div className="space-y-5">
+      <GlassBreadcrumb items={[{ label: "Admin", href: "/admin/dashboard" }, { label: "Activity Logs" }]} />
+      
+      {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <GlassPageHeader title="System Audit Trail" description={`${totalItems} immutable events recorded`} />
+        <GlassPageHeader
+          title="System Activity Trail"
+          description={`${totalItems} recorded administrative actions and security events`}
+        />
         <button
           onClick={() => void handleExportCSV()}
           disabled={exporting}
-          className="self-start sm:self-center inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-border bg-card text-xs font-semibold text-foreground hover:bg-secondary hover:text-foreground transition-all shadow-xs disabled:opacity-50"
+          className="self-start sm:self-center inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-border bg-card text-xs font-semibold text-foreground hover:bg-secondary hover:text-foreground transition-all shadow-xs disabled:opacity-50 cursor-pointer"
         >
           <Download size={13} className={exporting ? "animate-bounce text-primary" : "text-muted-foreground"} />
-          <span>{exporting ? "Exporting CSV..." : "Export Audit CSV"}</span>
+          <span>{exporting ? "Exporting..." : "Export Activity CSV"}</span>
         </button>
       </div>
 
-      <EnterpriseTableToolbar
-        searchPlaceholder="Search audit trail by event, actor, or payload..."
-        searchValue={searchQuery}
-        onSearch={setSearchQuery}
-        filterLabel="Severity"
-        filterOptions={[
-          { value: "CRITICAL", label: "Critical" },
-          { value: "HIGH", label: "High" },
-          { value: "MEDIUM", label: "Medium" },
-          { value: "LOW", label: "Low" },
-          { value: "INFO", label: "Info" },
-        ]}
-        selectedFilter={filterValue}
-        onFilterChange={setFilterValue}
+      {/* Enterprise Multi-Category, Search, Severity & Calendar Time Toolbar */}
+      <ActivityFilterBar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        selectedCategory={selectedCategory}
+        onCategoryChange={setSelectedCategory}
+        selectedSeverity={filterValue}
+        onSeverityChange={setFilterValue}
+        onRefresh={() => void refetch()}
+        isRefreshing={loading}
+        selectedTimePreset={timePreset}
+        onTimePresetChange={handleTimePresetChange}
+        startDate={startDate}
+        endDate={endDate}
+        onDateRangeChange={handleDateRangeChange}
+        onResetTimeFilter={handleResetTimeFilter}
       />
 
-      <div className="rounded-xl border border-border bg-card shadow-2xs overflow-hidden">
-        <GlassTable
-          columns={columns}
-          data={logs as (AuditLogResponse & Record<string, unknown>)[]}
-          loading={loading}
-          sortBy={sortBy}
-          sortOrder={sortOrder}
-          onSortChange={handleSort}
-          emptyMessage="No audit events recorded"
-        />
-        <EnterprisePagination
-          totalItems={totalItems}
-          currentPage={currentPage}
-          pageSize={pageSize}
-          onPageChange={setCurrentPage}
-          onPageSizeChange={setPageSize}
-          itemName="audit events"
-        />
-      </div>
+      {/* Main Clean Table */}
+      <ActivityLogTable
+        logs={filteredLogs}
+        loading={loading}
+        totalItems={totalItems}
+        currentPage={currentPage}
+        pageSize={pageSize}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+        onSortChange={handleSort}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        onInspect={openInspector}
+      />
+
+      {/* Inspector Slide-over Modal */}
+      <ActivityDetailModal
+        event={selectedEvent}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        formatEventName={formatEventName}
+      />
     </div>
   );
 }
-

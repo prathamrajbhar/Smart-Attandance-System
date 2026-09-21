@@ -12,6 +12,7 @@ interface UseTableQueryOptions {
   defaultSortBy?: string;
   defaultSortOrder?: "asc" | "desc";
   filterKey?: string;
+  extraParams?: Record<string, string | number | undefined>;
 }
 
 export function useTableQuery<T>({
@@ -20,6 +21,7 @@ export function useTableQuery<T>({
   defaultSortBy = "createdAt",
   defaultSortOrder = "desc",
   filterKey = "department_id",
+  extraParams,
 }: UseTableQueryOptions) {
   const router = useRouter();
   const pathname = usePathname();
@@ -77,6 +79,13 @@ export function useTableQuery<T>({
       };
       if (debouncedQuery.trim()) params.q = debouncedQuery.trim();
       if (filterValue && filterValue !== "all") params[filterKey] = filterValue;
+      if (extraParams) {
+        Object.entries(extraParams).forEach(([k, v]) => {
+          if (v !== undefined && v !== "" && v !== "all") {
+            params[k] = v;
+          }
+        });
+      }
 
       const res = await api.get<PaginatedResponse<T>>(endpoint, {
         params,
@@ -93,7 +102,7 @@ export function useTableQuery<T>({
     } finally {
       setLoading(false);
     }
-  }, [endpoint, currentPage, pageSize, sortBy, sortOrder, debouncedQuery, filterValue, filterKey]);
+  }, [endpoint, currentPage, pageSize, sortBy, sortOrder, debouncedQuery, filterValue, filterKey, JSON.stringify(extraParams)]);
 
   useEffect(() => {
     void fetchData();

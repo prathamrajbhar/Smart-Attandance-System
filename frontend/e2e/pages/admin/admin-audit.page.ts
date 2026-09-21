@@ -9,7 +9,7 @@ export class AdminAuditPage extends BasePage {
   constructor(page: Page) {
     super(page);
     this.searchInput = page.getByPlaceholder(/Search audit trail by event, actor/i);
-    this.exportButton = page.getByRole("button", { name: /Export Audit CSV|Exporting/i });
+    this.exportButton = page.getByRole("button", { name: /Export.*CSV|Exporting/i });
     this.auditTable = page.locator("table");
   }
 

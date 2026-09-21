@@ -156,7 +156,7 @@ export default function GlassTable<T extends Record<string, unknown>>({
       </div>
 
 
-      {totalPages > 1 && (
+      {sortBy === undefined && totalPages > 1 && (
         <div className="flex items-center justify-between border-t border-border px-4 py-3 bg-card text-xs text-muted-foreground">
           <span>
             Showing <strong className="font-semibold text-foreground">{page * pageSize + 1}</strong> to{" "}

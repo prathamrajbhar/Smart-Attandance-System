@@ -31,7 +31,7 @@ export default function AttendanceTrendChart(): React.ReactElement {
   const [period, setPeriod] = useState<"6m" | "30d">("6m");
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5 shadow-xs flex flex-col justify-between">
+    <div className="rounded-xl border border-border bg-card p-5 shadow-xs flex flex-col justify-between h-full">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div>

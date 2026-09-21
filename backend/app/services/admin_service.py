@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 from typing import List, Optional
 
 from prisma.models import Department, AuditLog, Subject, Classroom, Designation
@@ -614,10 +615,34 @@ class AdminService:
         sort_order: str = "desc",
         q: Optional[str] = None,
         severity: Optional[str] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
     ) -> dict:
         where: dict = {}
         if severity and severity != "all":
             where["severity"] = severity.upper()
+
+        # Date range filtering
+        timestamp_filter: dict = {}
+        if start_date:
+            try:
+                # Support both YYYY-MM-DD and full ISO strings
+                dt_start = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
+                timestamp_filter["gte"] = dt_start
+            except Exception:
+                pass
+        if end_date:
+            try:
+                dt_end = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
+                # If only date part is provided (length <= 10), make it inclusive to end of day
+                if len(end_date) <= 10:
+                    dt_end = dt_end.replace(hour=23, minute=59, second=59, microsecond=999999)
+                timestamp_filter["lte"] = dt_end
+            except Exception:
+                pass
+
+        if timestamp_filter:
+            where["timestamp"] = timestamp_filter
 
         if q and q.strip():
             query_str = q.strip()

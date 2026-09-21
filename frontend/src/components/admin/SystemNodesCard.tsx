@@ -19,8 +19,8 @@ export default function SystemNodesCard({ health, config }: SystemNodesCardProps
       status: config?.isFaceRecognitionEnabled ? "Operational" : "Disabled",
       accuracy: "FaceNet 128-d Vector Space",
       latency: health?.services?.database ? `${health.services.database.latency_ms}ms DB` : "Online",
-      icon: <Cpu size={16} className="text-emerald-600" />,
-      iconBg: "bg-emerald-50 border-emerald-100",
+      icon: <Cpu size={16} className="text-emerald-600 dark:text-emerald-400" />,
+      iconBg: "bg-emerald-500/10 border border-emerald-500/20",
       active: Boolean(config?.isFaceRecognitionEnabled),
     },
     {
@@ -28,8 +28,8 @@ export default function SystemNodesCard({ health, config }: SystemNodesCardProps
       status: config?.isFaceRecognitionEnabled ? "Operational" : "Standby",
       accuracy: "MobileNetV2 Neural Classifier",
       latency: "Real-time",
-      icon: <ShieldCheck size={16} className="text-teal-600" />,
-      iconBg: "bg-teal-50 border-teal-100",
+      icon: <ShieldCheck size={16} className="text-teal-600 dark:text-teal-400" />,
+      iconBg: "bg-teal-500/10 border border-teal-500/20",
       active: Boolean(config?.isFaceRecognitionEnabled),
     },
     {
@@ -37,8 +37,8 @@ export default function SystemNodesCard({ health, config }: SystemNodesCardProps
       status: config?.isGpsVerificationEnabled ? "Operational" : "Disabled",
       accuracy: "Haversine Ellipsoid (BLE/GPS)",
       latency: "Local Node",
-      icon: <Activity size={16} className="text-sky-600" />,
-      iconBg: "bg-sky-50 border-sky-100",
+      icon: <Activity size={16} className="text-sky-600 dark:text-sky-400" />,
+      iconBg: "bg-sky-500/10 border border-sky-500/20",
       active: Boolean(config?.isGpsVerificationEnabled),
     },
     {
@@ -46,8 +46,8 @@ export default function SystemNodesCard({ health, config }: SystemNodesCardProps
       status: health?.services?.database?.status === "healthy" ? "Operational" : "Degraded",
       accuracy: "Vector Index Active (ivfflat)",
       latency: `${health?.services?.database?.latency_ms ?? 14}ms`,
-      icon: <Database size={16} className="text-indigo-600" />,
-      iconBg: "bg-indigo-50 border-indigo-100",
+      icon: <Database size={16} className="text-indigo-600 dark:text-indigo-400" />,
+      iconBg: "bg-indigo-500/10 border border-indigo-500/20",
       active: health?.services?.database?.status === "healthy",
     },
     {
@@ -55,22 +55,26 @@ export default function SystemNodesCard({ health, config }: SystemNodesCardProps
       status: health?.services?.redis?.status === "healthy" ? "Operational" : "Degraded",
       accuracy: "Distributed Session & Lock Engine",
       latency: `${health?.services?.redis?.latency_ms ?? 0}ms`,
-      icon: <HardDrive size={16} className="text-purple-600" />,
-      iconBg: "bg-purple-50 border-purple-100",
+      icon: <HardDrive size={16} className="text-purple-600 dark:text-purple-400" />,
+      iconBg: "bg-purple-500/10 border border-purple-500/20",
       active: health?.services?.redis?.status === "healthy",
     },
   ];
 
   return (
-    <div className="rounded-xl border border-border bg-card shadow-xs overflow-hidden flex flex-col justify-between">
+    <div className="rounded-2xl border border-border bg-card shadow-xs overflow-hidden flex flex-col justify-between h-full">
       <div className="p-4 sm:p-5 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="p-1.5 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-600">
+          <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
             <Radio size={16} className="animate-pulse" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-[Outfit]">System Nodes & Engines</h3>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Vector biometric pipelines & local geospatial services</p>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
+              {"System Nodes & Engines"}
+            </h3>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              Vector biometric pipelines & geospatial telemetry
+            </p>
           </div>
         </div>
         <GlassBadge variant={isHealthy ? "success" : "warning"} className="py-1 px-2.5 text-[10px] font-semibold">
@@ -78,14 +82,14 @@ export default function SystemNodesCard({ health, config }: SystemNodesCardProps
         </GlassBadge>
       </div>
 
-      <div className="p-4 sm:p-5 space-y-2.5">
+      <div className="p-3 sm:p-4 divide-y divide-border/50 flex-1">
         {nodes.map((node) => (
           <div
             key={node.name}
-            className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/60 hover:border-slate-300 transition-all"
+            className="flex items-center justify-between gap-3 py-2.5 px-2 rounded-lg hover:bg-secondary/40 transition-colors"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <div className={`p-2 rounded-lg border ${node.iconBg} shrink-0`}>
+              <div className={`p-2 rounded-lg ${node.iconBg} shrink-0`}>
                 {node.icon}
               </div>
               <div className="min-w-0">
@@ -94,12 +98,16 @@ export default function SystemNodesCard({ health, config }: SystemNodesCardProps
               </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="text-[10px] font-mono font-medium text-muted-foreground bg-card px-2 py-0.5 rounded border border-border">
+            <div className="flex items-center gap-2.5 shrink-0">
+              <span className="text-[10px] font-mono font-medium text-muted-foreground bg-secondary/70 px-2 py-0.5 rounded-md border border-border/40">
                 {node.latency}
               </span>
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${
+                node.active
+                  ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20"
+                  : "bg-slate-500/10 text-slate-700 dark:text-slate-400 border-slate-500/20"
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${node.active ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
                 <span>{node.status}</span>
               </span>
             </div>
@@ -107,12 +115,12 @@ export default function SystemNodesCard({ health, config }: SystemNodesCardProps
         ))}
       </div>
 
-      <div className="px-5 py-3 border-t border-border bg-secondary/20 flex items-center justify-between text-[11px] text-muted-foreground">
+      <div className="px-5 py-3 border-t border-border bg-secondary/15 flex items-center justify-between text-[11px] text-muted-foreground">
         <span className="flex items-center gap-1.5 font-medium">
-          <CheckCircle2 size={13} className="text-emerald-600" />
+          <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400" />
           Zero-Trust Invariant Active
         </span>
-        <span className="font-mono">Cluster: local-node-01</span>
+        <span className="font-mono text-[10px]">Cluster: local-node-01</span>
       </div>
     </div>
   );

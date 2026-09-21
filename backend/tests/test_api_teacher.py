@@ -185,12 +185,12 @@ def test_get_session_smart_pass(mock_teacher_user, mock_teacher_profile):
             class_name="CS-101",
             subject="Algorithms",
             expires_at=datetime.now(timezone.utc).isoformat(),
-            refresh_interval_seconds=30,
+            refresh_interval_seconds=5,
         )
         response = client.get("/api/v1/teacher/sessions/ses-101/smart-pass")
         assert response.status_code == 200
         data = response.json()
         assert data["qr_token"] == "jwt-teacher-session-token"
         assert data["session_id"] == "ses-101"
-        assert data["refresh_interval_seconds"] == 30
+        assert data["refresh_interval_seconds"] == 5
     app.dependency_overrides.clear()

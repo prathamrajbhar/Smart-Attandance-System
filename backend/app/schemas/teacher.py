@@ -245,7 +245,7 @@ class TeacherSmartPassResponse(BaseModel):
     class_name: str = Field(..., description="Academic class name")
     subject: str = Field(..., description="Subject name")
     expires_at: str = Field(..., description="ISO 8601 expiry timestamp")
-    refresh_interval_seconds: int = Field(30, description="Recommended token rotation interval in seconds")
+    refresh_interval_seconds: int = Field(5, description="Recommended token rotation interval in seconds")
 
 
 class ClassAttendanceExportItem(BaseModel):

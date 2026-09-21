@@ -415,7 +415,7 @@ class TeacherService:
             else class_name
         )
 
-        expires_delta = timedelta(seconds=35)
+        expires_delta = timedelta(seconds=15)
         qr_token = create_access_token(
             subject=teacher.userId,
             role="TEACHER",
@@ -435,7 +435,7 @@ class TeacherService:
             class_name=class_name,
             subject=subject_name,
             expires_at=(now + expires_delta).isoformat(),
-            refresh_interval_seconds=30,
+            refresh_interval_seconds=5,
         )
 
 

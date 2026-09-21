@@ -30,7 +30,7 @@ export default function SmartPassGeneratorModal({
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
-  const [secondsRemaining, setSecondsRemaining] = useState(30);
+  const [secondsRemaining, setSecondsRemaining] = useState(5);
   const [verifiedCount, setVerifiedCount] = useState(initialVerifiedCount);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -39,7 +39,7 @@ export default function SmartPassGeneratorModal({
       setLoading(true);
       const { data } = await api.get<TeacherSmartPassResponse>(`/teacher/sessions/${sessionId}/smart-pass`);
       setPassData(data);
-      setSecondsRemaining(data.refresh_interval_seconds || 30);
+      setSecondsRemaining(data.refresh_interval_seconds || 5);
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to generate Smart Pass QR"));
     } finally {
@@ -70,7 +70,7 @@ export default function SmartPassGeneratorModal({
       setSecondsRemaining((prev) => {
         if (prev <= 1) {
           void fetchPass();
-          return 30;
+          return 5;
         }
         return prev - 1;
       });
@@ -96,7 +96,7 @@ export default function SmartPassGeneratorModal({
 
   if (!isOpen) return null;
 
-  const isUrgent = secondsRemaining <= 5;
+  const isUrgent = secondsRemaining <= 2;
   const qrSize = fullscreen ? 360 : 220;
 
   return (

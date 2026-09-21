@@ -240,9 +240,9 @@
     "semantic_hash": ""
   },
   "backend/app/schemas/teacher.py": {
-    "mtime": 1789987906.836214,
-    "seen": 1789993711.095158,
-    "ast_hash": "a2d57168a3165de24354866e068dd199",
+    "mtime": 1789997177.8140728,
+    "seen": 1789997281.6360488,
+    "ast_hash": "addc53b120fc619ea51cbc8a0e4a317f",
     "semantic_hash": ""
   },
   "backend/app/services/absentee_scanner.py": {
@@ -336,9 +336,9 @@
     "semantic_hash": ""
   },
   "backend/app/services/teacher_service.py": {
-    "mtime": 1789987923.0251055,
-    "seen": 1789993711.0951831,
-    "ast_hash": "24f4aecf9f2c496b7de34b359d0c1051",
+    "mtime": 1789997182.564831,
+    "seen": 1789997281.6368675,
+    "ast_hash": "cc91633c441d78d41db6d88ff4a3337e",
     "semantic_hash": ""
   },
   "backend/app/utils/geofencing.py": {
@@ -414,9 +414,9 @@
     "semantic_hash": ""
   },
   "backend/tests/test_api_teacher.py": {
-    "mtime": 1789988006.9835498,
-    "seen": 1789993711.0952008,
-    "ast_hash": "c8c149d812935bde8870841235ef7720",
+    "mtime": 1789997186.565629,
+    "seen": 1789997281.6374862,
+    "ast_hash": "195f2a5b30ddc50a92a87cfab1468bc8",
     "semantic_hash": ""
   },
   "backend/tests/test_core_and_middleware.py": {
@@ -1338,9 +1338,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/scanner/SmartPassGeneratorModal.tsx": {
-    "mtime": 1789994205.4693415,
-    "seen": 1789994289.0508337,
-    "ast_hash": "48a13c9df0d508086534007c3f02cfae",
+    "mtime": 1789997192.6713243,
+    "seen": 1789997281.6473503,
+    "ast_hash": "a3e56dca8652329340553bede3b3741c",
     "semantic_hash": ""
   },
   "frontend/src/components/scanner/SmartPassScannerModal.tsx": {
@@ -3396,15 +3396,15 @@
     "semantic_hash": ""
   },
   "screenshots/teacher_smart_pass_projector_web.png": {
-    "mtime": 1789994163.0122747,
-    "seen": 1789994289.0606532,
-    "ast_hash": "446e5d96113d6f80e2b44983390cc5a7",
+    "mtime": 1789997266.6899204,
+    "seen": 1789997281.6665378,
+    "ast_hash": "da201f1353a26360a2b8fcdfc45829a7",
     "semantic_hash": ""
   },
   "screenshots/teacher_smart_pass_web.png": {
-    "mtime": 1789994161.8234274,
-    "seen": 1789994289.0606549,
-    "ast_hash": "94d3cdf915ae772825d1fa9ffdc6d57b",
+    "mtime": 1789997265.2299826,
+    "seen": 1789997281.6665406,
+    "ast_hash": "04e15cbb68f820a2b74fac8ef7b71b94",
     "semantic_hash": ""
   },
   "mobile/lib/data/local/permission_service.dart": {

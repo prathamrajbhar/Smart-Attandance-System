@@ -151,11 +151,31 @@ class _ClassSessionCardState extends State<ClassSessionCard> {
             ],
             if (_canMark) ...[
               const SizedBox(height: 10),
-              GlassButton(
-                label: 'Scan Smart Pass QR',
-                icon: Icons.qr_code_scanner_rounded,
-                isExpanded: true,
-                onPressed: () => context.push('/smart-pass'),
+              Row(
+                children: [
+                  Expanded(
+                    child: GlassButton(
+                      label: 'Smart Pass QR',
+                      icon: Icons.qr_code_scanner_rounded,
+                      height: 40,
+                      fontSize: 12.5,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      onPressed: () => context.push('/smart-pass'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: GlassButton(
+                      label: 'Face Match',
+                      variant: GlassButtonVariant.secondary,
+                      icon: Icons.face_retouching_natural_rounded,
+                      height: 40,
+                      fontSize: 12.5,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      onPressed: () => context.push('/verify/${widget.session.sessionId}'),
+                    ),
+                  ),
+                ],
               ),
             ],
           ],

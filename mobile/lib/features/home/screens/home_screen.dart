@@ -131,12 +131,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       ),
                     ),
                   const Spacer(),
-                  Text(
-                    DateTime.now().shortDate,
-                    style: const TextStyle(
-                      color: SasColors.textMuted,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
+                  Flexible(
+                    child: Text(
+                      DateTime.now().shortDate,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: SasColors.textMuted,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ],

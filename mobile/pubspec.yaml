@@ -20,8 +20,9 @@ dependencies:
   flutter_dotenv: ^5.2.1
 
 
-  # Camera
+  # Camera & QR Scanner
   camera: ^0.11.0+2
+  mobile_scanner: ^7.4.2
 
   # Location
   geolocator: ^13.0.2

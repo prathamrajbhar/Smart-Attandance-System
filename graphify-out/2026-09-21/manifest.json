@@ -2412,15 +2412,15 @@
     "semantic_hash": ""
   },
   "mobile/lib/features/home/screens/home_screen.dart": {
-    "mtime": 1789989178.7264438,
-    "seen": 1789993711.0956361,
-    "ast_hash": "23c53b448bbbe3f74c1d82f82e97c072",
+    "mtime": 1789995509.1090696,
+    "seen": 1789995568.1779013,
+    "ast_hash": "c72e7cebb29b112346b61b14021cade6",
     "semantic_hash": ""
   },
   "mobile/lib/features/home/widgets/class_session_card.dart": {
-    "mtime": 1789894853.805149,
-    "seen": 1789993711.0956376,
-    "ast_hash": "834dce2a93a5dfae05d199cf1e9c8452",
+    "mtime": 1789995515.870312,
+    "seen": 1789995568.1779032,
+    "ast_hash": "ae9c3aeeccad1eb3c825451ce84eb5b9",
     "semantic_hash": ""
   },
   "mobile/lib/features/home/widgets/home_attendance_overview.dart": {
@@ -2442,9 +2442,9 @@
     "semantic_hash": ""
   },
   "mobile/lib/features/home/widgets/home_welcome_card.dart": {
-    "mtime": 1789989168.7451606,
-    "seen": 1789993711.095642,
-    "ast_hash": "96e629aae22e29e6df8827d149a431e5",
+    "mtime": 1789995499.754145,
+    "seen": 1789995568.1779666,
+    "ast_hash": "13ef929f5f2331af06f296abe0622140",
     "semantic_hash": ""
   },
   "mobile/lib/features/home/widgets/leave_quick_actions.dart": {
@@ -2592,9 +2592,9 @@
     "semantic_hash": ""
   },
   "mobile/lib/features/smart_pass/screens/smart_pass_screen.dart": {
-    "mtime": 1789995180.7941368,
-    "seen": 1789995303.8289218,
-    "ast_hash": "535640cd9c4ada1fac3c6ec9d05929bf",
+    "mtime": 1789995527.523935,
+    "seen": 1789995568.1784487,
+    "ast_hash": "bd8a7e6c3cd62d890f3c144efda0f6bc",
     "semantic_hash": ""
   },
   "mobile/lib/features/smart_pass/widgets/smart_pass_guidelines_card.dart": {
@@ -3405,6 +3405,12 @@
     "mtime": 1789994161.8234274,
     "seen": 1789994289.0606549,
     "ast_hash": "94d3cdf915ae772825d1fa9ffdc6d57b",
+    "semantic_hash": ""
+  },
+  "mobile/lib/data/local/permission_service.dart": {
+    "mtime": 1789995491.7314968,
+    "seen": 1789995568.1765037,
+    "ast_hash": "17c0eca473b89f76f8347026dcad4760",
     "semantic_hash": ""
   }
 }

@@ -11,6 +11,8 @@ class GlassButton extends StatelessWidget {
   final bool isLoading;
   final bool isExpanded;
   final double? height;
+  final EdgeInsetsGeometry? padding;
+  final double? fontSize;
 
   const GlassButton({
     super.key,
@@ -21,6 +23,8 @@ class GlassButton extends StatelessWidget {
     this.isLoading = false,
     this.isExpanded = false,
     this.height,
+    this.padding,
+    this.fontSize,
   });
 
   @override
@@ -41,18 +45,22 @@ class GlassButton extends StatelessWidget {
               valueColor: AlwaysStoppedAnimation<Color>(colors.foreground),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
         ] else if (icon != null) ...[
-          Icon(icon, size: 17, color: colors.foreground),
-          const SizedBox(width: 8),
+          Icon(icon, size: 16, color: colors.foreground),
+          const SizedBox(width: 6),
         ],
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: colors.foreground,
-            letterSpacing: -0.01,
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: fontSize ?? 14,
+              fontWeight: FontWeight.w600,
+              color: colors.foreground,
+              letterSpacing: -0.01,
+            ),
           ),
         ),
       ],
@@ -79,7 +87,7 @@ class GlassButton extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
               splashColor: colors.foreground.withValues(alpha: 0.1),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: padding ?? const EdgeInsets.symmetric(horizontal: 14),
                 child: child,
               ),
             ),

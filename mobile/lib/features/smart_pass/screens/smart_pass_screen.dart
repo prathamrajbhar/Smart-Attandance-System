@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:smart_attendance_app/app/theme.dart';
 import 'package:smart_attendance_app/data/local/permission_service.dart';
 import 'package:smart_attendance_app/domain/models/smart_pass.dart';
@@ -20,17 +22,25 @@ class SmartPassScreen extends ConsumerStatefulWidget {
 class _SmartPassScreenState extends ConsumerState<SmartPassScreen> with WidgetsBindingObserver {
   PermissionStatusResult? _permissionStatus;
   bool _checkingPermission = false;
+  bool _isProcessing = false;
+  late final MobileScannerController _scannerController;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _scannerController = MobileScannerController(
+      detectionSpeed: DetectionSpeed.normal,
+      facing: CameraFacing.back,
+      torchEnabled: false,
+    );
     _checkPermissions();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _scannerController.dispose();
     super.dispose();
   }
 
@@ -59,6 +69,24 @@ class _SmartPassScreenState extends ConsumerState<SmartPassScreen> with WidgetsB
     }
   }
 
+  void _onDetect(BarcodeCapture capture) {
+    if (_isProcessing) return;
+    final passState = ref.read(smartPassProvider);
+    if (passState.isLoading || passState.scanResult != null) return;
+
+    for (final barcode in capture.barcodes) {
+      final code = barcode.rawValue?.trim();
+      if (code != null && code.isNotEmpty) {
+        setState(() => _isProcessing = true);
+        HapticFeedback.mediumImpact();
+        ref.read(smartPassProvider.notifier).scanAndVerifyPass(code).then((_) {
+          if (mounted) setState(() => _isProcessing = false);
+        });
+        break;
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final passState = ref.watch(smartPassProvider);
@@ -77,7 +105,7 @@ class _SmartPassScreenState extends ConsumerState<SmartPassScreen> with WidgetsB
               else if (!hasPermission || !isLocationServiceOn)
                 _buildPermissionCard()
               else ...[
-                _buildScannerViewfinder(passState.isLoading),
+                _buildLiveScanner(passState.isLoading),
                 const SizedBox(height: 16),
                 if (passState.errorMessage != null)
                   _buildErrorBanner(passState.errorMessage!),
@@ -143,59 +171,120 @@ class _SmartPassScreenState extends ConsumerState<SmartPassScreen> with WidgetsB
     );
   }
 
-  Widget _buildScannerViewfinder(bool isLoading) {
+  Widget _buildLiveScanner(bool isLoading) {
     return GlassCard(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            height: 220,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: SasColors.accentEmerald.withValues(alpha: 0.4),
-                width: 1.5,
-              ),
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.qr_code_scanner_rounded,
-                      size: 72,
-                      color: SasColors.accentEmerald.withValues(alpha: 0.9),
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Ready to Scan',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: SasColors.textPrimary,
-                      ),
-                    ),
-                  ],
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              height: 280,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: SasColors.accentEmerald.withValues(alpha: 0.5),
+                  width: 2,
                 ),
-                if (isLoading)
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Center(
-                      child: CircularProgressIndicator(color: SasColors.accentEmerald),
+              ),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  MobileScanner(
+                    controller: _scannerController,
+                    onDetect: _onDetect,
+                    errorBuilder: (context, error) {
+                      return Container(
+                        color: Colors.black87,
+                        padding: const EdgeInsets.all(16),
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.videocam_off_rounded, size: 40, color: SasColors.warning),
+                              const SizedBox(height: 10),
+                              const Text(
+                                'Camera Access Required',
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                error.errorDetails?.message ?? 'Please grant camera permission to scan QR codes.',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: SasColors.textMuted, fontSize: 11),
+                              ),
+                              const SizedBox(height: 12),
+                              GlassButton(
+                                label: 'Start Camera',
+                                height: 38,
+                                onPressed: () => _scannerController.start(),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: ValueListenableBuilder(
+                            valueListenable: _scannerController,
+                            builder: (context, state, child) {
+                              return Icon(
+                                state.torchState == TorchState.on
+                                    ? Icons.flash_on_rounded
+                                    : Icons.flash_off_rounded,
+                                color: Colors.white,
+                                size: 20,
+                              );
+                            },
+                          ),
+                          onPressed: () => _scannerController.toggleTorch(),
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.cameraswitch_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          onPressed: () => _scannerController.switchCamera(),
+                        ),
+                      ],
                     ),
                   ),
-              ],
+                  if (isLoading || _isProcessing)
+                    Container(
+                      color: Colors.black.withValues(alpha: 0.65),
+                      child: const Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CircularProgressIndicator(color: SasColors.accentEmerald),
+                            SizedBox(height: 12),
+                            Text(
+                              'Verifying Location & Device UUID...',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           const Text(
             'Point camera at the Teacher\'s Live Class QR code',
             textAlign: TextAlign.center,
@@ -205,7 +294,7 @@ class _SmartPassScreenState extends ConsumerState<SmartPassScreen> with WidgetsB
               color: SasColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           const Text(
             'GPS coordinates and registered device UUID are verified automatically in real time.',
             textAlign: TextAlign.center,
@@ -279,7 +368,9 @@ class _SmartPassScreenState extends ConsumerState<SmartPassScreen> with WidgetsB
             label: 'Scan Another Code',
             icon: Icons.qr_code_scanner_rounded,
             onPressed: () {
+              setState(() => _isProcessing = false);
               ref.read(smartPassProvider.notifier).resetScan();
+              _scannerController.start();
             },
           ),
         ],

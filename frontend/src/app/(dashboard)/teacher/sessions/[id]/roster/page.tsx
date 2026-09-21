@@ -179,6 +179,7 @@ export default function SessionRosterPage(): React.ReactElement {
         onClose={() => setShowQrModal(false)}
         sessionId={id}
         className={roster.class_name}
+        initialVerifiedCount={counts.present}
         onStudentVerified={() => {
           void fetchRoster();
         }}

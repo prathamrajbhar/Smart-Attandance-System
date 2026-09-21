@@ -1,4 +1,5 @@
-import { chromium } from "playwright";
+import pkg from "../frontend/node_modules/@playwright/test/index.js";
+const { chromium } = pkg;
 import fs from "fs";
 import path from "path";
 

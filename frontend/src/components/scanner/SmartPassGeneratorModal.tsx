@@ -14,6 +14,7 @@ interface SmartPassGeneratorModalProps {
   onClose: () => void;
   sessionId: string;
   className?: string;
+  initialVerifiedCount?: number;
   onStudentVerified?: () => void;
 }
 
@@ -22,6 +23,7 @@ export default function SmartPassGeneratorModal({
   onClose,
   sessionId,
   className = "Class Session",
+  initialVerifiedCount = 0,
   onStudentVerified,
 }: SmartPassGeneratorModalProps): React.ReactElement | null {
   const [passData, setPassData] = useState<TeacherSmartPassResponse | null>(null);
@@ -29,7 +31,7 @@ export default function SmartPassGeneratorModal({
   const [copied, setCopied] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [secondsRemaining, setSecondsRemaining] = useState(30);
-  const [verifiedCount, setVerifiedCount] = useState(0);
+  const [verifiedCount, setVerifiedCount] = useState(initialVerifiedCount);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchPass = useCallback(async () => {

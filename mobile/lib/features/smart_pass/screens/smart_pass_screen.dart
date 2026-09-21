@@ -8,7 +8,6 @@ import 'package:smart_attendance_app/shared/widgets/animated_background.dart';
 import 'package:smart_attendance_app/shared/widgets/glass_app_bar.dart';
 import 'package:smart_attendance_app/shared/widgets/glass_button.dart';
 import 'package:smart_attendance_app/shared/widgets/glass_card.dart';
-import 'package:smart_attendance_app/shared/widgets/glass_input.dart';
 
 class SmartPassScreen extends ConsumerStatefulWidget {
   const SmartPassScreen({super.key});
@@ -18,21 +17,6 @@ class SmartPassScreen extends ConsumerStatefulWidget {
 }
 
 class _SmartPassScreenState extends ConsumerState<SmartPassScreen> {
-  final TextEditingController _tokenController = TextEditingController();
-
-  @override
-  void dispose() {
-    _tokenController.dispose();
-    super.dispose();
-  }
-
-  void _onVerifyPressed() {
-    final token = _tokenController.text.trim();
-    if (token.isEmpty) return;
-    FocusScope.of(context).unfocus();
-    ref.read(smartPassProvider.notifier).scanAndVerifyPass(token);
-  }
-
   @override
   Widget build(BuildContext context) {
     final passState = ref.watch(smartPassProvider);
@@ -51,7 +35,6 @@ class _SmartPassScreenState extends ConsumerState<SmartPassScreen> {
                 const SizedBox(height: 16),
                 if (passState.errorMessage != null)
                   _buildErrorBanner(passState.errorMessage!),
-                _buildManualInputSection(passState.isLoading),
               ],
               const SizedBox(height: 16),
               const SmartPassGuidelinesCard(),
@@ -66,63 +49,69 @@ class _SmartPassScreenState extends ConsumerState<SmartPassScreen> {
     return GlassCard(
       padding: const EdgeInsets.all(20),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-            height: 180,
+            height: 220,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: SasColors.accentEmerald.withValues(alpha: 0.3)),
+              color: Colors.black.withValues(alpha: 0.4),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: SasColors.accentEmerald.withValues(alpha: 0.4),
+                width: 1.5,
+              ),
             ),
             child: Stack(
               alignment: Alignment.center,
               children: [
-                const Icon(Icons.qr_code_scanner_rounded, size: 64, color: SasColors.accentEmerald),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.qr_code_scanner_rounded,
+                      size: 72,
+                      color: SasColors.accentEmerald.withValues(alpha: 0.9),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Ready to Scan',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: SasColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
                 if (isLoading)
-                  const CircularProgressIndicator(color: SasColors.accentEmerald),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Center(
+                      child: CircularProgressIndicator(color: SasColors.accentEmerald),
+                    ),
+                  ),
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           const Text(
-            'Point camera at Teacher\'s Smart Pass QR code',
+            'Point camera at the Teacher\'s Live Class QR code',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: SasColors.textPrimary),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: SasColors.textPrimary,
+            ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           const Text(
-            'Automatic GPS and Device Verification will execute instantly',
+            'GPS coordinates and registered device UUID are verified automatically in real time.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 11, color: SasColors.textMuted),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildManualInputSection(bool isLoading) {
-    return GlassCard(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text(
-            'Manual Token Verification',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: SasColors.textPrimary),
-          ),
-          const SizedBox(height: 10),
-          GlassInput(
-            controller: _tokenController,
-            hint: 'Paste session QR security token...',
-            prefixIcon: Icons.key_rounded,
-          ),
-          const SizedBox(height: 12),
-          GlassButton(
-            label: 'Verify & Mark Attendance',
-            icon: Icons.check_circle_outline_rounded,
-            isLoading: isLoading,
-            onPressed: isLoading ? null : _onVerifyPressed,
           ),
         ],
       ),
@@ -192,7 +181,6 @@ class _SmartPassScreenState extends ConsumerState<SmartPassScreen> {
             label: 'Scan Another Code',
             icon: Icons.qr_code_scanner_rounded,
             onPressed: () {
-              _tokenController.clear();
               ref.read(smartPassProvider.notifier).resetScan();
             },
           ),

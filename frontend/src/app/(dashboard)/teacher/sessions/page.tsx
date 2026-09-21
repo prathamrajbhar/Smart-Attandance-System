@@ -14,6 +14,7 @@ import GlassButton from "@/components/ui/GlassButton";
 import GlassLoader from "@/components/ui/GlassLoader";
 import ActiveSessionsCard from "./ActiveSessionsCard";
 import PastSessionsTable from "./PastSessionsTable";
+import SmartPassGeneratorModal from "@/components/scanner/SmartPassGeneratorModal";
 import type { AcademicClassWithGeofence, SessionResponse, SessionWithClassResponse } from "@/types";
 
 export default function SessionsPage(): React.ReactElement {
@@ -26,6 +27,7 @@ export default function SessionsPage(): React.ReactElement {
   const [activeSessions, setActiveSessions] = useState<SessionResponse[]>([]);
   const [pastSessions, setPastSessions] = useState<SessionWithClassResponse[]>([]);
   const [classFilter, setClassFilter] = useState("");
+  const [selectedQrSession, setSelectedQrSession] = useState<{ id: string; className: string } | null>(null);
 
   const fetchData = useCallback(async (): Promise<void> => {
     try {
@@ -184,10 +186,29 @@ export default function SessionsPage(): React.ReactElement {
         <ActiveSessionsCard
           sessions={filteredActiveSessions}
           onStop={(id) => void handleStop(id)}
+          onOpenQr={(session) => {
+            const cls = classes.find((c) => c.id === session.academicClassId);
+            setSelectedQrSession({
+              id: session.id,
+              className: cls ? `${cls.name} — ${cls.subject}` : "Class Session",
+            });
+          }}
         />
       </div>
 
       <PastSessionsTable sessions={filteredPastSessions} />
+
+      {selectedQrSession && (
+        <SmartPassGeneratorModal
+          isOpen={true}
+          onClose={() => setSelectedQrSession(null)}
+          sessionId={selectedQrSession.id}
+          className={selectedQrSession.className}
+          onStudentVerified={() => {
+            void fetchData();
+          }}
+        />
+      )}
     </div>
   );
 }

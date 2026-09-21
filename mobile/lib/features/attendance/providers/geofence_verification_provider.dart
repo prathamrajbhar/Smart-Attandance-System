@@ -69,24 +69,19 @@ class GeofenceVerificationNotifier extends AutoDisposeNotifier<GeofenceVerificat
       } catch (_) {}
       final config = ref.read(hiveServiceProvider).getSystemConfig();
       if (!config.isGpsVerificationEnabled) {
-        // Mock success when GPS is disabled
+        final locationService = ref.read(locationServiceProvider);
+        Position? pos;
+        try {
+          pos = await locationService.getHighlyAccuratePosition();
+        } catch (_) {
+          pos = await Geolocator.getLastKnownPosition();
+        }
         state = state.copyWith(
           status: GeofenceStatus.success,
-          position: Position(
-            longitude: classLng,
-            latitude: classLat,
-            timestamp: DateTime.now(),
-            accuracy: 0.0,
-            altitude: 0.0,
-            heading: 0.0,
-            speed: 0.0,
-            speedAccuracy: 0.0,
-            altitudeAccuracy: 0.0,
-            headingAccuracy: 0.0,
-          ),
+          position: pos,
           distanceMeters: 0.0,
           radiusMeters: radius,
-          accuracy: 0.0,
+          accuracy: pos?.accuracy ?? 0.0,
         );
         return;
       }

@@ -1,6 +1,6 @@
 import React from "react";
 import { useRouter } from "next/navigation";
-import { ClipboardList, BookOpen, Square } from "lucide-react";
+import { ClipboardList, BookOpen, Square, QrCode } from "lucide-react";
 import GlassCard from "@/components/ui/GlassCard";
 import GlassBadge from "@/components/ui/GlassBadge";
 import GlassButton from "@/components/ui/GlassButton";
@@ -9,11 +9,13 @@ import type { SessionResponse } from "@/types";
 interface ActiveSessionsCardProps {
   sessions: SessionResponse[];
   onStop: (id: string) => void;
+  onOpenQr?: (session: SessionResponse) => void;
 }
 
 export default function ActiveSessionsCard({
   sessions,
   onStop,
+  onOpenQr,
 }: ActiveSessionsCardProps): React.ReactElement {
   const router = useRouter();
 
@@ -36,7 +38,17 @@ export default function ActiveSessionsCard({
                   Ends: {new Date(session.endTime).toLocaleTimeString()}
                 </p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
+                {onOpenQr && (
+                  <GlassButton
+                    variant="primary"
+                    size="sm"
+                    icon={<QrCode size={14} />}
+                    onClick={() => onOpenQr(session)}
+                  >
+                    Smart Pass QR
+                  </GlassButton>
+                )}
                 <GlassButton
                   variant="ghost"
                   size="sm"

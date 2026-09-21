@@ -1,19 +1,22 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { BarChart3, Users, BookOpen, TrendingUp } from "lucide-react";
-import api from "@/lib/api";
+import { BarChart3, Users, Grid, Download, RefreshCw } from "lucide-react";
+import api, { getApiErrorMessage } from "@/lib/api";
 import GlassPageHeader from "@/components/ui/GlassPageHeader";
-import GlassCard from "@/components/ui/GlassCard";
 import GlassSelect from "@/components/ui/GlassSelect";
-import GlassStatCard from "@/components/ui/GlassStatCard";
+import GlassButton from "@/components/ui/GlassButton";
 import GlassLoader from "@/components/ui/GlassLoader";
 import GlassEmptyState from "@/components/ui/GlassEmptyState";
+import toast from "react-hot-toast";
 import type { AcademicClassWithGeofence, ClassStatsResponse } from "@/types";
 
-import {
-  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-} from "recharts";
+import AnalyticsOverviewTab from "@/components/teacher/AnalyticsOverviewTab";
+import StudentsRosterTab from "@/components/teacher/StudentsRosterTab";
+import AttendanceMatrixTable from "@/components/teacher/AttendanceMatrixTable";
+import StudentHistoryModal from "@/components/teacher/StudentHistoryModal";
+
+type ActiveTab = "overview" | "students" | "matrix";
 
 export default function AnalyticsPage(): React.ReactElement {
   const [classes, setClasses] = useState<AcademicClassWithGeofence[]>([]);
@@ -21,17 +24,29 @@ export default function AnalyticsPage(): React.ReactElement {
   const [stats, setStats] = useState<ClassStatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<ActiveTab>("overview");
+
+  // Student Drilldown Modal state
+  const [selectedStudent, setSelectedStudent] = useState<{
+    id: string;
+    name: string;
+    enrollment: string;
+  } | null>(null);
 
   useEffect(() => {
-    async function fetch(): Promise<void> {
+    async function fetchClasses(): Promise<void> {
       try {
         const { data } = await api.get<AcademicClassWithGeofence[]>("/teacher/my-classes");
         setClasses(data);
         if (data.length > 0) setSelectedClass(data[0].id);
-      } catch { setClasses([]); }
-      finally { setLoading(false); }
+      } catch (err: unknown) {
+        toast.error(getApiErrorMessage(err, "Failed to load classes"));
+        setClasses([]);
+      } finally {
+        setLoading(false);
+      }
     }
-    fetch();
+    void fetchClasses();
   }, []);
 
   useEffect(() => {
@@ -41,81 +56,170 @@ export default function AnalyticsPage(): React.ReactElement {
       try {
         const { data } = await api.get<ClassStatsResponse>(`/teacher/classes/${selectedClass}/stats`);
         setStats(data);
-      } catch { setStats(null); }
-      finally { setStatsLoading(false); }
+      } catch (err: unknown) {
+        toast.error(getApiErrorMessage(err, "Failed to load class analytics"));
+        setStats(null);
+      } finally {
+        setStatsLoading(false);
+      }
     }
-    fetchStats();
+    void fetchStats();
   }, [selectedClass]);
 
-  if (loading) return <GlassLoader text="Loading analytics..." />;
-  if (classes.length === 0) return <><GlassPageHeader title="Analytics" /><GlassEmptyState title="No Classes" message="No classes assigned yet." /></>;
+  const handleExportSummaryCSV = (): void => {
+    if (!stats || !stats.students || stats.students.length === 0) {
+      toast.error("No student data to export.");
+      return;
+    }
 
-  const trendData = stats?.history && stats.history.length > 0
-    ? stats.history.map((h) => ({
-        session: h.session_name,
-        attendance: h.attendance_percentage,
-      }))
-    : Array.from({ length: 5 }, (_, i) => ({
-        session: `S${i + 1}`,
-        attendance: 0,
-      }));
+    const headers = ["Enrollment Number", "Student Name", "Email", "Attended Sessions", "Total Sessions", "Attendance Rate %", "At-Risk Defaulter"];
+    const rows = stats.students.map((s) => [
+      s.enrollment_number,
+      s.full_name,
+      s.email,
+      s.attended_sessions,
+      s.total_sessions,
+      `${s.attendance_percentage.toFixed(1)}%`,
+      s.at_risk ? "YES" : "NO",
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) => row.map((val) => `"${String(val).replace(/"/g, '""')}"`).join(",")),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const sanitizedName = (stats.class_name || "class").replace(/[^a-z0-9]/gi, "_").toLowerCase();
+    link.setAttribute("href", url);
+    link.setAttribute("download", `attendance_summary_${sanitizedName}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Class attendance report downloaded!");
+  };
+
+  if (loading) return <GlassLoader text="Loading analytics environment..." />;
+  if (classes.length === 0) {
+    return (
+      <>
+        <GlassPageHeader title="Analytics" />
+        <GlassEmptyState title="No Classes Assigned" message="You have no assigned academic classes yet." />
+      </>
+    );
+  }
 
   return (
-    <div className="animate-fade-in-up">
-      <GlassPageHeader title="Analytics Dashboard" description="Attendance trends and statistics" />
+    <div className="animate-fade-in-up space-y-6">
+      {/* Top Header with Class Picker & Action Buttons */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <GlassPageHeader
+          title="Attendance & Student Analytics"
+          description="Enterprise grade attendance metrics, student history drilldowns, and defaulter tracking"
+        />
 
-      <div className="mb-6 max-w-xs">
-        <GlassSelect label="Select Class"
-          options={classes.map((c) => ({ value: c.id, label: `${c.name} — ${c.subject}` }))}
-          value={selectedClass} onChange={setSelectedClass} />
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="w-56">
+            <GlassSelect
+              label="Select Class"
+              options={classes.map((c) => ({ value: c.id, label: `${c.name} (${c.subject})` }))}
+              value={selectedClass}
+              onChange={setSelectedClass}
+            />
+          </div>
+          <GlassButton
+            variant="secondary"
+            className="text-xs h-10 px-3 self-end"
+            icon={<Download size={14} />}
+            onClick={handleExportSummaryCSV}
+            disabled={!stats || !stats.students || stats.students.length === 0}
+          >
+            Export Class CSV
+          </GlassButton>
+        </div>
       </div>
 
-      {statsLoading ? <GlassLoader text="Loading stats..." /> : stats ? (
+      {/* Navigation Tabs */}
+      <div className="flex items-center gap-2 border-b border-border pb-3">
+        <button
+          onClick={() => setActiveTab("overview")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            activeTab === "overview"
+              ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+              : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+          }`}
+        >
+          <BarChart3 size={15} /> Overview & Metrics
+        </button>
+        <button
+          onClick={() => setActiveTab("students")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            activeTab === "students"
+              ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+              : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+          }`}
+        >
+          <Users size={15} /> Student Defaulters & Roster
+          {stats?.at_risk_count ? (
+            <span className="px-1.5 py-0.2 rounded text-[10px] bg-rose-500/20 text-rose-400 border border-rose-500/30">
+              {stats.at_risk_count}
+            </span>
+          ) : null}
+        </button>
+        <button
+          onClick={() => setActiveTab("matrix")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            activeTab === "matrix"
+              ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+              : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+          }`}
+        >
+          <Grid size={15} /> Attendance Matrix Grid
+        </button>
+      </div>
+
+      {/* Main Content Area */}
+      {statsLoading ? (
+        <div className="py-16"><GlassLoader text="Calculating class statistics and student summaries..." /></div>
+      ) : stats ? (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-            <GlassStatCard icon={<BookOpen size={22} />} label="Total Sessions" value={stats.total_sessions} accentColor="emerald" />
-            <GlassStatCard icon={<Users size={22} />} label="Enrolled Students" value={stats.total_students} accentColor="emerald" />
-            <GlassStatCard icon={<TrendingUp size={22} />} label="Attendance Rate" value={`${(stats.overall_attendance_percentage ?? 0).toFixed(1)}%`} accentColor="emerald" />
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <GlassCard className="bg-card">
-              <h3 className="text-xs font-bold text-foreground uppercase tracking-wider mb-4 flex items-center gap-2 font-[Outfit]">
-                <BarChart3 size={16} className="text-emerald-600" /> Attendance Trend
-              </h3>
-              <ResponsiveContainer width="100%" height={280}>
-                <AreaChart data={trendData}>
-                  <defs>
-                    <linearGradient id="attendanceGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis dataKey="session" stroke="#64748b" fontSize={11} />
-                  <YAxis stroke="#64748b" fontSize={11} domain={[0, 100]} />
-                  <Tooltip contentStyle={{ backgroundColor: "#ffffff", borderColor: "#e2e8f0", borderRadius: 8, fontSize: 12 }} />
-                  <Area type="monotone" dataKey="attendance" stroke="#10b981" fill="url(#attendanceGrad)" strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </GlassCard>
-
-            <GlassCard className="bg-card">
-              <h3 className="text-xs font-bold text-foreground uppercase tracking-wider mb-4 font-[Outfit]">Session Breakdown</h3>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={trendData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis dataKey="session" stroke="#64748b" fontSize={11} />
-                  <YAxis stroke="#64748b" fontSize={11} domain={[0, 100]} />
-                  <Tooltip contentStyle={{ backgroundColor: "#ffffff", borderColor: "#e2e8f0", borderRadius: 8, fontSize: 12 }} />
-                  <Bar dataKey="attendance" fill="#0284c7" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </GlassCard>
-          </div>
+          {activeTab === "overview" && <AnalyticsOverviewTab stats={stats} />}
+          {activeTab === "students" && (
+            <StudentsRosterTab
+              students={stats.students ?? []}
+              totalSessions={stats.total_sessions}
+              onSelectStudent={(id, name, enrollment) =>
+                setSelectedStudent({ id, name, enrollment })
+              }
+            />
+          )}
+          {activeTab === "matrix" && (
+            <AttendanceMatrixTable
+              classId={selectedClass}
+              onSelectStudent={(id, name, enrollment) =>
+                setSelectedStudent({ id, name, enrollment })
+              }
+            />
+          )}
         </>
       ) : (
-        <GlassEmptyState title="No Stats" message="No statistics available for this class yet." />
+        <div className="p-8 rounded-2xl bg-card border border-border">
+          <GlassEmptyState title="No Statistics Available" message="No attendance data is available for this class." />
+        </div>
+      )}
+
+      {/* Student History Drilldown Modal */}
+      {selectedStudent && (
+        <StudentHistoryModal
+          isOpen={!!selectedStudent}
+          onClose={() => setSelectedStudent(null)}
+          classId={selectedClass}
+          studentId={selectedStudent.id}
+          studentName={selectedStudent.name}
+          enrollmentNumber={selectedStudent.enrollment}
+        />
       )}
     </div>
   );

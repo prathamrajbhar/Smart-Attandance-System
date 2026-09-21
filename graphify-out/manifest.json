@@ -48,9 +48,9 @@
     "semantic_hash": ""
   },
   "backend/app/api/teacher.py": {
-    "mtime": 1789987938.1870043,
-    "seen": 1789993711.0951133,
-    "ast_hash": "0c0645ad5e9e84649f73846cbe545e5e",
+    "mtime": 1790011690.3655243,
+    "seen": 1790011953.9010413,
+    "ast_hash": "691833b305bfdb4ca08c4bc89dc2af7c",
     "semantic_hash": ""
   },
   "backend/app/api/ws.py": {
@@ -240,9 +240,9 @@
     "semantic_hash": ""
   },
   "backend/app/schemas/teacher.py": {
-    "mtime": 1789997177.8140728,
-    "seen": 1789997281.6360488,
-    "ast_hash": "addc53b120fc619ea51cbc8a0e4a317f",
+    "mtime": 1790011635.2787278,
+    "seen": 1790011953.902052,
+    "ast_hash": "5ea2126a8a6727ebaa11fcff2be8ccc9",
     "semantic_hash": ""
   },
   "backend/app/services/absentee_scanner.py": {
@@ -336,9 +336,9 @@
     "semantic_hash": ""
   },
   "backend/app/services/teacher_service.py": {
-    "mtime": 1789997182.564831,
-    "seen": 1789997281.6368675,
-    "ast_hash": "cc91633c441d78d41db6d88ff4a3337e",
+    "mtime": 1790011666.8134408,
+    "seen": 1790011953.9025483,
+    "ast_hash": "f6171702249c313869bac73663c43537",
     "semantic_hash": ""
   },
   "backend/app/utils/geofencing.py": {
@@ -414,9 +414,9 @@
     "semantic_hash": ""
   },
   "backend/tests/test_api_teacher.py": {
-    "mtime": 1789997186.565629,
-    "seen": 1789997281.6374862,
-    "ast_hash": "195f2a5b30ddc50a92a87cfab1468bc8",
+    "mtime": 1790011730.3040519,
+    "seen": 1790011953.9029458,
+    "ast_hash": "8adab70c56fbbda144b477e804af2537",
     "semantic_hash": ""
   },
   "backend/tests/test_core_and_middleware.py": {
@@ -1020,9 +1020,9 @@
     "semantic_hash": ""
   },
   "frontend/src/app/(dashboard)/teacher/analytics/page.tsx": {
-    "mtime": 1789842746.3786304,
-    "seen": 1789993711.0953403,
-    "ast_hash": "8d03cb69226a32a11390d28a7def1afc",
+    "mtime": 1790011848.8758502,
+    "seen": 1790011953.907223,
+    "ast_hash": "21698d51b83b0bd7afda6d5cafc3c2b4",
     "semantic_hash": ""
   },
   "frontend/src/app/(dashboard)/teacher/classes/[id]/page.tsx": {
@@ -1770,9 +1770,9 @@
     "semantic_hash": ""
   },
   "frontend/src/types/attendance.ts": {
-    "mtime": 1789906580.2289348,
-    "seen": 1789993711.095501,
-    "ast_hash": "38b4b8e7eb16db214313fca4fff2975b",
+    "mtime": 1790011772.2916076,
+    "seen": 1790011953.9109874,
+    "ast_hash": "b89dfaef1c698817551132d60e6f4858",
     "semantic_hash": ""
   },
   "frontend/src/types/index.ts": {
@@ -3429,6 +3429,60 @@
     "mtime": 1789996172.1116548,
     "seen": 1789996300.5534382,
     "ast_hash": "1be55ee24fad13a6ad345987c99430dc",
+    "semantic_hash": ""
+  },
+  "frontend/src/components/teacher/AnalyticsOverviewTab.tsx": {
+    "mtime": 1790011827.5838542,
+    "seen": 1790011953.9092891,
+    "ast_hash": "70ac16c8b5d9831ae043642c92b1884e",
+    "semantic_hash": ""
+  },
+  "frontend/src/components/teacher/AttendanceMatrixTable.tsx": {
+    "mtime": 1790011817.5531604,
+    "seen": 1790011953.9092913,
+    "ast_hash": "776fd140fc8edbfa67459495d0c44f9c",
+    "semantic_hash": ""
+  },
+  "frontend/src/components/teacher/StudentHistoryModal.tsx": {
+    "mtime": 1790011799.7377172,
+    "seen": 1790011953.9093974,
+    "ast_hash": "b6cbe2082d8d8666a69fa70e30ed9640",
+    "semantic_hash": ""
+  },
+  "frontend/src/components/teacher/StudentsRosterTab.tsx": {
+    "mtime": 1790011839.2525043,
+    "seen": 1790011953.9094,
+    "ast_hash": "885dd022d969c8cd141611c1fb9b1263",
+    "semantic_hash": ""
+  },
+  "scripts/test_teacher_analytics_playwright.mjs": {
+    "mtime": 1790011888.2051067,
+    "seen": 1790011953.9146845,
+    "ast_hash": "95939257d7428cc4fb4ff2dcea97b8ea",
+    "semantic_hash": ""
+  },
+  "screenshots/teacher_analytics_matrix.png": {
+    "mtime": 1790011906.8108737,
+    "seen": 1790011953.9159684,
+    "ast_hash": "4ff2e6cecdbdfccdc7235752592f237b",
+    "semantic_hash": ""
+  },
+  "screenshots/teacher_analytics_overview.png": {
+    "mtime": 1790011901.4366744,
+    "seen": 1790011953.9159698,
+    "ast_hash": "00d956b31ffcb6578256dcd54bb0daad",
+    "semantic_hash": ""
+  },
+  "screenshots/teacher_analytics_students.png": {
+    "mtime": 1790011902.7657123,
+    "seen": 1790011953.9159708,
+    "ast_hash": "edbf95fd4998de991294b9d6a24248a8",
+    "semantic_hash": ""
+  },
+  "screenshots/teacher_student_history_modal.png": {
+    "mtime": 1790011904.5126655,
+    "seen": 1790011953.9160008,
+    "ast_hash": "d6178c521111a98922502c150a286803",
     "semantic_hash": ""
   }
 }

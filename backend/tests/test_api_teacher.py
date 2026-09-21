@@ -194,3 +194,79 @@ def test_get_session_smart_pass(mock_teacher_user, mock_teacher_profile):
         assert data["session_id"] == "ses-101"
         assert data["refresh_interval_seconds"] == 5
     app.dependency_overrides.clear()
+
+
+def test_get_student_class_attendance_history(mock_teacher_user, mock_teacher_profile):
+    from app.schemas.teacher import StudentClassHistoryResponse, StudentClassSessionLog
+    app.dependency_overrides[get_current_user] = lambda: mock_teacher_user
+    app.dependency_overrides[get_current_teacher] = lambda: mock_teacher_profile
+
+    with patch("app.services.teacher_service.TeacherService.get_student_class_attendance_history", new_callable=AsyncMock) as mock_hist:
+        mock_hist.return_value = StudentClassHistoryResponse(
+            student_id="std-101",
+            student_name="Aarav Sharma",
+            enrollment_number="ENR-2024-001",
+            email="aarav@university.edu",
+            class_id="cls-101",
+            class_name="CS301-A",
+            subject="Operating Systems",
+            total_sessions=10,
+            attended_sessions=8,
+            attendance_percentage=80.0,
+            at_risk=False,
+            sessions=[
+                StudentClassSessionLog(
+                    session_id="ses-1",
+                    session_name="Session 1 (2026-09-01)",
+                    session_date="2026-09-01",
+                    start_time=datetime.now(timezone.utc),
+                    end_time=datetime.now(timezone.utc),
+                    status="Present",
+                    final_ai_score=0.95,
+                    marked_at=datetime.now(timezone.utc),
+                    remarks="Verified via Face Match",
+                    student_note=None,
+                )
+            ]
+        )
+        response = client.get("/api/v1/teacher/classes/cls-101/students/std-101/history")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["student_name"] == "Aarav Sharma"
+        assert data["attendance_percentage"] == 80.0
+        assert len(data["sessions"]) == 1
+        assert data["sessions"][0]["status"] == "Present"
+    app.dependency_overrides.clear()
+
+
+def test_get_class_attendance_matrix(mock_teacher_user, mock_teacher_profile):
+    from app.schemas.teacher import AttendanceMatrixResponse, AttendanceMatrixSessionItem, AttendanceMatrixStudentItem
+    app.dependency_overrides[get_current_user] = lambda: mock_teacher_user
+    app.dependency_overrides[get_current_teacher] = lambda: mock_teacher_profile
+
+    with patch("app.services.teacher_service.TeacherService.get_class_attendance_matrix", new_callable=AsyncMock) as mock_mat:
+        mock_mat.return_value = AttendanceMatrixResponse(
+            class_id="cls-101",
+            class_name="CS301-A",
+            subject="Operating Systems",
+            sessions=[
+                AttendanceMatrixSessionItem(session_id="ses-1", session_name="S1", session_date="01 Sep")
+            ],
+            students=[
+                AttendanceMatrixStudentItem(
+                    student_id="std-101",
+                    enrollment_number="ENR-001",
+                    full_name="Aarav Sharma",
+                    attendance_percentage=100.0,
+                    statuses={"ses-1": "Present"},
+                )
+            ]
+        )
+        response = client.get("/api/v1/teacher/classes/cls-101/matrix")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["class_name"] == "CS301-A"
+        assert len(data["sessions"]) == 1
+        assert len(data["students"]) == 1
+        assert data["students"][0]["statuses"]["ses-1"] == "Present"
+    app.dependency_overrides.clear()

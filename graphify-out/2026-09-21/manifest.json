@@ -240,9 +240,9 @@
     "semantic_hash": ""
   },
   "backend/app/schemas/teacher.py": {
-    "mtime": 1789987906.836214,
-    "seen": 1789993711.095158,
-    "ast_hash": "a2d57168a3165de24354866e068dd199",
+    "mtime": 1789997177.8140728,
+    "seen": 1789997281.6360488,
+    "ast_hash": "addc53b120fc619ea51cbc8a0e4a317f",
     "semantic_hash": ""
   },
   "backend/app/services/absentee_scanner.py": {
@@ -336,9 +336,9 @@
     "semantic_hash": ""
   },
   "backend/app/services/teacher_service.py": {
-    "mtime": 1789987923.0251055,
-    "seen": 1789993711.0951831,
-    "ast_hash": "24f4aecf9f2c496b7de34b359d0c1051",
+    "mtime": 1789997182.564831,
+    "seen": 1789997281.6368675,
+    "ast_hash": "cc91633c441d78d41db6d88ff4a3337e",
     "semantic_hash": ""
   },
   "backend/app/utils/geofencing.py": {
@@ -414,9 +414,9 @@
     "semantic_hash": ""
   },
   "backend/tests/test_api_teacher.py": {
-    "mtime": 1789988006.9835498,
-    "seen": 1789993711.0952008,
-    "ast_hash": "c8c149d812935bde8870841235ef7720",
+    "mtime": 1789997186.565629,
+    "seen": 1789997281.6374862,
+    "ast_hash": "195f2a5b30ddc50a92a87cfab1468bc8",
     "semantic_hash": ""
   },
   "backend/tests/test_core_and_middleware.py": {
@@ -1338,9 +1338,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/scanner/SmartPassGeneratorModal.tsx": {
-    "mtime": 1789994205.4693415,
-    "seen": 1789994289.0508337,
-    "ast_hash": "48a13c9df0d508086534007c3f02cfae",
+    "mtime": 1789997192.6713243,
+    "seen": 1789997281.6473503,
+    "ast_hash": "a3e56dca8652329340553bede3b3741c",
     "semantic_hash": ""
   },
   "frontend/src/components/scanner/SmartPassScannerModal.tsx": {
@@ -2412,15 +2412,15 @@
     "semantic_hash": ""
   },
   "mobile/lib/features/home/screens/home_screen.dart": {
-    "mtime": 1789995509.1090696,
-    "seen": 1789995568.1779013,
-    "ast_hash": "c72e7cebb29b112346b61b14021cade6",
+    "mtime": 1789996124.3721213,
+    "seen": 1789996300.5507376,
+    "ast_hash": "cf009a0aa7f7c5e0c244e0444f7bcba9",
     "semantic_hash": ""
   },
   "mobile/lib/features/home/widgets/class_session_card.dart": {
-    "mtime": 1789995515.870312,
-    "seen": 1789995568.1779032,
-    "ast_hash": "ae9c3aeeccad1eb3c825451ce84eb5b9",
+    "mtime": 1789996220.6122298,
+    "seen": 1789996300.5507402,
+    "ast_hash": "d81999da5fba528d32ba58dc74adc696",
     "semantic_hash": ""
   },
   "mobile/lib/features/home/widgets/home_attendance_overview.dart": {
@@ -2592,9 +2592,9 @@
     "semantic_hash": ""
   },
   "mobile/lib/features/smart_pass/screens/smart_pass_screen.dart": {
-    "mtime": 1789995527.523935,
-    "seen": 1789995568.1784487,
-    "ast_hash": "bd8a7e6c3cd62d890f3c144efda0f6bc",
+    "mtime": 1789996056.6624265,
+    "seen": 1789996300.5513015,
+    "ast_hash": "4d9c5edba26f4f091bf2f9d5b9676bcc",
     "semantic_hash": ""
   },
   "mobile/lib/features/smart_pass/widgets/smart_pass_guidelines_card.dart": {
@@ -2640,9 +2640,9 @@
     "semantic_hash": ""
   },
   "mobile/lib/shared/widgets/glass_button.dart": {
-    "mtime": 1789990197.8278806,
-    "seen": 1789993711.0956821,
-    "ast_hash": "07c301e35c723d958a7e3ce311e20169",
+    "mtime": 1789996215.341166,
+    "seen": 1789996300.551432,
+    "ast_hash": "4191ad3b55851b75293d5f4aa730be4f",
     "semantic_hash": ""
   },
   "mobile/lib/shared/widgets/glass_card.dart": {
@@ -3024,9 +3024,9 @@
     "semantic_hash": ""
   },
   "mobile/pubspec.yaml": {
-    "mtime": 1789830164.2624688,
-    "seen": 1789993711.095758,
-    "ast_hash": "ea81511e211cede5c9c3854fd75f32d7",
+    "mtime": 1789995846.141843,
+    "seen": 1789996300.5524654,
+    "ast_hash": "ece022881e6981e072975ad5af0275e8",
     "semantic_hash": ""
   },
   "mobile/web/index.html": {
@@ -3396,21 +3396,39 @@
     "semantic_hash": ""
   },
   "screenshots/teacher_smart_pass_projector_web.png": {
-    "mtime": 1789994163.0122747,
-    "seen": 1789994289.0606532,
-    "ast_hash": "446e5d96113d6f80e2b44983390cc5a7",
+    "mtime": 1789997266.6899204,
+    "seen": 1789997281.6665378,
+    "ast_hash": "da201f1353a26360a2b8fcdfc45829a7",
     "semantic_hash": ""
   },
   "screenshots/teacher_smart_pass_web.png": {
-    "mtime": 1789994161.8234274,
-    "seen": 1789994289.0606549,
-    "ast_hash": "94d3cdf915ae772825d1fa9ffdc6d57b",
+    "mtime": 1789997265.2299826,
+    "seen": 1789997281.6665406,
+    "ast_hash": "04e15cbb68f820a2b74fac8ef7b71b94",
     "semantic_hash": ""
   },
   "mobile/lib/data/local/permission_service.dart": {
     "mtime": 1789995491.7314968,
     "seen": 1789995568.1765037,
     "ast_hash": "17c0eca473b89f76f8347026dcad4760",
+    "semantic_hash": ""
+  },
+  "screenshots/phone_current_state.png": {
+    "mtime": 1789995795.9206247,
+    "seen": 1789996300.553436,
+    "ast_hash": "938b3248695a80fc4e8a936476709fa8",
+    "semantic_hash": ""
+  },
+  "screenshots/phone_dual_options_clean.png": {
+    "mtime": 1789996289.4377053,
+    "seen": 1789996300.5534375,
+    "ast_hash": "edd39a58123bbc7866517edae89bd295",
+    "semantic_hash": ""
+  },
+  "screenshots/phone_live_state.png": {
+    "mtime": 1789996172.1116548,
+    "seen": 1789996300.5534382,
+    "ast_hash": "1be55ee24fad13a6ad345987c99430dc",
     "semantic_hash": ""
   }
 }

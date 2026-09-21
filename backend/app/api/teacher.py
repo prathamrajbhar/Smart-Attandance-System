@@ -14,6 +14,7 @@ from app.schemas.teacher import (
     ClassStatsResponse, AttendanceManualOverride, SessionWithClassResponse,
     BulkMarkRequest, AbsentStudentItem, DeviceChangeResponse, DeviceChangeApprove,
     SmartPassVerifyRequest, SmartPassVerifyResponse, TeacherSmartPassResponse, ClassAttendanceExportItem,
+    StudentClassHistoryResponse, AttendanceMatrixResponse,
 )
 from app.schemas.common import MessageResponse, BulkActionCountResponse
 from app.schemas.attendance import AttendanceReview, FlaggedAttendanceResponse
@@ -157,6 +158,29 @@ async def get_class_stats(
     teacher_service: TeacherService = Depends(),
 ) -> ClassStatsResponse:
     return await teacher_service.get_class_stats(user_id=teacher.userId, class_id=class_id)
+
+
+@router.get("/classes/{class_id}/students/{student_id}/history", response_model=StudentClassHistoryResponse)
+async def get_student_class_attendance_history(
+    class_id: str,
+    student_id: str,
+    teacher: Teacher = Depends(get_current_teacher),
+    teacher_service: TeacherService = Depends(),
+) -> StudentClassHistoryResponse:
+    return await teacher_service.get_student_class_attendance_history(
+        user_id=teacher.userId, class_id=class_id, student_id=student_id
+    )
+
+
+@router.get("/classes/{class_id}/matrix", response_model=AttendanceMatrixResponse)
+async def get_class_attendance_matrix(
+    class_id: str,
+    teacher: Teacher = Depends(get_current_teacher),
+    teacher_service: TeacherService = Depends(),
+) -> AttendanceMatrixResponse:
+    return await teacher_service.get_class_attendance_matrix(
+        user_id=teacher.userId, class_id=class_id
+    )
 
 
 @router.post("/sessions/{session_id}/override", response_model=MessageResponse, status_code=status.HTTP_200_OK)

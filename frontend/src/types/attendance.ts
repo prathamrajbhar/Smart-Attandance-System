@@ -52,18 +52,101 @@ export interface PendingLeaveItem {
   updated_at: string;
 }
 
+export interface StatusDistribution {
+  present: number;
+  absent: number;
+  flagged: number;
+  approved: number;
+}
+
+export interface DistributionTiers {
+  below_50: number;
+  between_50_75: number;
+  between_75_85: number;
+  above_85: number;
+}
+
+export interface StudentAttendanceSummaryItem {
+  student_id: string;
+  enrollment_number: string;
+  full_name: string;
+  email: string;
+  total_sessions: number;
+  attended_sessions: number;
+  attendance_percentage: number;
+  at_risk: boolean;
+  last_attended_at?: string | null;
+}
+
 export interface SessionTrendItem {
   session_id: string;
   session_name: string;
+  session_date?: string | null;
   attendance_percentage: number;
 }
 
 export interface ClassStatsResponse {
   class_id: string;
+  class_name?: string;
+  subject?: string;
   total_sessions: number;
   total_students: number;
   overall_attendance_percentage: number;
+  at_risk_count?: number;
+  status_distribution?: StatusDistribution;
+  distribution_tiers?: DistributionTiers;
   history?: SessionTrendItem[];
+  students?: StudentAttendanceSummaryItem[];
+}
+
+export interface StudentClassSessionLog {
+  session_id: string;
+  session_name: string;
+  session_date: string;
+  start_time: string;
+  end_time: string;
+  status: "Present" | "Absent" | "Flagged" | "Approved" | string;
+  final_ai_score: number;
+  marked_at?: string | null;
+  remarks?: string | null;
+  student_note?: string | null;
+}
+
+export interface StudentClassHistoryResponse {
+  student_id: string;
+  student_name: string;
+  enrollment_number: string;
+  email: string;
+  class_id: string;
+  class_name: string;
+  subject: string;
+  total_sessions: number;
+  attended_sessions: number;
+  attendance_percentage: number;
+  at_risk: boolean;
+  sessions: StudentClassSessionLog[];
+}
+
+export interface AttendanceMatrixSessionItem {
+  session_id: string;
+  session_name: string;
+  session_date: string;
+}
+
+export interface AttendanceMatrixStudentItem {
+  student_id: string;
+  enrollment_number: string;
+  full_name: string;
+  attendance_percentage: number;
+  statuses: Record<string, string>;
+}
+
+export interface AttendanceMatrixResponse {
+  class_id: string;
+  class_name: string;
+  subject: string;
+  sessions: AttendanceMatrixSessionItem[];
+  students: AttendanceMatrixStudentItem[];
 }
 
 export interface AnomalyResult {

@@ -541,24 +541,31 @@ async def scan_absentee_anomalies(
 
     student_map = {}
     for r in records:
-        if r.student:
-            first_name = r.student.firstName or ""
-            last_name = r.student.lastName or ""
+        student = getattr(r, "student", None)
+        if student:
+            first_name = getattr(student, "firstName", "") or ""
+            last_name = getattr(student, "lastName", "") or ""
             full_name = f"{first_name} {last_name}".strip() or "Unknown Student"
-            student_map[r.studentId] = {
+            student_map[getattr(r, "studentId", "")] = {
                 "student_name": full_name,
-                "enrollment_number": r.student.enrollmentNumber,
+                "enrollment_number": getattr(student, "enrollmentNumber", "N/A"),
             }
 
     rows = []
     for r in records:
-        if r.session and getattr(r.session, "sessionDate", None):
-            day_str = r.session.sessionDate.strftime("%A")
-        elif r.createdAt:
-            day_str = r.createdAt.strftime("%A")
+        session = getattr(r, "session", None)
+        created_at = getattr(r, "createdAt", None)
+        if session and getattr(session, "sessionDate", None):
+            day_str = session.sessionDate.strftime("%A")
+        elif created_at:
+            day_str = created_at.strftime("%A")
         else:
             day_str = "Monday"
-        rows.append({"student_id": r.studentId, "status": r.status, "day_of_week": day_str})
+        rows.append({
+            "student_id": getattr(r, "studentId", ""),
+            "status": getattr(r, "status", "Absent"),
+            "day_of_week": day_str,
+        })
 
     try:
         flagged = await run_absentee_scan(attendance_records=rows, contamination=contamination)

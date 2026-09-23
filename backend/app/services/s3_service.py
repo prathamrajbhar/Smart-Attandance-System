@@ -110,6 +110,34 @@ class S3Service:
             return f"{clean_endpoint}/{self.bucket_name}/{key}"
         return f"https://{self.bucket_name}.s3.{self.region_name}.amazonaws.com/{key}"
 
+    def generate_presigned_url(
+        self,
+        key_or_url: Optional[str],
+        expires_in: int = 3600,
+        response_content_disposition: Optional[str] = None,
+    ) -> Optional[str]:
+        if not key_or_url:
+            return None
+        if not self.bucket_name:
+            return key_or_url
+        try:
+            key = self._extract_key(key_or_url)
+            params = {
+                "Bucket": self.bucket_name,
+                "Key": key,
+            }
+            if response_content_disposition:
+                params["ResponseContentDisposition"] = response_content_disposition
+            url = self.client.generate_presigned_url(
+                ClientMethod="get_object",
+                Params=params,
+                ExpiresIn=expires_in,
+            )
+            return url
+        except Exception as exc:
+            logger.warning("Failed to generate presigned S3 URL for '%s': %s", key_or_url, exc)
+            return key_or_url
+
     def _extract_key(self, key_or_url: str) -> str:
         if not (key_or_url.startswith("http://") or key_or_url.startswith("https://")):
             return key_or_url.lstrip("/")

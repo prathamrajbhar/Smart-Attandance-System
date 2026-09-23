@@ -1,6 +1,6 @@
 import pytest
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 from types import SimpleNamespace
 from fastapi.testclient import TestClient
 
@@ -120,6 +120,43 @@ def test_bulk_mark_attendance(mock_teacher_user, mock_teacher_profile):
         })
         assert response.status_code == 200
         assert response.json()["count"] == 2
+    app.dependency_overrides.clear()
+
+def test_get_pending_leaves_with_presigned_doc(mock_teacher_user, mock_teacher_profile):
+    app.dependency_overrides[get_current_user] = lambda: mock_teacher_user
+    app.dependency_overrides[get_current_teacher] = lambda: mock_teacher_profile
+
+    fake_student = MagicMock()
+    fake_student.firstName = "Rohit"
+    fake_student.lastName = "Sharma"
+    fake_student.enrollmentNumber = "CSE2026002"
+
+    fake_leave = MagicMock()
+    fake_leave.id = "leave-1"
+    fake_leave.studentId = "stu-1"
+    fake_leave.student = fake_student
+    fake_leave.startDate = datetime(2026, 9, 23)
+    fake_leave.endDate = datetime(2026, 10, 1)
+    fake_leave.reason = "Medical Leave Request"
+    fake_leave.documentUrl = "leaves/test-doc.jpg"
+    fake_leave.status = "PENDING"
+    fake_leave.approvedBy = None
+    fake_leave.approverNote = None
+    fake_leave.createdAt = datetime.now()
+    fake_leave.updatedAt = datetime.now()
+
+    with patch("app.repositories.leave_repo.LeaveRepository.get_pending_for_teacher", new_callable=AsyncMock) as mock_get_pending, \
+         patch("app.services.s3_service.s3_service.generate_presigned_url") as mock_presigned:
+        mock_get_pending.return_value = [fake_leave]
+        mock_presigned.return_value = "https://smart-attndance-system.s3.ap-south-1.amazonaws.com/leaves/test-doc.jpg?AWSAccessKeyId=TEST&Signature=123"
+
+        response = client.get("/api/v1/teacher/leaves/pending")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+        assert "Signature=123" in data[0]["document_url"]
+        assert data[0]["student_name"] == "Rohit Sharma"
+        mock_presigned.assert_called_once_with("leaves/test-doc.jpg")
     app.dependency_overrides.clear()
 
 def test_approve_leave_request(mock_teacher_user, mock_teacher_profile):

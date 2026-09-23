@@ -79,7 +79,7 @@ export default function LeaveReviewDialog({
             {leave.document_url ? (
               <div className="flex items-center justify-between p-2.5 bg-slate-950/50 rounded-lg border border-emerald-500/20">
                 <div className="flex items-center gap-2 text-xs text-emerald-400 font-medium">
-                  {leave.document_url.toLowerCase().endsWith(".pdf") ? <FileText size={16} /> : <ImageIcon size={16} />}
+                  {leave.document_url.toLowerCase().split("?")[0].endsWith(".pdf") ? <FileText size={16} /> : <ImageIcon size={16} />}
                   <span>Document Attached (S3)</span>
                 </div>
                 <button

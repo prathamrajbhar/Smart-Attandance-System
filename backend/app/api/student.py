@@ -80,6 +80,7 @@ def _validate_image(image: UploadFile) -> None:
 
 
 def _make_leave_response(leave, student_name: str, enrollment_number: str = None) -> LeaveRequestResponse:
+    document_url = s3_service.generate_presigned_url(leave.documentUrl) if leave.documentUrl else None
     return LeaveRequestResponse(
         id=leave.id,
         student_id=leave.studentId,
@@ -88,7 +89,7 @@ def _make_leave_response(leave, student_name: str, enrollment_number: str = None
         start_date=leave.startDate,
         end_date=leave.endDate,
         reason=leave.reason,
-        document_url=leave.documentUrl,
+        document_url=document_url,
         status=leave.status,
         approved_by=leave.approvedBy,
         approver_note=leave.approverNote,

@@ -24,17 +24,19 @@ from app.services.attendance_service import AttendanceService
 from app.services.teacher_service import TeacherService
 from app.services.leave_service import LeaveService
 from app.services.device_change_service import DeviceChangeService
+from app.services.s3_service import s3_service
 
 router = APIRouter(prefix="/teacher", tags=["Teacher Features"])
 
 
 def _make_leave_response(leave) -> LeaveRequestResponse:
     name = f"{leave.student.firstName or ''} {leave.student.lastName or ''}".strip()
+    document_url = s3_service.generate_presigned_url(leave.documentUrl) if leave.documentUrl else None
     return LeaveRequestResponse(
         id=leave.id, student_id=leave.studentId, student_name=name or "Unknown",
         enrollment_number=leave.student.enrollmentNumber,
         start_date=leave.startDate, end_date=leave.endDate, reason=leave.reason,
-        document_url=leave.documentUrl, status=leave.status, approved_by=leave.approvedBy,
+        document_url=document_url, status=leave.status, approved_by=leave.approvedBy,
         approver_note=leave.approverNote, created_at=leave.createdAt, updated_at=leave.updatedAt,
     )
 

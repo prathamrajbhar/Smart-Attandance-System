@@ -91,7 +91,7 @@ export default function LeavesPage(): React.ReactElement {
           className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 text-xs font-medium transition-colors"
           title="Click to preview attached document"
         >
-          {r.document_url.toLowerCase().endsWith(".pdf") ? <FileText size={13} /> : <ImageIcon size={13} />}
+          {r.document_url.toLowerCase().split("?")[0].endsWith(".pdf") ? <FileText size={13} /> : <ImageIcon size={13} />}
           <span>View Doc</span>
         </button>
       ) : <span className="text-slate-600 text-xs">—</span>,

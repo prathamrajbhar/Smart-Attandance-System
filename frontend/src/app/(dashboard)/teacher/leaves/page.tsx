@@ -69,17 +69,17 @@ export default function LeavesPage(): React.ReactElement {
     {
       key: "start_date",
       header: "From",
-      render: (r) => <span className="text-xs text-slate-400">{new Date(r.start_date).toLocaleDateString()}</span>,
+      render: (r) => <span className="text-xs text-muted-foreground">{new Date(r.start_date).toLocaleDateString()}</span>,
     },
     {
       key: "end_date",
       header: "To",
-      render: (r) => <span className="text-xs text-slate-400">{new Date(r.end_date).toLocaleDateString()}</span>,
+      render: (r) => <span className="text-xs text-muted-foreground">{new Date(r.end_date).toLocaleDateString()}</span>,
     },
     {
       key: "reason",
       header: "Reason",
-      render: (r) => <span className="text-xs text-slate-300 truncate max-w-[180px] block">{r.reason}</span>,
+      render: (r) => <span className="text-xs text-foreground font-medium truncate max-w-[180px] block">{r.reason}</span>,
     },
     {
       key: "document_url",
@@ -88,28 +88,28 @@ export default function LeavesPage(): React.ReactElement {
         <button
           type="button"
           onClick={() => setViewDocLeave(r)}
-          className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 text-xs font-medium transition-colors"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-medium transition-colors cursor-pointer"
           title="Click to preview attached document"
         >
           {r.document_url.toLowerCase().split("?")[0].endsWith(".pdf") ? <FileText size={13} /> : <ImageIcon size={13} />}
           <span>View Doc</span>
         </button>
-      ) : <span className="text-slate-600 text-xs">—</span>,
+      ) : <span className="text-muted-foreground text-xs">—</span>,
     },
     {
       key: "actions",
       header: "Actions",
       render: (row) => (
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => { setSelectedLeave(row); setApproveAction("APPROVED"); setApproverNote(""); }}
-            className="glass-btn glass-btn-sm glass-btn-ghost text-emerald-400 hover:text-emerald-300"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 active:scale-95 transition-all text-xs font-medium cursor-pointer"
           >
             <CheckCircle2 size={14} /> Approve
           </button>
           <button
             onClick={() => { setSelectedLeave(row); setApproveAction("REJECTED"); setApproverNote(""); }}
-            className="glass-btn glass-btn-sm glass-btn-ghost text-rose-400 hover:text-rose-300"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/20 active:scale-95 transition-all text-xs font-medium cursor-pointer"
           >
             <XCircle size={14} /> Reject
           </button>

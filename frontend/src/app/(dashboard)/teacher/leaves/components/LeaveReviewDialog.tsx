@@ -32,66 +32,66 @@ export default function LeaveReviewDialog({
   const toDate = new Date(leave.end_date).toLocaleDateString();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-lg bg-slate-900 border border-slate-700/80 rounded-xl shadow-2xl overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+      <div className="relative w-full max-w-lg bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-800 bg-slate-900/80 flex items-center gap-3">
-          <div className={`p-2 rounded-lg border ${isApproved ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-rose-500/10 border-rose-500/20 text-rose-400"}`}>
+        <div className="px-6 py-4 border-b border-border bg-secondary/30 flex items-center gap-3">
+          <div className={`p-2.5 rounded-xl border ${isApproved ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400" : "bg-destructive/10 border-destructive/20 text-destructive"}`}>
             {isApproved ? <CheckCircle2 size={20} /> : <XCircle size={20} />}
           </div>
           <div>
-            <h3 className="text-base font-semibold text-white">
+            <h3 className="text-base font-bold text-foreground font-[Outfit]">
               {isApproved ? "Approve Leave Request" : "Reject Leave Request"}
             </h3>
-            <p className="text-xs text-slate-400">Review request details and add decision notes</p>
+            <p className="text-xs text-muted-foreground">Review request details and add decision notes</p>
           </div>
         </div>
 
         {/* Content */}
         <div className="p-6 space-y-4 text-sm">
-          <div className="grid grid-cols-2 gap-3 bg-slate-950/60 p-3 rounded-lg border border-slate-800/80">
-            <div className="flex items-center gap-2 text-slate-300">
-              <User size={15} className="text-emerald-400 shrink-0" />
+          <div className="grid grid-cols-2 gap-3 bg-secondary/30 p-3.5 rounded-xl border border-border">
+            <div className="flex items-center gap-2.5 text-muted-foreground">
+              <User size={16} className="text-primary shrink-0" />
               <div className="overflow-hidden">
-                <div className="text-xs text-slate-400">Student</div>
-                <div className="font-medium text-white truncate">{leave.student_name}</div>
+                <div className="text-[11px] text-muted-foreground font-medium">Student</div>
+                <div className="font-semibold text-foreground text-xs truncate">{leave.student_name}</div>
               </div>
             </div>
-            <div className="flex items-center gap-2 text-slate-300">
-              <Calendar size={15} className="text-emerald-400 shrink-0" />
+            <div className="flex items-center gap-2.5 text-muted-foreground">
+              <Calendar size={16} className="text-primary shrink-0" />
               <div className="overflow-hidden">
-                <div className="text-xs text-slate-400">Period</div>
-                <div className="font-medium text-white text-xs">{fromDate} – {toDate}</div>
+                <div className="text-[11px] text-muted-foreground font-medium">Period</div>
+                <div className="font-semibold text-foreground text-xs">{fromDate} – {toDate}</div>
               </div>
             </div>
           </div>
 
           <div>
-            <span className="text-xs font-semibold text-slate-400 block mb-1">Reason for Leave</span>
-            <div className="p-3 bg-slate-950/50 rounded-lg border border-slate-800/60 text-slate-300 text-xs leading-relaxed">
+            <span className="text-xs font-semibold text-foreground block mb-1.5">Reason for Leave</span>
+            <div className="p-3 bg-secondary/20 rounded-xl border border-border text-foreground text-xs leading-relaxed">
               {leave.reason}
             </div>
           </div>
 
           {/* Attached Document Preview */}
           <div>
-            <span className="text-xs font-semibold text-slate-400 block mb-1">Attached Documentation</span>
+            <span className="text-xs font-semibold text-foreground block mb-1.5">Attached Documentation</span>
             {leave.document_url ? (
-              <div className="flex items-center justify-between p-2.5 bg-slate-950/50 rounded-lg border border-emerald-500/20">
-                <div className="flex items-center gap-2 text-xs text-emerald-400 font-medium">
+              <div className="flex items-center justify-between p-3 bg-emerald-500/5 rounded-xl border border-emerald-500/20">
+                <div className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
                   {leave.document_url.toLowerCase().split("?")[0].endsWith(".pdf") ? <FileText size={16} /> : <ImageIcon size={16} />}
                   <span>Document Attached (S3)</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => onViewDoc(leave)}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-medium transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-xs font-medium transition-colors cursor-pointer"
                 >
                   <Eye size={13} /> View Doc
                 </button>
               </div>
             ) : (
-              <div className="text-xs text-slate-500 italic p-2 bg-slate-950/30 rounded border border-slate-800/40">
+              <div className="text-xs text-muted-foreground italic p-3 bg-secondary/20 rounded-xl border border-border">
                 No supporting document attached
               </div>
             )}
@@ -99,7 +99,7 @@ export default function LeaveReviewDialog({
 
           {/* Note Input */}
           <div>
-            <label htmlFor="approver-note" className="text-xs font-semibold text-slate-400 block mb-1">
+            <label htmlFor="approver-note" className="text-xs font-semibold text-foreground block mb-1.5">
               Approver Note (Optional)
             </label>
             <textarea
@@ -109,18 +109,18 @@ export default function LeaveReviewDialog({
               placeholder={isApproved ? "Optional approval note..." : "Reason for rejection..."}
               maxLength={300}
               rows={2}
-              className="w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 transition-colors resize-none"
+              className="w-full px-3 py-2 bg-card border border-border rounded-xl text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all resize-none"
             />
           </div>
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-slate-800 bg-slate-900/80 flex items-center justify-end gap-3">
+        <div className="px-6 py-4 border-t border-border bg-secondary/20 flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={onCancel}
             disabled={submitting}
-            className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-colors disabled:opacity-50"
+            className="px-4 py-2 rounded-xl bg-secondary hover:bg-muted text-foreground text-xs font-medium transition-colors border border-border cursor-pointer disabled:opacity-50"
           >
             Cancel
           </button>
@@ -128,7 +128,7 @@ export default function LeaveReviewDialog({
             type="button"
             onClick={onConfirm}
             disabled={submitting}
-            className={`px-4 py-2 rounded-lg text-xs font-semibold text-white transition-colors flex items-center gap-1.5 shadow-lg disabled:opacity-50 ${isApproved ? "bg-emerald-600 hover:bg-emerald-500" : "bg-rose-600 hover:bg-rose-500"}`}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold text-white transition-opacity flex items-center gap-1.5 shadow-sm cursor-pointer hover:opacity-90 disabled:opacity-50 ${isApproved ? "bg-emerald-600 hover:bg-emerald-500" : "bg-destructive hover:bg-destructive/90"}`}
           >
             {isApproved ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
             {submitting ? "Processing..." : (isApproved ? "Confirm Approval" : "Confirm Rejection")}

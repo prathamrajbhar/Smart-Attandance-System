@@ -16,32 +16,32 @@ export default function LeaveDocumentModal({ leave, onClose }: LeaveDocumentModa
   if (!leave || !leave.document_url) return null;
 
   const url = leave.document_url;
-  const isPdf = url.toLowerCase().endsWith(".pdf") || url.includes(".pdf?");
+  const isPdf = url.toLowerCase().split("?")[0].endsWith(".pdf");
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-2xl bg-slate-900 border border-slate-700/80 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+      <div className="relative w-full max-w-2xl bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800 bg-slate-900/80">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-secondary/30">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+            <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
               {isPdf ? <FileText size={18} /> : <ImageIcon size={18} />}
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-white">
+              <h3 className="text-sm font-bold text-foreground font-[Outfit]">
                 Supporting Document
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-muted-foreground">
                 {leave.student_name} ({leave.enrollment_number})
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <a
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
               title="Open in new tab"
             >
               <ExternalLink size={16} />
@@ -51,14 +51,14 @@ export default function LeaveDocumentModal({ leave, onClose }: LeaveDocumentModa
               download
               target="_blank"
               rel="noopener noreferrer"
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
               title="Download"
             >
               <Download size={16} />
             </a>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
               title="Close"
             >
               <X size={16} />
@@ -67,26 +67,26 @@ export default function LeaveDocumentModal({ leave, onClose }: LeaveDocumentModa
         </div>
 
         {/* Preview Content */}
-        <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-slate-950/60 min-h-[300px] relative">
+        <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-secondary/20 min-h-[300px] relative">
           {isPdf ? (
             <iframe
               src={url}
               title="Leave Document Preview"
-              className="w-full h-[500px] rounded border border-slate-800"
+              className="w-full h-[500px] rounded-xl border border-border"
             />
           ) : loadError ? (
-            <div className="flex flex-col items-center justify-center p-8 text-center text-slate-400">
-              <AlertCircle size={36} className="text-rose-400 mb-3" />
-              <p className="text-sm font-medium text-slate-200 mb-1">Unable to preview document directly</p>
-              <p className="text-xs text-slate-400 mb-4 max-w-xs">
-                The image couldn't be rendered in-browser. You can still open it in a new tab or download it directly.
+            <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
+              <AlertCircle size={36} className="text-rose-500 mb-3" />
+              <p className="text-sm font-semibold text-foreground mb-1">Unable to preview document directly</p>
+              <p className="text-xs text-muted-foreground mb-4 max-w-xs">
+                The document couldn't be rendered in-browser. You can still open it in a new tab or download it directly.
               </p>
               <div className="flex gap-2">
                 <a
                   href={url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 text-xs font-medium transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium transition-opacity hover:opacity-90"
                 >
                   <ExternalLink size={14} /> Open in New Tab
                 </a>
@@ -95,8 +95,8 @@ export default function LeaveDocumentModal({ leave, onClose }: LeaveDocumentModa
           ) : (
             <>
               {loading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-slate-950/40 backdrop-blur-xs">
-                  <Loader2 size={24} className="animate-spin text-emerald-400" />
+                <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-xs">
+                  <Loader2 size={24} className="animate-spin text-primary" />
                 </div>
               )}
               <img
@@ -107,18 +107,18 @@ export default function LeaveDocumentModal({ leave, onClose }: LeaveDocumentModa
                   setLoading(false);
                   setLoadError(true);
                 }}
-                className="max-h-[500px] max-w-full rounded object-contain border border-slate-800/80 shadow-lg"
+                className="max-h-[500px] max-w-full rounded-xl object-contain border border-border shadow-md"
               />
             </>
           )}
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3 border-t border-slate-800 bg-slate-900/80 flex items-center justify-between text-xs text-slate-400">
-          <span className="truncate max-w-md">Reason: {leave.reason}</span>
+        <div className="px-5 py-3.5 border-t border-border bg-card flex items-center justify-between text-xs text-muted-foreground">
+          <span className="truncate max-w-md">Reason: <strong className="text-foreground font-medium">{leave.reason}</strong></span>
           <button
             onClick={onClose}
-            className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors font-medium shrink-0"
+            className="px-4 py-1.5 rounded-lg bg-secondary hover:bg-muted text-foreground transition-colors font-medium border border-border shrink-0 cursor-pointer"
           >
             Close
           </button>

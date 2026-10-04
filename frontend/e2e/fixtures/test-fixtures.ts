@@ -23,8 +23,13 @@ import { TeacherDeviceChangesPage } from "../pages/teacher/teacher-device-change
 import { TeacherAnalyticsPage } from "../pages/teacher/teacher-analytics.page";
 import { TeacherHistoryPage } from "../pages/teacher/teacher-history.page";
 import { TeacherProfilePage } from "../pages/teacher/teacher-profile.page";
+import { SuperAdminPage } from "../pages/super-admin/super-admin.page";
 
 export const TEST_CREDENTIALS = {
+  superAdmin: {
+    email: process.env.TEST_SUPERADMIN_EMAIL || "superadmin@smartattendance.edu.in",
+    password: process.env.TEST_SUPERADMIN_PASSWORD || "SuperAdmin@123",
+  },
   admin: {
     email: process.env.TEST_ADMIN_EMAIL || "admin@smartattendance.edu.in",
     password: process.env.TEST_ADMIN_PASSWORD || "Admin@123",
@@ -34,7 +39,7 @@ export const TEST_CREDENTIALS = {
     password: process.env.TEST_TEACHER_PASSWORD || "Teacher@123",
   },
   student: {
-    email: process.env.TEST_STUDENT_EMAIL || "aarav.patel.2026@yopmail.com",
+    email: process.env.TEST_STUDENT_EMAIL || "aarav.patel.001@yopmail.com",
     password: process.env.TEST_STUDENT_PASSWORD || "Student@123",
   },
 };
@@ -68,6 +73,7 @@ export interface PageObjects {
   teacherAnalyticsPage: TeacherAnalyticsPage;
   teacherHistoryPage: TeacherHistoryPage;
   teacherProfilePage: TeacherProfilePage;
+  superAdminPage: SuperAdminPage;
 }
 
 export const test = base.extend<PageObjects>({
@@ -142,6 +148,9 @@ export const test = base.extend<PageObjects>({
   },
   teacherProfilePage: async ({ page }, use) => {
     await use(new TeacherProfilePage(page));
+  },
+  superAdminPage: async ({ page }, use) => {
+    await use(new SuperAdminPage(page));
   },
 });
 

@@ -84,10 +84,10 @@ export default function BulkImportModal({
             </div>
             <div>
               <h3 className="text-base font-bold text-foreground font-[Outfit]">
-                Bulk Ingest {getEntityTitle()}
+                Import {getEntityTitle()}
               </h3>
               <p className="text-xs text-muted-foreground">
-                {fileName ? `File: ${fileName}` : "Upload institution roster for 10-batch ingestion & verification"}
+                {fileName ? `File: ${fileName}` : `Upload a CSV file to add multiple ${getEntityTitle().toLowerCase()} at once`}
               </p>
             </div>
           </div>
@@ -132,7 +132,7 @@ export default function BulkImportModal({
                 disabled={records.length === 0}
                 className="px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors shadow-2xs cursor-pointer"
               >
-                Commit Import ({records.length} records in {Math.ceil(records.length / 10)} batches)
+                Import {records.length} Records
               </button>
             </div>
           </>

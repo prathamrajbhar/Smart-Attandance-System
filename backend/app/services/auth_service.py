@@ -61,12 +61,28 @@ class AuthService:
                         detail="Account is bound to another device. Please submit a device change request.",
                     )
 
-        token = create_access_token(subject=user.id, role=user.role)
+        tid = getattr(user, "tenantId", None)
+        tenant_slug, tenant_name = None, None
+        if tid:
+            t = await db.tenant.find_unique(where={"id": tid})
+            if t:
+                if t.status != "ACTIVE":
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail=f"Institution account '{t.name}' is currently {t.status.lower()}. Please contact system administration.",
+                    )
+                tenant_slug, tenant_name = t.slug, t.name
+
+        token = create_access_token(
+            subject=user.id, role=user.role,
+            extra_data={"tid": tid, "tenant_id": tid} if tid else None,
+        )
         return Token(
-            access_token=token,
-            token_type="bearer",
-            role=user.role,
+            access_token=token, token_type="bearer", role=user.role,
             must_change_password=getattr(user, "mustChangePassword", False),
+            tenant_id=tid,
+            tenant_slug=tenant_slug,
+            tenant_name=tenant_name,
         )
 
     async def change_password(self, user_id: str, new_password: str, current_password: Optional[str] = None) -> bool:

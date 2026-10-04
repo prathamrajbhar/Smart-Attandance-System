@@ -55,6 +55,11 @@ final dioProvider = Provider<Dio>((ref) {
         options.headers['Authorization'] = 'Bearer $token';
       }
 
+      final tenantId = await storage.getTenantId();
+      if (tenantId != null && tenantId.isNotEmpty) {
+        options.headers['X-Tenant-ID'] = tenantId;
+      }
+
       // Strip leading slash so path resolves relative to baseUrl (preserving /api/v1/)
       if (options.path.startsWith('/') &&
           !options.path.startsWith('http://') &&

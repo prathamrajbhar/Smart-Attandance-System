@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_attendance_app/app/app.dart';
-import 'package:smart_attendance_app/core/constants.dart';
 import 'package:smart_attendance_app/data/local/hive_service.dart';
 import 'package:smart_attendance_app/data/local/offline_sync_service.dart';
 import 'package:smart_attendance_app/data/local/notification_service.dart';
@@ -18,28 +17,17 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class AppHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
-    return super.createHttpClient(context)
-      ..badCertificateCallback = (X509Certificate cert, String host, int port) {
-        final configuredUri = Uri.tryParse(kApiBaseUrl);
-        final targetHost = configuredUri?.host.toLowerCase() ?? '';
-        final reqHost = host.toLowerCase();
-
-        if (targetHost.isNotEmpty) {
-          if (reqHost == targetHost) return true;
-          final domainParts = targetHost.split('.');
-          if (domainParts.length >= 2) {
-            final parentDomain = domainParts.sublist(domainParts.length - 2).join('.');
-            if (reqHost.endsWith(parentDomain)) return true;
-          }
-        }
-        if (reqHost == 'localhost' ||
-            reqHost == '10.0.2.2' ||
-            reqHost.startsWith('127.0.0.1') ||
-            reqHost.startsWith('192.168.')) {
+    final client = super.createHttpClient(context);
+    if (!kReleaseMode) {
+      client.badCertificateCallback = (X509Certificate cert, String host, int port) {
+        // Permit loopback exclusively for local development testing in non-release mode
+        if (host == 'localhost' || host == '10.0.2.2' || host == '127.0.0.1') {
           return true;
         }
         return false;
       };
+    }
+    return client;
   }
 }
 

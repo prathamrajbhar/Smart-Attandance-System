@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import {
   loginSchema,
   changePasswordSchema,
-  forgotPasswordSchema,
 } from "../auth";
 import { classFormSchema } from "../admin";
 import { studentFormSchema } from "../student";
@@ -10,8 +9,8 @@ import {
   departmentSchema,
   subjectSchema,
   classroomSchema,
-  designationSchema,
 } from "../masterData";
+
 import { geofenceSchema } from "../teacher";
 import { leaveRequestSchema } from "../leave";
 

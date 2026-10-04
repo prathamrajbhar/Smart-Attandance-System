@@ -12,9 +12,19 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const token = useAuthStore.getState().token;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const authState = useAuthStore.getState();
+    if (authState.token) {
+      config.headers.Authorization = `Bearer ${authState.token}`;
+    }
+    const tenantId =
+      authState.tenantId ||
+      authState.user?.tenant_id ||
+      authState.user?.tenant_slug ||
+      (typeof window !== "undefined" ? localStorage.getItem("sas-tenant-id") : null) ||
+      process.env.NEXT_PUBLIC_DEFAULT_TENANT_ID ||
+      "default-institution";
+    if (tenantId) {
+      config.headers["X-Tenant-ID"] = tenantId;
     }
     return config;
   },
@@ -24,7 +34,25 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status;
+    const detail: string = error.response?.data?.detail ?? "";
+
+    if (status === 403) {
+      const isSuspended =
+        detail.toLowerCase().includes("suspended") ||
+        detail.toLowerCase().includes("suspension");
+      if (isSuspended && typeof window !== "undefined") {
+        useAuthStore.getState().setSuspended(true, detail);
+        const requestUrl = error.config?.url || "";
+        const isAuthUrl = requestUrl.includes("/auth/login");
+        if (!isAuthUrl && !window.location.pathname.startsWith("/suspended")) {
+          window.location.href = "/suspended";
+        }
+        return Promise.reject(error);
+      }
+    }
+
+    if (status === 401) {
       const requestUrl = error.config?.url || "";
       const isAuthUrl =
         requestUrl.includes("/auth/login") ||

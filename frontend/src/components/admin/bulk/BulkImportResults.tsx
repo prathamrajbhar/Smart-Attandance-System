@@ -39,7 +39,7 @@ export default function BulkImportResults({
 
     const rows = summary.failedRecords
       .map((r) => {
-        const err = `"${r.validationError || "Ingestion error"}"`;
+        const err = `"${r.validationError || "Import error"}"`;
         if (entityType === "classes") {
           return `${r.first_name},${r.identifier},${r.email},${r.last_name},${err}`;
         }
@@ -85,13 +85,15 @@ export default function BulkImportResults({
         <div>
           <h4 className="text-sm font-bold text-foreground">
             {isAllSuccess
-              ? "Bulk Import Completed Successfully"
+              ? "Import Completed Successfully"
               : isPartial
-              ? "Bulk Import Completed with Warnings"
-              : "Bulk Import Encountered Errors"}
+              ? "Import Completed with Warnings"
+              : "Import Encountered Issues"}
           </h4>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {summary.totalImported} of {summary.totalProcessed} records were created in 10-item batches.
+            {summary.totalImported === summary.totalProcessed && summary.totalProcessed > 0
+              ? `All ${summary.totalProcessed} records were imported successfully.`
+              : `${summary.totalImported} of ${summary.totalProcessed} records were imported successfully.`}
           </p>
         </div>
       </div>
@@ -99,19 +101,19 @@ export default function BulkImportResults({
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-3 gap-3">
         <div className="p-3 bg-secondary/30 rounded-xl border border-border">
-          <p className="text-[11px] text-muted-foreground font-medium">Successfully Created</p>
+          <p className="text-[11px] text-muted-foreground font-medium">Successfully Added</p>
           <p className="text-xl font-bold font-mono text-foreground mt-0.5">{summary.totalImported}</p>
         </div>
 
         <div className="p-3 bg-secondary/30 rounded-xl border border-border">
           <p className="text-[11px] text-muted-foreground font-medium flex items-center gap-1">
-            <Mail size={12} className="text-indigo-500" /> Invites Sent
+            <Mail size={12} className="text-indigo-500" /> Invitations Sent
           </p>
           <p className="text-xl font-bold font-mono text-foreground mt-0.5">{summary.totalInvited}</p>
         </div>
 
         <div className="p-3 bg-secondary/30 rounded-xl border border-border">
-          <p className="text-[11px] text-muted-foreground font-medium">Failed / Skipped</p>
+          <p className="text-[11px] text-muted-foreground font-medium">Failed</p>
           <p className="text-xl font-bold font-mono text-foreground mt-0.5">{summary.totalFailed}</p>
         </div>
       </div>
@@ -121,7 +123,7 @@ export default function BulkImportResults({
         <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-3.5 space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
-              <AlertTriangle size={13} /> {summary.allErrors.length} Import Discrepancies
+              <AlertTriangle size={13} /> {summary.allErrors.length} {summary.allErrors.length === 1 ? "Issue" : "Issues"} to Review
             </span>
             {summary.failedRecords.length > 0 && (
               <button
@@ -129,13 +131,13 @@ export default function BulkImportResults({
                 onClick={handleDownloadFailedCsv}
                 className="text-[11px] text-rose-600 hover:text-rose-700 underline font-medium flex items-center gap-1 cursor-pointer"
               >
-                <Download size={11} /> Export Failed CSV
+                <Download size={11} /> Download Error Report
               </button>
             )}
           </div>
-          <div className="max-h-28 overflow-y-auto space-y-1 text-[11px] font-mono text-rose-700 dark:text-rose-300 pr-1">
+          <div className="max-h-28 overflow-y-auto space-y-1 text-[11px] font-sans text-rose-700 dark:text-rose-300 pr-1">
             {summary.allErrors.map((err, idx) => (
-              <p key={idx} className="bg-background/40 px-2 py-1 rounded">
+              <p key={idx} className="bg-background/60 px-2.5 py-1.5 rounded border border-rose-500/10 font-medium">
                 {err}
               </p>
             ))}

@@ -1,0 +1,21 @@
+class_name,subject_code,teacher_email,classroom_name,semester,batch,max_students
+CS-201-A,CS201,rajesh.sharma@yopmail.com,Lecture Hall 101,3,2024-2028,60
+CS-301-A,CS301,rajesh.sharma@yopmail.com,CS Computing Lab 1,5,2023-2027,60
+CS-401-A,CS401,manish.verma@yopmail.com,AI & Robotics Lab,7,2022-2026,40
+CS-202-B,CS202,vikram.joshi@yopmail.com,Lecture Hall 102,3,2024-2028,60
+CS-302-A,CS302,vikram.joshi@yopmail.com,CS Computing Lab 2,5,2023-2027,60
+CS-203-A,CS203,rajesh.sharma@yopmail.com,Lecture Hall 201,3,2024-2028,60
+EC-201-A,EC201,sunita.rao@yopmail.com,Lecture Hall 202,3,2024-2028,60
+EC-301-A,EC301,sunita.rao@yopmail.com,DSP & Signal Lab,5,2023-2027,45
+EC-302-A,EC302,sanjay.gupta@yopmail.com,Microcontroller Lab,5,2023-2027,50
+EC-401-A,EC401,sunita.rao@yopmail.com,VLSI Design Lab,7,2022-2026,45
+ME-201-A,ME201,suresh.patil@yopmail.com,Advanced Fluid Mechanics Lab,3,2024-2028,35
+ME-202-A,ME202,harish.deshmukh@yopmail.com,Thermal Engineering Lab,3,2024-2028,40
+ME-301-A,ME301,suresh.patil@yopmail.com,Drawing Hall 101,5,2023-2027,80
+CE-201-A,CE201,ananya.roy@yopmail.com,Lecture Hall 201,3,2024-2028,60
+CE-301-A,CE301,ananya.roy@yopmail.com,Structures & Concrete Lab,5,2023-2027,50
+EE-301-A,EE301,ramesh.chandra@yopmail.com,Power Systems Lab,5,2023-2027,40
+EE-302-A,EE302,ramesh.chandra@yopmail.com,Lecture Hall 102,5,2023-2027,60
+IT-301-A,IT301,vikram.joshi@yopmail.com,CS Computing Lab 1,5,2023-2027,60
+IT-302-A,IT302,manish.verma@yopmail.com,Lecture Hall 101,5,2023-2027,60
+MA-101-A,MA101,meena.iyer@yopmail.com,Central Auditorium,1,2025-2029,200

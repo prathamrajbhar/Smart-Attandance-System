@@ -4,6 +4,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1 \
     libglib2.0-0 \
     git \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -17,6 +18,6 @@ RUN python -m prisma generate
 
 EXPOSE 7860
 
-CMD ["sh", "-c", "python -m prisma db push && uvicorn main:app --host 0.0.0.0 --port 7860"]
+CMD ["sh", "-c", "python -m prisma db push && python scripts/migrate_multitenant.py && uvicorn main:app --host 0.0.0.0 --port 7860"]
 
 

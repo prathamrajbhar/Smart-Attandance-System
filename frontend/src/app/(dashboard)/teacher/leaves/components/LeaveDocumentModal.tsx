@@ -79,8 +79,9 @@ export default function LeaveDocumentModal({ leave, onClose }: LeaveDocumentModa
               <AlertCircle size={36} className="text-rose-500 mb-3" />
               <p className="text-sm font-semibold text-foreground mb-1">Unable to preview document directly</p>
               <p className="text-xs text-muted-foreground mb-4 max-w-xs">
-                The document couldn't be rendered in-browser. You can still open it in a new tab or download it directly.
+                The document couldn&apos;t be rendered in-browser. You can still open it in a new tab or download it directly.
               </p>
+
               <div className="flex gap-2">
                 <a
                   href={url}
@@ -99,8 +100,11 @@ export default function LeaveDocumentModal({ leave, onClose }: LeaveDocumentModa
                   <Loader2 size={24} className="animate-spin text-primary" />
                 </div>
               )}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={url}
+
+
                 alt="Leave Supporting Document"
                 onLoad={() => setLoading(false)}
                 onError={() => {

@@ -41,16 +41,20 @@ export function useAuditTableQuery() {
     return { queryStart: undefined, queryEnd: undefined };
   }, [timePreset, startDate, endDate]);
 
+  const extraParams = useMemo(() => {
+    return {
+      start_date: queryStart,
+      end_date: queryEnd,
+    };
+  }, [queryStart, queryEnd]);
+
   const table = useTableQuery<AuditLogResponse>({
     endpoint: "/admin/audit",
     defaultPageSize: 15,
     defaultSortBy: "timestamp",
     defaultSortOrder: "desc",
     filterKey: "severity",
-    extraParams: {
-      start_date: queryStart,
-      end_date: queryEnd,
-    },
+    extraParams,
   });
 
   const { refetch, setCurrentPage } = table;

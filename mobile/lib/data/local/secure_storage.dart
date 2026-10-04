@@ -39,6 +39,32 @@ class SecureStorageService {
     return _storage.read(key: kSecureKeyDeviceUuid);
   }
 
+  Future<void> saveTenantInfo({
+    required String id,
+    String? slug,
+    String? name,
+  }) async {
+    await _storage.write(key: kSecureKeyTenantId, value: id);
+    if (slug != null) {
+      await _storage.write(key: kSecureKeyTenantSlug, value: slug);
+    }
+    if (name != null) {
+      await _storage.write(key: kSecureKeyTenantName, value: name);
+    }
+  }
+
+  Future<String?> getTenantId() async {
+    return _storage.read(key: kSecureKeyTenantId);
+  }
+
+  Future<String?> getTenantSlug() async {
+    return _storage.read(key: kSecureKeyTenantSlug);
+  }
+
+  Future<String?> getTenantName() async {
+    return _storage.read(key: kSecureKeyTenantName);
+  }
+
   Future<void> clearAll() async {
     await _storage.deleteAll();
   }

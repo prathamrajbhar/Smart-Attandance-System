@@ -1,28 +1,27 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import { CheckCircle2, XCircle, FileText, Image as ImageIcon } from "lucide-react";
-import api, { getApiErrorMessage } from "@/lib/api";
+import React, { useEffect, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowRight, FileText, Image as ImageIcon, Eye } from "lucide-react";
+import api from "@/lib/api";
+import { useDebounce } from "@/hooks/useDebounce";
 import GlassPageHeader from "@/components/ui/GlassPageHeader";
 import GlassTable, { type TableColumn } from "@/components/ui/GlassTable";
 import GlassLoader from "@/components/ui/GlassLoader";
 import GlassEmptyState from "@/components/ui/GlassEmptyState";
 import GlassCard from "@/components/ui/GlassCard";
 import GlassSearch from "@/components/ui/GlassSearch";
+import EnterprisePagination from "@/components/ui/EnterprisePagination";
 import type { PendingLeaveItem } from "@/types";
-import LeaveDocumentModal from "./components/LeaveDocumentModal";
-import LeaveReviewDialog from "./components/LeaveReviewDialog";
 
-export default function LeavesPage(): React.ReactElement {
+export default function LeavesPage(): React.JSX.Element {
+  const router = useRouter();
   const [leaves, setLeaves] = useState<PendingLeaveItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedLeave, setSelectedLeave] = useState<PendingLeaveItem | null>(null);
-  const [approveAction, setApproveAction] = useState<"APPROVED" | "REJECTED" | null>(null);
-  const [approverNote, setApproverNote] = useState("");
-  const [viewDocLeave, setViewDocLeave] = useState<PendingLeaveItem | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const debouncedSearch = useDebounce(searchTerm, 300);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     let mounted = true;
@@ -36,36 +35,28 @@ export default function LeavesPage(): React.ReactElement {
         if (mounted) setLoading(false);
       }
     }
-    fetchLeaves();
+    void fetchLeaves();
     return () => { mounted = false; };
   }, []);
 
-  async function handleSubmit(): Promise<void> {
-    if (!selectedLeave || !approveAction) return;
-    setSubmitting(true);
-    try {
-      await api.put(`/teacher/leaves/${selectedLeave.id}/approve`, {
-        status: approveAction,
-        approver_note: approverNote || undefined,
-      });
-      toast.success(`Leave request ${approveAction.toLowerCase()} successfully`);
-      setSelectedLeave(null);
-      setApproveAction(null);
-      setApproverNote("");
-      const { data } = await api.get<PendingLeaveItem[]>("/teacher/leaves/pending");
-      setLeaves(data);
-    } catch (err: unknown) {
-      toast.error(getApiErrorMessage(err, "Failed to process leave request"));
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  if (loading) return <GlassLoader text="Loading leave requests..." />;
-
   const columns: TableColumn<PendingLeaveItem & Record<string, unknown>>[] = [
-    { key: "enrollment_number", header: "Enrollment #" },
-    { key: "student_name", header: "Student", sortable: true },
+    { 
+      key: "enrollment_number", 
+      header: "Enrollment #",
+      render: (r) => (
+        <span className="font-mono text-xs text-foreground bg-secondary/80 px-2 py-0.5 rounded border border-border">
+          {r.enrollment_number}
+        </span>
+      )
+    },
+    { 
+      key: "student_name", 
+      header: "Student", 
+      sortable: true,
+      render: (r) => (
+        <span className="font-semibold text-foreground text-xs">{r.student_name}</span>
+      )
+    },
     {
       key: "start_date",
       header: "From",
@@ -79,58 +70,68 @@ export default function LeavesPage(): React.ReactElement {
     {
       key: "reason",
       header: "Reason",
-      render: (r) => <span className="text-xs text-foreground font-medium truncate max-w-[180px] block">{r.reason}</span>,
+      render: (r) => <span className="text-xs text-foreground font-medium truncate max-w-[200px] block">{r.reason}</span>,
     },
     {
       key: "document_url",
-      header: "Document",
+      header: "Proof Attached",
       render: (r) => r.document_url ? (
-        <button
-          type="button"
-          onClick={() => setViewDocLeave(r)}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-medium transition-colors cursor-pointer"
-          title="Click to preview attached document"
-        >
-          {r.document_url.toLowerCase().split("?")[0].endsWith(".pdf") ? <FileText size={13} /> : <ImageIcon size={13} />}
-          <span>View Doc</span>
-        </button>
-      ) : <span className="text-muted-foreground text-xs">—</span>,
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[11px] font-semibold">
+          {r.document_url.toLowerCase().split("?")[0].endsWith(".pdf") ? <FileText size={12} /> : <ImageIcon size={12} />}
+          <span>Attached</span>
+        </span>
+      ) : <span className="text-muted-foreground text-xs italic">None</span>,
     },
     {
       key: "actions",
-      header: "Actions",
+      header: "Adjudication",
       render: (row) => (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => { setSelectedLeave(row); setApproveAction("APPROVED"); setApproverNote(""); }}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 active:scale-95 transition-all text-xs font-medium cursor-pointer"
-          >
-            <CheckCircle2 size={14} /> Approve
-          </button>
-          <button
-            onClick={() => { setSelectedLeave(row); setApproveAction("REJECTED"); setApproverNote(""); }}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/20 active:scale-95 transition-all text-xs font-medium cursor-pointer"
-          >
-            <XCircle size={14} /> Reject
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => router.push(`/teacher/leaves/${row.id}`)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-secondary text-foreground active:scale-95 transition-all text-xs font-semibold cursor-pointer shadow-2xs"
+          title="Review Leave Application"
+        >
+          <Eye size={13} className="text-primary" />
+          <span>Review Application</span>
+          <ArrowRight size={12} className="text-muted-foreground ml-0.5" />
+        </button>
       ),
     },
   ];
 
-  const filtered = leaves.filter((r) =>
-    r.student_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    r.enrollment_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    r.reason.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filtered = useMemo(() => {
+    if (!debouncedSearch.trim()) return leaves;
+    const lower = debouncedSearch.toLowerCase();
+    return leaves.filter((r) =>
+      r.student_name.toLowerCase().includes(lower) ||
+      r.enrollment_number.toLowerCase().includes(lower) ||
+      r.reason.toLowerCase().includes(lower)
+    );
+  }, [leaves, debouncedSearch]);
+
+  const paginated = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, page, pageSize]);
+
+  if (loading) return <GlassLoader text="Loading leave requests..." />;
 
   return (
-    <div className="animate-fade-in-up">
-      <GlassPageHeader title="Leave Requests" description={`${leaves.length} pending leave request(s)`} />
-      <GlassCard padding="sm" className="mb-6">
+    <div className="animate-fade-in-up space-y-6">
+      <GlassPageHeader 
+        title="Student Leave Applications" 
+        description={`${leaves.length} pending leave request(s) awaiting faculty review and formal adjudication.`} 
+      />
+
+      <GlassCard padding="sm">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
-            <GlassSearch placeholder="Search by student name, enrollment, or reason..." onSearch={setSearchTerm} />
+            <GlassSearch
+              placeholder="Search by student name, enrollment, or reason..."
+              value={searchTerm}
+              onSearch={(val) => { setSearchTerm(val); setPage(1); }}
+            />
           </div>
         </div>
       </GlassCard>
@@ -138,30 +139,24 @@ export default function LeavesPage(): React.ReactElement {
       {leaves.length === 0 ? (
         <GlassEmptyState title="All Clear" message="No pending leave requests found." />
       ) : (
-        <GlassTable
-          columns={columns}
-          data={filtered as (PendingLeaveItem & Record<string, unknown>)[]}
-          emptyMessage="No pending leaves match your search."
-        />
+        <div className="rounded-xl border border-border bg-card shadow-2xs overflow-hidden">
+          <GlassTable
+            columns={columns}
+            data={paginated as (PendingLeaveItem & Record<string, unknown>)[]}
+            emptyMessage="No pending leaves match your search."
+          />
+          {filtered.length > 0 && (
+            <EnterprisePagination
+              totalItems={filtered.length}
+              currentPage={page}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={(sz) => { setPageSize(sz); setPage(1); }}
+              itemName="leave requests"
+            />
+          )}
+        </div>
       )}
-
-      {/* Document Preview Modal */}
-      <LeaveDocumentModal
-        leave={viewDocLeave}
-        onClose={() => setViewDocLeave(null)}
-      />
-
-      {/* Review and Approval Dialog */}
-      <LeaveReviewDialog
-        leave={selectedLeave}
-        action={approveAction}
-        approverNote={approverNote}
-        submitting={submitting}
-        onNoteChange={setApproverNote}
-        onConfirm={handleSubmit}
-        onCancel={() => { setSelectedLeave(null); setApproveAction(null); }}
-        onViewDoc={(leave) => setViewDocLeave(leave)}
-      />
     </div>
   );
 }

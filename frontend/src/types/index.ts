@@ -1,6 +1,15 @@
 export * from "./models";
 export * from "./attendance";
 export * from "./notification";
+export * from "./tenant";
+
+export type UserRole =
+  | "SUPER_ADMIN"
+  | "TENANT_ADMIN"
+  | "TEACHER"
+  | "STUDENT"
+  | "PARENT"
+  | "ADMIN";
 
 export interface LoginRequest {
   email: string;
@@ -10,17 +19,26 @@ export interface LoginRequest {
 export interface TokenResponse {
   access_token: string;
   token_type: string;
-  role: "STUDENT" | "TEACHER" | "ADMIN";
+  role: UserRole;
   must_change_password?: boolean;
 }
 
 export interface UserProfile {
   id: string;
   email: string;
-  role: "STUDENT" | "TEACHER" | "ADMIN";
+  role: UserRole;
   is_active: boolean;
+  tenant_id?: string | null;
+  tenant_slug?: string | null;
+  tenant_name?: string | null;
   must_change_password?: boolean;
-  student_profile: { id: string; enrollment_number: string } | null;
+  student_profile: {
+    id: string;
+    enrollment_number: string;
+    first_name?: string;
+    last_name?: string;
+    face_registered?: boolean;
+  } | null;
   teacher_profile: {
     id: string;
     employee_id: string;

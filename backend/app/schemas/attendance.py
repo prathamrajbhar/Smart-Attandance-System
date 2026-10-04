@@ -58,3 +58,21 @@ class AttendanceReview(BaseModel):
     @classmethod
     def strip_remarks(cls, v: Optional[str]) -> str:
         return v.strip() if isinstance(v, str) else ""
+
+
+class AttendanceAsyncEnqueueResponse(BaseModel):
+    job_id: str = Field(..., description="Unique UUID of the queued attendance job")
+    status: str = Field("PENDING", description="Current status: PENDING")
+    message: str = Field("Attendance submission queued for verification", description="Informational message")
+
+
+class AttendanceJobStatusResponse(BaseModel):
+    job_id: str
+    student_id: str
+    session_id: str
+    status: Literal["PENDING", "PROCESSING", "COMPLETED", "FAILED"]
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+    result: Optional[dict] = None
+    error: Optional[str] = None
+

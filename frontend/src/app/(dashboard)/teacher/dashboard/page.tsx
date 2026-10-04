@@ -10,7 +10,9 @@ import GlassBadge from "@/components/ui/GlassBadge";
 import toast from "react-hot-toast";
 import ActiveSessionBanner from "./ActiveSessionBanner";
 import TeacherQuickActions from "@/components/teacher/TeacherQuickActions";
+import TeacherTodayScheduleStrip from "@/components/teacher/TeacherTodayScheduleStrip";
 import type { AcademicClassWithGeofence, SessionWithClassResponse, FlaggedAttendanceResponse } from "@/types";
+import type { TeacherTodayScheduleItem } from "@/types/timetable";
 
 export default function TeacherDashboardPage(): React.ReactElement {
   const [loading, setLoading] = useState(true);
@@ -18,6 +20,7 @@ export default function TeacherDashboardPage(): React.ReactElement {
   const [classes, setClasses] = useState<AcademicClassWithGeofence[]>([]);
   const [sessions, setSessions] = useState<SessionWithClassResponse[]>([]);
   const [flagged, setFlagged] = useState<FlaggedAttendanceResponse[]>([]);
+  const [todaySchedule, setTodaySchedule] = useState<TeacherTodayScheduleItem[]>([]);
 
   const greeting = (() => {
     const h = new Date().getHours();
@@ -30,14 +33,16 @@ export default function TeacherDashboardPage(): React.ReactElement {
 
   const fetchData = useCallback(async (): Promise<void> => {
     try {
-      const [c, s, f] = await Promise.all([
+      const [c, s, f, t] = await Promise.all([
         api.get<AcademicClassWithGeofence[]>("/teacher/my-classes"),
         api.get<SessionWithClassResponse[]>("/teacher/sessions/all"),
         api.get<FlaggedAttendanceResponse[]>("/teacher/attendance/flagged"),
+        api.get<TeacherTodayScheduleItem[]>("/timetable/teacher/today").catch(() => ({ data: [] })),
       ]);
       setClasses(c.data);
       setSessions(s.data);
       setFlagged(f.data);
+      setTodaySchedule(t.data);
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to load dashboard data"));
     } finally {
@@ -50,15 +55,17 @@ export default function TeacherDashboardPage(): React.ReactElement {
     let isMounted = true;
     const load = async () => {
       try {
-        const [c, s, f] = await Promise.all([
+        const [c, s, f, t] = await Promise.all([
           api.get<AcademicClassWithGeofence[]>("/teacher/my-classes"),
           api.get<SessionWithClassResponse[]>("/teacher/sessions/all"),
           api.get<FlaggedAttendanceResponse[]>("/teacher/attendance/flagged"),
+          api.get<TeacherTodayScheduleItem[]>("/timetable/teacher/today").catch(() => ({ data: [] })),
         ]);
         if (isMounted) {
           setClasses(c.data);
           setSessions(s.data);
           setFlagged(f.data);
+          setTodaySchedule(t.data);
           setLoading(false);
         }
       } catch (err: unknown) {
@@ -103,6 +110,9 @@ export default function TeacherDashboardPage(): React.ReactElement {
           <span>{refreshing ? "Refreshing..." : "Refresh Console"}</span>
         </button>
       </div>
+
+      {/* Today's Teaching Schedule Banner */}
+      <TeacherTodayScheduleStrip schedule={todaySchedule} onSessionStarted={handleRefresh} />
 
       {activeSessions.length > 0 && <ActiveSessionBanner session={activeSessions[0]} />}
 

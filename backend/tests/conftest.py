@@ -44,6 +44,13 @@ def setup_test_redis(mock_redis):
     yield mock_redis
     app_redis.redis_client = None
 
+@pytest.fixture(autouse=True)
+def clear_dependency_overrides():
+    """Ensure FastAPI dependency overrides do not leak between tests."""
+    from main import app
+    yield
+    app.dependency_overrides.clear()
+
 @pytest.fixture
 def mock_admin_user():
     return SimpleNamespace(

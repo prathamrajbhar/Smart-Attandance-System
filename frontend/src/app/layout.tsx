@@ -3,8 +3,16 @@ import { Toaster } from "react-hot-toast";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Smart Attendance System",
-  description: "AI-powered multi-layered smart attendance verification dashboard",
+  title: {
+    default: "Smart Attendance System | AI Multi-Layer Verification",
+    template: "%s | Smart Attendance System",
+  },
+  description: "AI-powered multi-layered smart attendance verification & management dashboard",
+  keywords: ["Smart Attendance", "AI Verification", "Geofence Attendance", "Liveness Detection", "Attendance Management"],
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }): React.ReactElement {

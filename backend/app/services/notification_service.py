@@ -116,7 +116,7 @@ async def get_user_notifications(
     unread_only: bool = False,
     category: Optional[str] = None,
     page: int = 1,
-    page_size: int = 20,
+    page_size: int = 10,
 ) -> Dict[str, Any]:
     where_conditions: List[Dict[str, Any]] = [
         {"OR": [{"userId": user_id}, {"role": user_role}, {"role": None}]}
@@ -171,7 +171,8 @@ async def mark_notification_read(notification_id: str, user_id: str) -> bool:
             data={"isRead": True},
         )
         return True
-    except Exception:
+    except Exception as err:
+        logger.error("Failed to mark notification %s read: %s", notification_id, err)
         return False
 
 
@@ -196,8 +197,32 @@ async def delete_notification(notification_id: str, user_id: str) -> bool:
     try:
         await db.notification.delete(where={"id": notification_id})
         return True
-    except Exception:
+    except Exception as err:
+        logger.error("Failed to delete notification %s: %s", notification_id, err)
         return False
+
+
+async def delete_multiple_notifications(notification_ids: List[str], user_id: str) -> int:
+    try:
+        result = await db.notification.delete_many(where={"id": {"in": notification_ids}})
+        return result
+    except Exception as err:
+        logger.error("Failed to delete notifications: %s", err)
+        return 0
+
+
+async def delete_all_user_notifications(user_id: str, user_role: str) -> int:
+    try:
+        result = await db.notification.delete_many(
+            where={
+                "OR": [{"userId": user_id}, {"role": user_role}, {"role": None}]
+            }
+        )
+        return result
+    except Exception as err:
+        logger.error("Failed to delete all notifications for user %s: %s", user_id, err)
+        return 0
+
 
 
 async def broadcast_announcement(

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Pencil, Trash2, Upload } from "lucide-react";
 import toast from "react-hot-toast";
@@ -12,6 +12,7 @@ import GlassSearch from "@/components/ui/GlassSearch";
 import GlassButton from "@/components/ui/GlassButton";
 import GlassConfirmDialog from "@/components/ui/GlassConfirmDialog";
 import GlassLoader from "@/components/ui/GlassLoader";
+import EnterprisePagination from "@/components/ui/EnterprisePagination";
 import BulkImportModal from "@/components/admin/BulkImportModal";
 import type { SubjectResponse } from "@/types";
 
@@ -23,6 +24,8 @@ export default function SubjectsPage(): React.ReactElement {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const fetchSubjects = useCallback(async (): Promise<void> => {
     try {
@@ -44,6 +47,7 @@ export default function SubjectsPage(): React.ReactElement {
   }, [fetchSubjects]);
 
   const handleSearch = useCallback((q: string) => {
+    setPage(1);
     if (!q.trim()) {
       setFiltered(subjects);
       return;
@@ -72,6 +76,11 @@ export default function SubjectsPage(): React.ReactElement {
       setDeleting(false);
     }
   }
+
+  const paginatedData = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, page, pageSize]);
 
   const columns: TableColumn<SubjectResponse & Record<string, unknown>>[] = [
     { key: "name", header: "Subject Name", sortable: true },
@@ -102,7 +111,7 @@ export default function SubjectsPage(): React.ReactElement {
   if (loading) return <GlassLoader text="Loading subjects..." />;
 
   return (
-    <div className="animate-fade-in-up">
+    <div className="animate-fade-in-up space-y-4">
       <GlassBreadcrumb
         items={[
           { label: "Admin", href: "/admin/dashboard" },
@@ -132,14 +141,26 @@ export default function SubjectsPage(): React.ReactElement {
           </div>
         }
       />
-      <div className="mb-6">
+      <div>
         <GlassSearch placeholder="Search subjects..." onSearch={handleSearch} />
       </div>
-      <GlassTable
-        columns={columns}
-        data={filtered as (SubjectResponse & Record<string, unknown>)[]}
-        emptyMessage="No subjects found"
-      />
+      <div className="space-y-3">
+        <GlassTable
+          columns={columns}
+          data={paginatedData as (SubjectResponse & Record<string, unknown>)[]}
+          emptyMessage="No subjects found"
+        />
+        <EnterprisePagination
+          currentPage={page}
+          pageSize={pageSize}
+          totalItems={filtered.length}
+          onPageChange={setPage}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setPage(1);
+          }}
+        />
+      </div>
       <GlassConfirmDialog
         isOpen={!!deleteTarget}
         title="Delete Subject"

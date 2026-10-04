@@ -9,7 +9,12 @@ from app.core.security import create_access_token
 from app.db.client import db
 from app.repositories.leave_repo import LeaveRepository
 
-from app.schemas.attendance import AttendanceMarkResponse, AttendanceAnalyzeResponse
+from app.schemas.attendance import (
+    AttendanceMarkResponse,
+    AttendanceAnalyzeResponse,
+    AttendanceAsyncEnqueueResponse,
+    AttendanceJobStatusResponse,
+)
 from app.schemas.student import (
     StudentAttendanceHistoryResponse,
     StudentClassResponse,
@@ -24,6 +29,8 @@ from app.schemas.student import (
 from app.schemas.common import MessageResponse
 from app.schemas.leave import LeaveRequestResponse, LeaveRequestListResponse
 from app.services.attendance_service import AttendanceService, AttendanceSubmission
+from app.services.attendance.attendance_queue_service import AttendanceQueueService
+from app.services.biometric_consent_service import BiometricConsentService
 from app.services.student_service import StudentService
 from app.services.gamification_service import GamificationService
 
@@ -183,6 +190,66 @@ async def confirm_attendance(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err))
 
 
+@router.post("/attendance/async-mark", response_model=AttendanceAsyncEnqueueResponse, status_code=status.HTTP_202_ACCEPTED)
+async def async_mark_attendance(
+    session_id: str = Form(...),
+    latitude: float = Form(...),
+    longitude: float = Form(...),
+    accuracy: float = Form(...),
+    image: UploadFile | None = File(None),
+    student: Student = Depends(get_current_student),
+    queue_service: AttendanceQueueService = Depends(),
+) -> AttendanceAsyncEnqueueResponse:
+    await _rate_limit_student(student.id, max_requests=15, window_seconds=60)
+    image_url = None
+    if image:
+        _validate_image(image)
+        image_url, _ = await _save_uploaded_image(image, "attendance")
+
+    submission = AttendanceSubmission(
+        student_id=student.id,
+        session_id=session_id,
+        latitude=latitude,
+        longitude=longitude,
+        accuracy=accuracy,
+        image_path=image_url,
+    )
+    job_id = await queue_service.enqueue_submission(submission)
+    return AttendanceAsyncEnqueueResponse(job_id=job_id)
+
+
+@router.get("/attendance/jobs/{job_id}", response_model=AttendanceJobStatusResponse)
+async def get_attendance_job_status(
+    job_id: str,
+    student: Student = Depends(get_current_student),
+    queue_service: AttendanceQueueService = Depends(),
+) -> AttendanceJobStatusResponse:
+    job = await queue_service.get_job_status(job_id)
+    if not job:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attendance job not found")
+    if job.get("student_id") != student.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this job")
+    return AttendanceJobStatusResponse(**job)
+
+
+@router.post("/biometric/consent", response_model=MessageResponse)
+async def submit_biometric_consent(
+    policy_version: str = Form("2026.1-BIPA"),
+    student: Student = Depends(get_current_student),
+) -> MessageResponse:
+    service = BiometricConsentService()
+    await service.record_consent(student.id, policy_version=policy_version)
+    return MessageResponse(status="success", message="Biometric consent successfully recorded.")
+
+
+@router.get("/biometric/consent-status")
+async def get_biometric_consent_status(
+    student: Student = Depends(get_current_student),
+) -> dict:
+    service = BiometricConsentService()
+    return await service.get_consent_status(student.id)
+
+
 @router.post("/register-face", response_model=MessageResponse, status_code=status.HTTP_200_OK)
 async def register_face(
     image: UploadFile = File(...),
@@ -193,6 +260,9 @@ async def register_face(
     _validate_image(image)
     image_url, image_bytes = await _save_uploaded_image(image, "registration")
     try:
+        consent_service = BiometricConsentService()
+        if not await consent_service.has_consent(student.id):
+            await consent_service.record_consent(student.id, policy_version="2026.1-BIPA")
         success = await attendance_service.register_face(student.id, image_bytes)
         if not success:
             raise ValueError("Could not extract a valid face from the image.")

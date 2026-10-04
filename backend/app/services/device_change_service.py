@@ -64,8 +64,28 @@ class DeviceChangeService:
             logger.warning("Failed to dispatch device change requested email: %s", e)
 
     async def get_pending_requests(self, teacher_id: str) -> List[DeviceChangeResponse]:
+        teacher_classes = await db.academicclass.find_many(where={"teacherId": teacher_id})
+        teacher_class_ids = [c.id for c in teacher_classes]
+
+        where_filter: dict = {"status": "PENDING"}
+        if teacher_class_ids:
+            where_filter["student"] = {
+                "is": {
+                    "enrollments": {
+                        "some": {
+                            "academicClassId": {"in": teacher_class_ids}
+                        }
+                    }
+                }
+            }
+        else:
+            teacher = await db.teacher.find_unique(where={"id": teacher_id}, include={"user": True})
+            tid = getattr(teacher.user, "tenantId", None) if (teacher and teacher.user) else None
+            if tid:
+                where_filter["student"] = {"is": {"user": {"is": {"tenantId": tid}}}}
+
         records = await db.devicechangerequest.find_many(
-            where={"status": "PENDING"},
+            where=where_filter,
             include={
                 "student": {
                     "include": {
@@ -102,6 +122,14 @@ class DeviceChangeService:
         )
         if not request_record or request_record.status != "PENDING":
             return False
+
+        teacher = await db.teacher.find_unique(where={"id": teacher_id}, include={"user": True})
+        if teacher and teacher.user and request_record.student and request_record.student.user:
+            t_tid = getattr(teacher.user, "tenantId", None)
+            s_tid = getattr(request_record.student.user, "tenantId", None)
+            if t_tid and s_tid and t_tid != s_tid:
+                logger.warning("Cross-tenant device change approval blocked: teacher %s vs student %s", teacher_id, request_record.studentId)
+                return False
 
         if new_status == "APPROVED":
             await db.student.update(

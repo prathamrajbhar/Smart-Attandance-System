@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 
 interface EnterprisePaginationProps {
   totalItems: number;
@@ -10,6 +10,23 @@ interface EnterprisePaginationProps {
   onPageChange: (page: number) => void;
   onPageSizeChange?: (pageSize: number) => void;
   itemName?: string;
+  pageSizeOptions?: number[];
+}
+
+function getPageNumbers(currentPage: number, totalPages: number): (number | string)[] {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+
+  if (currentPage <= 4) {
+    return [1, 2, 3, 4, 5, "...", totalPages];
+  }
+
+  if (currentPage >= totalPages - 3) {
+    return [1, "...", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+  }
+
+  return [1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages];
 }
 
 export default function EnterprisePagination({
@@ -19,52 +36,93 @@ export default function EnterprisePagination({
   onPageChange,
   onPageSizeChange,
   itemName = "records",
-}: EnterprisePaginationProps): React.ReactElement {
+  pageSizeOptions = [10, 20, 50, 100],
+}: EnterprisePaginationProps): React.JSX.Element {
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
-  const startItem = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
-  const endItem = Math.min(currentPage * pageSize, totalItems);
-
+  const validPage = Math.min(Math.max(1, currentPage), totalPages);
+  const startItem = totalItems === 0 ? 0 : (validPage - 1) * pageSize + 1;
+  const endItem = Math.min(validPage * pageSize, totalItems);
+  const pageNumbers = getPageNumbers(validPage, totalPages);
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 py-3 border-t border-border bg-card rounded-b-xl text-xs text-muted-foreground">
-      <p>
-        Showing <span className="font-semibold text-foreground">{startItem}</span> to{" "}
-        <span className="font-semibold text-foreground">{endItem}</span> of{" "}
-        <span className="font-semibold text-foreground">{totalItems}</span> {itemName}{" "}
-        <span className="text-muted-foreground/60">(Page {currentPage} of {totalPages})</span>
+      <p className="select-none">
+        Showing <span className="font-semibold text-foreground">{startItem.toLocaleString()}</span> to{" "}
+        <span className="font-semibold text-foreground">{endItem.toLocaleString()}</span> of{" "}
+        <span className="font-semibold text-foreground">{totalItems.toLocaleString()}</span> {itemName}{" "}
+        <span className="text-muted-foreground/60">(Page {validPage} of {totalPages})</span>
       </p>
 
-      <div className="flex items-center gap-1.5 self-end sm:self-auto">
+      <div className="flex items-center gap-1 self-end sm:self-auto flex-wrap">
         <button
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage <= 1}
-          className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 disabled:pointer-events-none transition-colors shadow-2xs"
+          type="button"
+          onClick={() => onPageChange(1)}
+          disabled={validPage <= 1}
+          className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-border bg-card text-foreground hover:bg-muted disabled:opacity-40 disabled:pointer-events-none transition-colors shadow-2xs cursor-pointer"
+          title="First Page"
+          aria-label="First page"
+        >
+          <ChevronsLeft size={13} />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onPageChange(validPage - 1)}
+          disabled={validPage <= 1}
+          className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-border bg-card text-foreground hover:bg-muted disabled:opacity-40 disabled:pointer-events-none transition-colors shadow-2xs cursor-pointer"
           title="Previous Page"
+          aria-label="Previous page"
         >
           <ChevronLeft size={13} />
         </button>
 
-        {Array.from({ length: totalPages }, (_, i) => i + 1).slice(0, 5).map((page) => (
-          <button
-            key={page}
-            onClick={() => onPageChange(page)}
-            className={`h-7 min-w-7 px-2 rounded-md text-xs font-medium transition-colors ${
-              page === currentPage
-                ? "bg-primary text-primary-foreground font-semibold shadow-2xs"
-                : "border border-border bg-card text-foreground hover:bg-secondary"
-            }`}
-          >
-            {page}
-          </button>
-        ))}
+        {pageNumbers.map((page, idx) => {
+          if (typeof page === "string") {
+            return (
+              <span key={`ellipsis-${idx}`} className="h-7 min-w-7 flex items-center justify-center text-xs text-muted-foreground select-none">
+                ...
+              </span>
+            );
+          }
+
+          const isActive = page === validPage;
+          return (
+            <button
+              key={page}
+              type="button"
+              onClick={() => onPageChange(page)}
+              className={`h-7 min-w-7 px-2 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+                isActive
+                  ? "bg-primary text-primary-foreground font-semibold shadow-2xs"
+                  : "border border-border bg-card text-foreground hover:bg-muted"
+              }`}
+              aria-current={isActive ? "page" : undefined}
+            >
+              {page}
+            </button>
+          );
+        })}
 
         <button
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage >= totalPages}
-          className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 disabled:pointer-events-none transition-colors shadow-2xs"
+          type="button"
+          onClick={() => onPageChange(validPage + 1)}
+          disabled={validPage >= totalPages}
+          className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-border bg-card text-foreground hover:bg-muted disabled:opacity-40 disabled:pointer-events-none transition-colors shadow-2xs cursor-pointer"
           title="Next Page"
+          aria-label="Next page"
         >
           <ChevronRight size={13} />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onPageChange(totalPages)}
+          disabled={validPage >= totalPages}
+          className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-border bg-card text-foreground hover:bg-muted disabled:opacity-40 disabled:pointer-events-none transition-colors shadow-2xs cursor-pointer"
+          title="Last Page"
+          aria-label="Last page"
+        >
+          <ChevronsRight size={13} />
         </button>
 
         {onPageSizeChange && (
@@ -73,11 +131,14 @@ export default function EnterprisePagination({
             <select
               value={pageSize}
               onChange={(e) => onPageSizeChange(Number(e.target.value))}
-              className="h-7 px-1.5 rounded-md border border-border bg-card text-xs text-foreground cursor-pointer focus:outline-none"
+              className="h-7 px-1.5 rounded-md border border-border bg-card text-xs text-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
+              aria-label="Items per page"
             >
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
+              {pageSizeOptions.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
             </select>
           </div>
         )}

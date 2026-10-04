@@ -9,7 +9,7 @@ export class TeacherLeavesPage extends BasePage {
   constructor(page: Page) {
     super(page);
     this.pageHeader = page.getByRole("heading", { name: /Leave Requests/i });
-    this.searchInput = page.getByPlaceholder(/Search by name or enrollment/i);
+    this.searchInput = page.getByPlaceholder(/Search by.*enrollment/i);
     this.leavesTable = page.locator("table");
   }
 

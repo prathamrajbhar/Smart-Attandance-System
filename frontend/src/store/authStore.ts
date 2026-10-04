@@ -6,15 +6,20 @@ import type { UserProfile } from "@/types";
 interface AuthState {
   user: UserProfile | null;
   token: string | null;
+  tenantId: string | null;
   isAuthenticated: boolean;
   isHydrated: boolean;
+  isSuspended: boolean;
+  suspensionReason: string | null;
 }
 
 interface AuthActions {
   login: (token: string, user: UserProfile) => void;
   logout: () => void;
   setUser: (user: UserProfile) => void;
+  setTenantId: (tenantId: string | null) => void;
   setHydrated: (state: boolean) => void;
+  setSuspended: (suspended: boolean, reason?: string | null) => void;
 }
 
 type AuthStore = AuthState & AuthActions;
@@ -46,23 +51,45 @@ export const useAuthStore = create<AuthStore>()(
     (set) => ({
       user: null,
       token: null,
+      tenantId: null,
       isAuthenticated: false,
       isHydrated: false,
+      isSuspended: false,
+      suspensionReason: null,
 
       login: (token: string, user: UserProfile): void => {
-        set({ token, user, isAuthenticated: true });
+        const tenantId = user.tenant_id ?? user.tenant_slug ?? null;
+        if (typeof window !== "undefined" && tenantId) {
+          localStorage.setItem("sas-tenant-id", tenantId);
+        }
+        set({ token, user, tenantId, isAuthenticated: true, isSuspended: false, suspensionReason: null });
       },
 
       logout: (): void => {
-        set({ token: null, user: null, isAuthenticated: false });
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("sas-tenant-id");
+        }
+        set({ token: null, user: null, tenantId: null, isAuthenticated: false, isSuspended: false, suspensionReason: null });
       },
 
       setUser: (user: UserProfile): void => {
-        set({ user });
+        const tenantId = user.tenant_id ?? user.tenant_slug ?? null;
+        if (typeof window !== "undefined" && tenantId) {
+          localStorage.setItem("sas-tenant-id", tenantId);
+        }
+        set({ user, tenantId });
+      },
+
+      setTenantId: (tenantId: string | null): void => {
+        set({ tenantId });
       },
 
       setHydrated: (state: boolean): void => {
         set({ isHydrated: state });
+      },
+
+      setSuspended: (suspended: boolean, reason?: string | null): void => {
+        set({ isSuspended: suspended, suspensionReason: reason ?? null });
       },
     }),
     {

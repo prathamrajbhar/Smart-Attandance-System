@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import api, { getApiErrorMessage } from "@/lib/api";
 import GlassCard from "@/components/ui/GlassCard";
 import GlassLoader from "@/components/ui/GlassLoader";
+import { useDebounce } from "@/hooks/useDebounce";
 import EnrollStudentRow from "./EnrollStudentRow";
 import EnrollStudentFilters from "./EnrollStudentFilters";
 import EnrollHeader from "./EnrollHeader";
@@ -20,6 +21,7 @@ export default function EnrollStudentsPage(): React.ReactElement {
   const [departments, setDepartments] = useState<DepartmentResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 300);
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [selectedSemester, setSelectedSemester] = useState("");
   const [selectedBatch, setSelectedBatch] = useState("");
@@ -66,8 +68,8 @@ export default function EnrollStudentsPage(): React.ReactElement {
       if (selectedDepartment && s.department_name !== selectedDepartment) return false;
       if (selectedSemester && String(s.semester) !== selectedSemester) return false;
       if (selectedBatch && s.batch !== selectedBatch) return false;
-      if (searchQuery.trim()) {
-        const lowerQ = searchQuery.toLowerCase();
+      if (debouncedSearch.trim()) {
+        const lowerQ = debouncedSearch.toLowerCase();
         const nameMatch = `${s.first_name || ""} ${s.last_name || ""}`.toLowerCase().includes(lowerQ);
         const emailMatch = s.email.toLowerCase().includes(lowerQ);
         const enrollMatch = (s.enrollment_number || "").toLowerCase().includes(lowerQ);
@@ -76,7 +78,7 @@ export default function EnrollStudentsPage(): React.ReactElement {
       }
       return true;
     });
-  }, [students, searchQuery, selectedDepartment, selectedSemester, selectedBatch]);
+  }, [students, debouncedSearch, selectedDepartment, selectedSemester, selectedBatch]);
 
   const nonEnrolledFilteredStudents = useMemo(() => {
     return filteredStudents.filter((s) => !(cls?.enrolled_student_ids?.includes(s.id) ?? false));

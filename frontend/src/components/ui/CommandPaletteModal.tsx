@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Search, X, Loader2, CornerDownLeft, Sparkles, GraduationCap, Users, BookOpen, Calendar, Compass } from "lucide-react";
+import { Search, X, Loader2, CornerDownLeft, Sparkles } from "lucide-react";
+
 import { useAuthStore } from "@/store/authStore";
 import api from "@/lib/api";
 import { useDebounce } from "@/hooks/useDebounce";

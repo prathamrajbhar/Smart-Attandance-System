@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Bell, CheckCheck, X, Megaphone, Loader2, Inbox } from "lucide-react";
+import { Bell, CheckCheck, X, Megaphone, Loader2, Inbox, AlertCircle } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { useNotifications } from "@/hooks/useNotifications";
 import NotificationTabs from "./notifications/NotificationTabs";
@@ -23,6 +23,7 @@ export default function NotificationPopover({
     notifications,
     unreadCount,
     loading,
+    error,
     filterTab,
     setFilterTab,
     markAsRead,
@@ -87,6 +88,21 @@ export default function NotificationPopover({
             <div className="py-10 flex flex-col items-center justify-center gap-2 text-muted-foreground">
               <Loader2 size={18} className="animate-spin text-primary" />
               <p className="text-xs">Loading notifications...</p>
+            </div>
+          ) : error && notifications.length === 0 ? (
+            <div className="py-8 px-4 flex flex-col items-center justify-center text-center">
+              <div className="p-2.5 rounded-full bg-destructive/10 text-destructive mb-2">
+                <AlertCircle size={18} />
+              </div>
+              <p className="text-xs font-semibold text-foreground">Failed to load</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">{error}</p>
+              <button
+                type="button"
+                onClick={() => void refetch()}
+                className="mt-2 text-[11px] font-semibold text-primary hover:underline cursor-pointer"
+              >
+                Retry
+              </button>
             </div>
           ) : notifications.length === 0 ? (
             <div className="py-10 px-4 flex flex-col items-center justify-center text-center">

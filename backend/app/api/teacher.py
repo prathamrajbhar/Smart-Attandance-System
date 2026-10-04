@@ -99,11 +99,17 @@ async def get_flagged_attendance(
 
 
 @router.get("/attendance/{id}", response_model=FlaggedAttendanceResponse)
-async def get_attendance_by_id(id: str, attendance_repo: AttendanceRepository = Depends()):
+async def get_attendance_by_id(
+    id: str,
+    teacher: Teacher = Depends(get_current_teacher),
+    attendance_repo: AttendanceRepository = Depends(),
+):
     r = await attendance_repo.get_by_id(id)
     if not r:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attendance record not found")
     ac = r.session.academicClass if r.session else None
+    if ac and ac.teacherId != teacher.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this class attendance record")
     return FlaggedAttendanceResponse(
         id=r.id, enrollment_number=r.student.enrollmentNumber if r.student else "N/A",
         student_name=(f"{r.student.firstName or ''} {r.student.lastName or ''}".strip() if r.student else "Unknown Student"),
@@ -122,7 +128,7 @@ async def review_flagged_attendance(
     teacher: Teacher = Depends(get_current_teacher),
     attendance_service: AttendanceService = Depends(),
 ) -> MessageResponse:
-    if not await attendance_service.review_attendance(attendance_id=id, status=review.status, remarks=review.remarks):
+    if not await attendance_service.review_attendance(attendance_id=id, status=review.status, remarks=review.remarks, teacher_id=teacher.id):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Attendance record not found, is not currently flagged, or review failed.")
     return MessageResponse(status="success", message=f"Attendance record has been {review.status}.")
 

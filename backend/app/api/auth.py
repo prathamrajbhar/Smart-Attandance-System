@@ -1,9 +1,10 @@
 from datetime import datetime, timezone
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from prisma.models import User
 
-from app.api.dependencies import get_current_user, reusable_oauth2
+from app.api.dependencies import get_current_user, reusable_oauth2, auth_rate_limit
 from app.core.config import settings
 from app.core.logging_config import get_logger
 from app.core.security import decode_access_token
@@ -34,27 +35,9 @@ logger = get_logger("app.api.auth")
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-_RATE_LIMIT_WINDOW = 60
-_RATE_LIMIT_MAX = 10
-
-
-async def _rate_limit(request: Request) -> None:
-    if settings.ENVIRONMENT == "development":
-        return
-    forwarded = request.headers.get("X-Forwarded-For")
-    ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "unknown")
-    key = f"ratelimit:auth:{ip}"
-    r = await get_redis()
-    count = await r.incr(key)
-    if count == 1:
-        await r.expire(key, _RATE_LIMIT_WINDOW)
-    if count > _RATE_LIMIT_MAX:
-        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Too many requests. Please try again later.")
-
-
 @router.post("/login", response_model=Token)
 async def login(login_data: UserLogin, request: Request, auth_service: AuthService = Depends()) -> Token:
-    await _rate_limit(request)
+    await auth_rate_limit(request)
     token = await auth_service.authenticate(login_data)
     if not token:
         logger.warning("Failed login: %s", login_data.email)
@@ -92,12 +75,27 @@ async def get_me(current_user: User = Depends(get_current_user)) -> UserProfileR
                 designation_id=teacher.designationId,
             )
 
+    tid = getattr(current_user, "tenantId", None)
+    tenant_slug, tenant_name = None, None
+    if tid:
+        t = await db.tenant.find_unique(where={"id": tid})
+        if t:
+            if current_user.role != "SUPER_ADMIN" and t.status != "ACTIVE":
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Tenant account for '{t.name}' is currently {t.status.lower()}.",
+                )
+            tenant_slug, tenant_name = t.slug, t.name
+
     return UserProfileResponse(
         id=current_user.id,
         email=current_user.email,
         role=current_user.role,
         is_active=current_user.isActive,
         must_change_password=getattr(current_user, "mustChangePassword", False),
+        tenant_id=tid,
+        tenant_slug=tenant_slug,
+        tenant_name=tenant_name,
         student_profile=student_profile,
         teacher_profile=teacher_profile,
     )
@@ -139,7 +137,7 @@ async def request_device_change(
     request: Request,
     device_change_service: DeviceChangeService = Depends(),
 ) -> MessageResponse:
-    await _rate_limit(request)
+    await auth_rate_limit(request)
     await device_change_service.request_device_change(data)
     return MessageResponse(status="success", message="Device change request submitted successfully.")
 
@@ -150,7 +148,7 @@ async def forgot_password(
     request: Request,
     auth_service: AuthService = Depends(),
 ) -> MessageResponse:
-    await _rate_limit(request)
+    await auth_rate_limit(request)
     frontend_url = resolve_frontend_url(request)
     await auth_service.request_password_reset(data.email, frontend_url=frontend_url)
     return MessageResponse(status="success", message="If the email is registered, a password reset link has been dispatched.")
@@ -162,7 +160,7 @@ async def reset_password(
     request: Request,
     auth_service: AuthService = Depends(),
 ) -> MessageResponse:
-    await _rate_limit(request)
+    await auth_rate_limit(request)
     await auth_service.reset_password(token=data.token, new_password=data.new_password)
     return MessageResponse(status="success", message="Password reset successfully. You can now login with your new credentials.")
 
@@ -196,11 +194,50 @@ async def complete_onboarding(
     request: Request,
     auth_service: AuthService = Depends(),
 ) -> MessageResponse:
-    await _rate_limit(request)
+    await auth_rate_limit(request)
     await auth_service.complete_onboarding(token=data.token, password=data.password)
     return MessageResponse(status="success", message="Account onboarding completed. You may now login.")
 
 
 @router.get("/config", response_model=SystemConfigResponse)
-async def get_public_system_config(config_service: SystemConfigService = Depends()):
-    return await config_service.get_config()
+async def get_public_system_config(
+    request: Request,
+    tenant_id: Optional[str] = None,
+    config_service: SystemConfigService = Depends(),
+):
+    tid = tenant_id or request.headers.get("X-Tenant-ID")
+    return await config_service.get_config(tenant_id=tid)
+
+
+@router.get("/sso/config")
+async def get_sso_config(tenant_slug: str = "default-institution"):
+    from app.services.sso_service import SSOService
+    try:
+        return await SSOService.get_tenant_sso_config(tenant_slug)
+    except ValueError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
+
+
+@router.post("/sso/saml/acs")
+async def saml_assertion_consumer(
+    request: Request,
+    tenant_id: Optional[str] = None,
+):
+    from app.services.sso_service import SSOService
+    form_data = await request.form()
+    saml_response = form_data.get("SAMLResponse")
+    if not saml_response:
+        try:
+            body = await request.json()
+            saml_response = body.get("SAMLResponse")
+        except Exception:
+            saml_response = None
+
+    if not saml_response:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing 'SAMLResponse' in payload.")
+
+    try:
+        return await SSOService.process_saml_assertion(str(saml_response), tenant_id=tenant_id)
+    except ValueError as err:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(err))
+

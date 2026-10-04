@@ -72,5 +72,15 @@ class Settings(BaseSettings):
         description="Logging level: DEBUG, INFO, WARNING, ERROR, CRITICAL"
     )
 
+    # Gemini AI Timetable Parser Configuration
+    GEMINI_API_KEY: str = Field(
+        default="",
+        description="Google Gemini API Key for timetable document parsing (configured in .env)"
+    )
+    GEMINI_MODEL: str = Field(
+        default="gemini-3.5-flash",
+        description="Gemini model for document timetable parsing (configured in .env)"
+    )
+
 
 settings = Settings()

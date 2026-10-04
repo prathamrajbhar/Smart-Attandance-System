@@ -2,8 +2,8 @@ from datetime import datetime
 from typing import List, Literal, Optional
 from pydantic import BaseModel, ConfigDict, Field
 
-NotificationType = Literal["info", "success", "warning", "danger"]
-NotificationCategory = Literal["attendance", "leave", "device", "security", "system"]
+NotificationType = Literal["info", "success", "warning", "danger", "critical"]
+NotificationCategory = Literal["attendance", "leave", "device", "security", "system", "maintenance", "update"]
 
 
 class NotificationResponse(BaseModel):
@@ -38,3 +38,9 @@ class NotificationBroadcastCreate(BaseModel):
     type: NotificationType = "info"
     category: NotificationCategory = "system"
     link: Optional[str] = Field(None, max_length=255)
+
+
+class NotificationBulkDeleteRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    ids: List[str] = Field(..., min_length=1)

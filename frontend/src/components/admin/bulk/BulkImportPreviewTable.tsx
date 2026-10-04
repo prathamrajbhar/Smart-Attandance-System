@@ -28,16 +28,16 @@ export default function BulkImportPreviewTable({
 
   return (
     <div className="space-y-4">
-      {/* Batch Overview Strip */}
+      {/* Overview Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="p-3 bg-secondary/30 rounded-xl border border-border flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
             {records.length}
           </div>
           <div>
-            <p className="text-[11px] text-muted-foreground font-medium">Parsed Records</p>
+            <p className="text-[11px] text-muted-foreground font-medium">Records Found</p>
             <p className="text-xs font-semibold text-foreground">
-              {validCount} valid {invalidCount > 0 && `• ${invalidCount} issues`}
+              {validCount} ready {invalidCount > 0 && `• ${invalidCount} to review`}
             </p>
           </div>
         </div>
@@ -47,7 +47,7 @@ export default function BulkImportPreviewTable({
             <Layers size={16} />
           </div>
           <div>
-            <p className="text-[11px] text-muted-foreground font-medium">Batch Architecture</p>
+            <p className="text-[11px] text-muted-foreground font-medium">Batch Processing</p>
             <p className="text-xs font-semibold text-foreground">
               {batchCount} {batchCount === 1 ? "batch" : "batches"} (10 per batch)
             </p>
@@ -61,7 +61,7 @@ export default function BulkImportPreviewTable({
                 <Mail size={16} />
               </div>
               <div>
-                <p className="text-[11px] text-muted-foreground font-medium">Email Invites</p>
+                <p className="text-[11px] text-muted-foreground font-medium">Send Welcome Emails</p>
                 <p className="text-xs font-semibold text-foreground">{sendInvite ? "Enabled" : "Disabled"}</p>
               </div>
             </div>
@@ -81,8 +81,8 @@ export default function BulkImportPreviewTable({
               ✓
             </div>
             <div>
-              <p className="text-[11px] text-muted-foreground font-medium">Direct Ingestion</p>
-              <p className="text-xs font-semibold text-foreground">Immediate DB Sync</p>
+              <p className="text-[11px] text-muted-foreground font-medium">Import Status</p>
+              <p className="text-xs font-semibold text-foreground">Ready to Import</p>
             </div>
           </div>
         )}
@@ -98,64 +98,70 @@ export default function BulkImportPreviewTable({
                 <th className="py-2 px-3">{entityType === "classes" ? "Class Name" : "Name"}</th>
                 <th className="py-2 px-3">
                   {entityType === "students"
-                    ? "Enrollment No"
+                    ? "Enrollment No."
                     : entityType === "teachers"
                     ? "Employee ID"
-                    : entityType === "classrooms"
-                    ? "Building"
                     : entityType === "classes"
                     ? "Subject Code"
+                    : entityType === "classrooms"
+                    ? "Building"
                     : "Code"}
                 </th>
                 <th className="py-2 px-3">
                   {entityType === "classes"
                     ? "Teacher Email"
-                    : entityType === "departments"
-                    ? "Head"
                     : entityType === "classrooms"
                     ? "Capacity"
-                    : entityType === "subjects" || entityType === "designations"
+                    : entityType === "departments" || entityType === "subjects" || entityType === "designations"
                     ? "Description"
                     : "Email"}
                 </th>
-                <th className="py-2 px-3 w-24">Status</th>
-                <th className="py-2 px-2 w-10 text-center">Action</th>
+                <th className="py-2 px-3 w-28 text-center">Status</th>
+                <th className="py-2 px-3 w-12 text-center">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
-              {records.map((rec, index) => (
-                <tr key={rec.id} className="hover:bg-secondary/20 transition-colors">
-                  <td className="py-2 px-3 text-center text-muted-foreground font-mono text-[11px]">{index + 1}</td>
+            <tbody className="divide-y divide-border/60">
+              {records.map((r, idx) => (
+                <tr
+                  key={r.id}
+                  className={`hover:bg-secondary/20 transition-colors ${
+                    !r.isValid ? "bg-rose-500/5 text-rose-600 dark:text-rose-400" : ""
+                  }`}
+                >
+                  <td className="py-2 px-3 text-center text-muted-foreground font-mono text-[11px]">
+                    {idx + 1}
+                  </td>
                   <td className="py-2 px-3 font-medium text-foreground">
-                    {entityType === "students" || entityType === "teachers"
-                      ? `${rec.first_name} ${rec.last_name}`
-                      : rec.first_name}
+                    {entityType === "departments" || entityType === "subjects" || entityType === "classrooms" || entityType === "designations" || entityType === "classes"
+                      ? r.first_name
+                      : `${r.first_name} ${r.last_name}`}
                   </td>
-                  <td className="py-2 px-3 font-mono text-[11px] text-foreground/80">{rec.identifier || "—"}</td>
-                  <td className="py-2 px-3 text-muted-foreground font-mono text-[11px] truncate max-w-[150px]">
-                    {entityType === "departments"
-                      ? rec.last_name || "—"
-                      : entityType === "classrooms"
-                      ? rec.max_students ? String(rec.max_students) : "—"
-                      : rec.email || "—"}
+                  <td className="py-2 px-3 font-mono text-[11px] text-muted-foreground">
+                    {r.identifier || "—"}
                   </td>
-                  <td className="py-2 px-3">
-                    {rec.isValid ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] text-emerald-500 font-medium bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                        <CheckCircle size={10} /> Ready
+                  <td className="py-2 px-3 text-muted-foreground truncate max-w-[160px]">
+                    {entityType === "classrooms" ? r.max_students || "—" : r.email || "—"}
+                  </td>
+                  <td className="py-2 px-3 text-center">
+                    {r.isValid ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                        <CheckCircle size={12} /> Ready
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-[11px] text-amber-500 font-medium bg-amber-500/10 px-2 py-0.5 rounded-full" title={rec.validationError}>
-                        <AlertTriangle size={10} /> Issue
+                      <span
+                        title={r.validationError}
+                        className="inline-flex items-center gap-1 text-[11px] text-rose-600 dark:text-rose-400 font-medium cursor-help"
+                      >
+                        <AlertTriangle size={12} /> Review
                       </span>
                     )}
                   </td>
-                  <td className="py-2 px-2 text-center">
+                  <td className="py-2 px-3 text-center">
                     <button
                       type="button"
-                      onClick={() => onRemoveRecord(rec.id)}
-                      className="text-muted-foreground hover:text-red-500 p-1 rounded transition-colors"
-                      title="Remove record"
+                      onClick={() => onRemoveRecord(r.id)}
+                      className="p-1 rounded text-muted-foreground hover:text-rose-500 transition-colors cursor-pointer"
+                      title="Remove row"
                     >
                       <Trash2 size={13} />
                     </button>
@@ -165,17 +171,6 @@ export default function BulkImportPreviewTable({
             </tbody>
           </table>
         </div>
-      </div>
-
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span>Showing all {records.length} parsed records</span>
-        <button
-          type="button"
-          onClick={onReset}
-          className="text-muted-foreground hover:text-foreground underline transition-colors cursor-pointer"
-        >
-          Upload a different file
-        </button>
       </div>
     </div>
   );

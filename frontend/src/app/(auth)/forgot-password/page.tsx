@@ -69,15 +69,17 @@ export default function ForgotPasswordPage(): React.ReactElement {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-      <div className="w-full max-w-md">
+    <div className="w-full max-w-md mx-auto my-auto py-8">
+      <div className="w-full">
         <div className="text-center mb-6">
-          <div className="inline-flex p-3 rounded-xl bg-primary text-primary-foreground shadow-sm mb-3">
-            <KeyRound size={26} />
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground font-[Outfit]">
-            Smart Attendance
-          </h1>
+          <Link href="/login" className="inline-block group cursor-pointer hover:opacity-90 transition-opacity">
+            <div className="inline-flex p-3 rounded-xl bg-primary text-primary-foreground shadow-sm mb-3 group-hover:scale-105 transition-transform">
+              <KeyRound size={26} />
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground font-[Outfit]">
+              Smart Attendance
+            </h1>
+          </Link>
           <p className="text-xs text-muted-foreground mt-1">Password Recovery</p>
         </div>
 

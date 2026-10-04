@@ -17,6 +17,9 @@ const String kHiveBoxConfig = 'sas_config';
 const String kSecureKeyJwt = 'sas_jwt_token';
 const String kSecureKeyDeviceUuid = 'sas_device_uuid';
 const String kSecureKeyUserRole = 'sas_user_role';
+const String kSecureKeyTenantId = 'sas_tenant_id';
+const String kSecureKeyTenantSlug = 'sas_tenant_slug';
+const String kSecureKeyTenantName = 'sas_tenant_name';
 
 const int kConnectTimeout = 15000;
 const int kReceiveTimeout = 15000;

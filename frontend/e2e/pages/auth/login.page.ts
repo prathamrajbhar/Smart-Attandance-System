@@ -28,8 +28,13 @@ export class LoginPage extends BasePage {
     await this.submitButton.click();
   }
 
-  async expectLoginSuccess(role: "ADMIN" | "TEACHER"): Promise<void> {
-    const expectedUrl = role === "ADMIN" ? /\/admin\/dashboard/ : /\/teacher\/classes|\/teacher\/dashboard/;
+  async expectLoginSuccess(role: "ADMIN" | "TEACHER" | "SUPER_ADMIN"): Promise<void> {
+    const expectedUrl =
+      role === "SUPER_ADMIN"
+        ? /\/super-admin\/dashboard/
+        : role === "ADMIN"
+        ? /\/admin\/dashboard/
+        : /\/teacher\/classes|\/teacher\/dashboard/;
     await this.page.waitForURL(expectedUrl, { timeout: 15000 });
   }
 

@@ -20,3 +20,6 @@
 
 ## 5. Version Control & Automated Delivery
 - **Commit & Push on Major Changes**: Whenever a major feature, architectural update, security improvement, or core third-party integration is completed and verified, create a clear semantic git commit and push the changes directly to the remote repository (`origin/main`).
+
+## 6. Database & Prisma Schema Standards
+- **Never Add `output` in `schema.prisma`**: The `generator client` block in `backend/prisma/schema.prisma` must never contain hardcoded `output` directory paths (e.g. `output = ...`). Custom output paths break containerized production Docker builds and CI/CD pipelines where Python packages and site-packages are resolved dynamically.

@@ -14,10 +14,9 @@ test.describe("07: Teacher Portal - Analytics, Review, Leaves & Profile", () => 
     await teacherReviewPage.goto();
     await teacherReviewPage.expectReviewQueueLoaded();
 
-    const isAllClear = await page.getByText(/All Clear|No flagged records/i).isVisible().catch(() => false);
-    if (!isAllClear) {
-      await expect(teacherReviewPage.searchInput).toBeVisible();
-    }
+    await expect(
+      teacherReviewPage.searchInput.or(page.getByText(/All Clear|No flagged records/i).first())
+    ).toBeVisible({ timeout: 10000 });
   });
 
   test("validates Student Leave Requests list and empty state handling", async ({
@@ -27,10 +26,7 @@ test.describe("07: Teacher Portal - Analytics, Review, Leaves & Profile", () => 
     await teacherLeavesPage.goto();
     await teacherLeavesPage.expectLeavesPageLoaded();
 
-    const isAllClear = await page.getByText(/All Clear|No pending leave/i).isVisible().catch(() => false);
-    if (!isAllClear) {
-      await expect(teacherLeavesPage.searchInput).toBeVisible();
-    }
+    await expect(teacherLeavesPage.searchInput).toBeVisible({ timeout: 10000 });
   });
 
   test("validates Device Change Requests and refresh button", async ({

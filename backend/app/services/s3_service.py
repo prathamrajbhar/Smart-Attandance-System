@@ -75,7 +75,12 @@ class S3Service:
         )
         return self.get_file_url(key)
 
-    async def upload_uploadfile(self, upload_file: UploadFile, folder: str) -> tuple[str, str, bytes]:
+    async def upload_uploadfile(
+        self,
+        upload_file: UploadFile,
+        folder: str,
+        tenant_id: Optional[str] = None,
+    ) -> tuple[str, str, bytes]:
         contents = await upload_file.read()
         await upload_file.seek(0)
         ext = os.path.splitext(upload_file.filename)[1].lower() if upload_file.filename else (mimetypes.guess_extension(upload_file.content_type or "") or ".jpg")
@@ -83,7 +88,20 @@ class S3Service:
             ext = ".jpg"
         if not ext:
             ext = ".jpg"
-        key = f"{folder}/{uuid.uuid4()}{ext}"
+
+        effective_tenant = tenant_id
+        if not effective_tenant:
+            try:
+                from app.middleware.tenant import get_current_tenant_id
+                effective_tenant = get_current_tenant_id()
+            except Exception:
+                effective_tenant = None
+
+        if effective_tenant and effective_tenant != "default-institution":
+            key = f"tenants/{effective_tenant}/{folder}/{uuid.uuid4()}{ext}"
+        else:
+            key = f"{folder}/{uuid.uuid4()}{ext}"
+
         content_type = upload_file.content_type or mimetypes.guess_type(upload_file.filename or "")[0] or "application/octet-stream"
         url = self.upload_bytes(contents, key, content_type=content_type)
         return key, url, contents

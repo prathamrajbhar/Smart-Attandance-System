@@ -86,6 +86,31 @@ class ProfileHeaderCard extends StatelessWidget {
                     ),
                   ),
                 ],
+                if (user?.tenantName != null && (user.tenantName as String).isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.account_balance_rounded,
+                        size: 11,
+                        color: SasColors.textMuted,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          user.tenantName as String,
+                          style: const TextStyle(
+                            color: SasColors.textMuted,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 8),
                 Row(
                   children: [

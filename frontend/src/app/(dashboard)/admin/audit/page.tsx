@@ -1,22 +1,21 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Download } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "@/lib/api";
 import GlassBreadcrumb from "@/components/ui/GlassBreadcrumb";
 import GlassPageHeader from "@/components/ui/GlassPageHeader";
 import ActivityFilterBar, { type ActivityCategory } from "@/components/admin/ActivityFilterBar";
-import ActivityLogTable, { formatEventName } from "@/components/admin/ActivityLogTable";
-import ActivityDetailModal from "@/components/admin/ActivityDetailModal";
+import ActivityLogTable from "@/components/admin/ActivityLogTable";
 import { useAuditTableQuery } from "@/hooks/useAuditTableQuery";
 import type { AuditLogResponse } from "@/types";
 
 export default function AuditPage(): React.ReactElement {
+  const router = useRouter();
   const [exporting, setExporting] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<ActivityCategory>("ALL");
-  const [selectedEvent, setSelectedEvent] = useState<(AuditLogResponse & Record<string, unknown>) | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const {
     data: logs,
@@ -77,8 +76,7 @@ export default function AuditPage(): React.ReactElement {
   };
 
   const openInspector = (record: AuditLogResponse & Record<string, unknown>) => {
-    setSelectedEvent(record);
-    setIsModalOpen(true);
+    router.push(`/admin/audit/${record.id}`);
   };
 
   return (
@@ -132,14 +130,6 @@ export default function AuditPage(): React.ReactElement {
         onPageChange={setCurrentPage}
         onPageSizeChange={setPageSize}
         onInspect={openInspector}
-      />
-
-      {/* Inspector Slide-over Modal */}
-      <ActivityDetailModal
-        event={selectedEvent}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        formatEventName={formatEventName}
       />
     </div>
   );

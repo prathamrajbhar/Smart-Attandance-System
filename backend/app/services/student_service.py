@@ -1,8 +1,11 @@
 from fastapi import HTTPException, status
 
+from app.core.logging_config import get_logger
 from app.db.client import db
 from app.repositories.student_repo import StudentRepository
 from app.schemas.student import StudentAttendanceItem, StudentAttendanceHistoryResponse, StudentClassResponse
+
+logger = get_logger("app.student.service")
 
 
 class StudentService:
@@ -38,10 +41,13 @@ class StudentService:
                     expired_session_ids.append(s.id)
 
         if expired_session_ids:
-            await db.session.update_many(
-                where={"id": {"in": expired_session_ids}},
-                data={"isActive": False}
-            )
+            from app.services.session_service import SessionService
+            sess_svc = SessionService()
+            for s_id in expired_session_ids:
+                try:
+                    await sess_svc.close_session(s_id)
+                except Exception as ex:
+                    logger.warning("Could not cleanly close expired session %s: %s", s_id, ex)
 
         res = []
         for e in enrollments:
@@ -258,7 +264,8 @@ class StudentService:
                 "enrollment_number": student.enrollmentNumber,
             }
             await manager.send_personal_message(msg, student_id=student.id)
-            await manager.broadcast_to_teachers(msg)
+            tid = session.academicClass.tenantId if (session.academicClass and hasattr(session.academicClass, "tenantId")) else None
+            await manager.broadcast_to_teachers(msg, tenant_id=tid)
         except Exception:
             pass
 

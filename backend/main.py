@@ -1,11 +1,15 @@
 import os
 
+os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
+os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
+
 try:
     import sentry_sdk
     sentry_sdk.init(
         dsn=os.getenv("SENTRY_DSN", "https://9e62f4cdab9492bcc05c312bddeb6918@o4512113532010496.ingest.us.sentry.io/4512113546297344"),
         enable_logs=True,
-        send_default_pii=True,
+        send_default_pii=os.getenv("ENVIRONMENT") == "development",
         traces_sample_rate=1.0,
         profile_session_sample_rate=1.0,
         profile_lifecycle="trace",
@@ -16,7 +20,7 @@ except ImportError:
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -27,8 +31,11 @@ from app.db.client import connect_db, disconnect_db
 from app.db.redis import connect_redis, disconnect_redis
 from app.services.s3_service import s3_service
 from app.services.scheduler import session_scheduler
-from app.api import auth, student, teacher, admin, logs, health, notifications, ws as ws_module, search
+from app.api import auth, student, teacher, admin, logs, health, notifications, ws as ws_module, search, super_admin, scim, timetable
 from app.middleware.request_logging import RequestLoggingMiddleware
+from app.middleware.security_headers import SecurityHeadersMiddleware
+from app.middleware.tenant import TenantResolutionMiddleware
+
 
 setup_logging(level=settings.LOG_LEVEL)
 logger = get_logger("app.main")
@@ -61,7 +68,9 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(TenantResolutionMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.FRONTEND_URL.split(",") if "," in settings.FRONTEND_URL else [settings.FRONTEND_URL],
@@ -73,6 +82,7 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(health.router, prefix=settings.API_V1_STR)
 app.include_router(auth.router, prefix=settings.API_V1_STR)
+app.include_router(super_admin.router, prefix=settings.API_V1_STR)
 app.include_router(student.router, prefix=settings.API_V1_STR)
 app.include_router(teacher.router, prefix=settings.API_V1_STR)
 app.include_router(admin.router, prefix=settings.API_V1_STR)
@@ -80,12 +90,17 @@ app.include_router(logs.router, prefix=settings.API_V1_STR)
 app.include_router(notifications.router, prefix=settings.API_V1_STR)
 app.include_router(ws_module.router, prefix=settings.API_V1_STR)
 app.include_router(search.router, prefix=settings.API_V1_STR)
+app.include_router(scim.router, prefix=settings.API_V1_STR)
+app.include_router(timetable.router, prefix=settings.API_V1_STR)
 
 
 @app.get("/sentry-debug")
 async def trigger_sentry_debug():
+    if settings.ENVIRONMENT != "development":
+        raise HTTPException(status_code=404, detail="Not found")
     division_by_zero = 1 / 0
     return {"division_by_zero": division_by_zero}
+
 
 
 @app.exception_handler(RequestValidationError)

@@ -73,6 +73,34 @@ class HomeWelcomeCard extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (user?.tenantName != null && (user.tenantName as String).isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 2),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.account_balance_rounded,
+                        size: 10,
+                        color: SasColors.accentEmerald,
+                      ),
+                      const SizedBox(width: 3),
+                      Flexible(
+                        child: Text(
+                          user.tenantName as String,
+                          style: const TextStyle(
+                            color: SasColors.accentEmerald,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.1,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               Text(
                 _getGreeting(),
                 style: const TextStyle(

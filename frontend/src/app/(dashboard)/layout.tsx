@@ -5,13 +5,18 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 import Sidebar from "@/components/ui/Sidebar";
 import Header from "@/components/ui/Header";
+import Footer from "@/components/ui/Footer";
 import GlassLoader from "@/components/ui/GlassLoader";
+import { usePlatformWebSocket } from "@/hooks/usePlatformWebSocket";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }): React.ReactElement {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, isHydrated, user } = useAuthStore();
+  const { isAuthenticated, isHydrated, user, isSuspended } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Connect WebSocket — handles real-time tenant suspension push
+  usePlatformWebSocket();
 
   useEffect(() => {
     if (!isHydrated) return;
@@ -21,12 +26,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       return;
     }
 
-    if (user?.role === "TEACHER" && pathname.startsWith("/admin")) {
+    const isSuperAdminRole = user?.role === "SUPER_ADMIN";
+    const isAdminRole = user?.role === "ADMIN" || user?.role === "TENANT_ADMIN";
+    const isTeacherRole = user?.role === "TEACHER";
+
+    if (isSuspended && !isSuperAdminRole) {
+      router.replace("/suspended");
+      return;
+    }
+
+    if (user?.role === "STUDENT" || user?.role === "PARENT") {
+      router.replace("/login");
+      return;
+    }
+
+    if (isTeacherRole && (pathname.startsWith("/admin") || pathname.startsWith("/super-admin"))) {
       router.replace("/teacher/classes");
       return;
     }
-    if (user?.role === "ADMIN" && pathname.startsWith("/teacher")) {
+    if (isAdminRole && (pathname.startsWith("/teacher") || pathname.startsWith("/super-admin"))) {
       router.replace("/admin/dashboard");
+      return;
+    }
+    if (isSuperAdminRole && pathname.startsWith("/teacher")) {
+      router.replace("/super-admin/dashboard");
       return;
     }
   }, [isHydrated, isAuthenticated, user, pathname, router]);
@@ -40,14 +63,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-background text-foreground">
+    <div className="min-h-screen flex flex-col md:flex-row bg-background text-foreground overflow-x-hidden">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className="flex-1 md:ml-[260px] min-w-0 flex flex-col transition-all duration-200">
+      <div className="flex-1 md:ml-[260px] min-w-0 flex flex-col transition-all duration-200 min-h-screen">
         <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
-        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 max-w-7xl w-full mx-auto">
+        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 max-w-7xl w-full mx-auto min-w-0">
           {children}
         </main>
+        <Footer />
       </div>
     </div>
   );

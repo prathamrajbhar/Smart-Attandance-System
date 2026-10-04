@@ -1,0 +1,21 @@
+name,code,description
+Assistant Professor (Grade-I),ASST_PROF_G1,Entry level faculty teaching undergraduate and postgraduate courses
+Assistant Professor (Grade-II),ASST_PROF_G2,Mid level teaching and research faculty with PhD
+Associate Professor,ASSOC_PROF,Senior faculty with expertise in research publication and teaching
+Professor,PROF,Full professor leading research groups and academic programs
+Professor & Head of Department,HOD,Department Chair responsible for academic and administrative operations
+Dean of Academic Affairs,DEAN_ACAD,Administrator responsible for academic curriculum scheduling and standards
+Dean of Student Affairs,DEAN_STUD,Administrator managing student welfare clubs and campus life
+Dean of Research & Development,DEAN_RND,Administrator overseeing research grants publications and patents
+Visiting Professor,VISIT_PROF,Adjunct or guest faculty from industry or foreign universities
+Adjunct Faculty,ADJUNCT_FAC,Industry practitioner delivering specialized domain courses
+Emeritus Professor,EMERITUS_PROF,Distinguished retired professor continuing research and advisory services
+Lab Assistant,LAB_ASST,Technical staff assisting in laboratory setup and practical sessions
+Senior Lab Technician,SR_LAB_TECH,Technical specialist overseeing complex laboratory machinery
+Workshop Superintendent,WORKSHOP_SUP,In-charge of central mechanical workshop and fabrication labs
+Training & Placement Officer,TPO,Officer facilitating corporate placements and campus recruitment
+Registrar,REGISTRAR,Chief administrative officer handling university records and admissions
+System Administrator,SYS_ADMIN,IT professional managing institute network and server infrastructure
+Research Associate,RESEARCH_ASSOC,Postdoctoral researcher working on funded projects
+Teaching Assistant,TEACHING_ASST,Postgraduate student assisting in grading and tutorial sessions
+Librarian,LIBRARIAN,Chief custodian of central library resources and electronic journals

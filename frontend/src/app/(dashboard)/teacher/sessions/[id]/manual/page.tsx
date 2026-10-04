@@ -9,6 +9,7 @@ import GlassBreadcrumb from "@/components/ui/GlassBreadcrumb";
 import GlassPageHeader from "@/components/ui/GlassPageHeader";
 import GlassCard from "@/components/ui/GlassCard";
 import GlassLoader from "@/components/ui/GlassLoader";
+import { useDebounce } from "@/hooks/useDebounce";
 import ManualAttendanceStats from "./ManualAttendanceStats";
 import ManualAttendanceStudentRow from "./ManualAttendanceStudentRow";
 import type { SessionAttendanceResponse, BulkMarkRequest } from "@/types";
@@ -22,10 +23,10 @@ export default function ManualAttendancePage(): React.ReactElement {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 300);
   const [statusMap, setStatusMap] = useState<Map<string, AttendanceStatus>>(new Map());
   const [focusedIndex, setFocusedIndex] = useState<number>(0);
   const itemRefs = useRef<Map<string, HTMLDivElement>>(new Map());
-
 
   useEffect(() => {
     let isMounted = true;
@@ -84,14 +85,14 @@ export default function ManualAttendancePage(): React.ReactElement {
   }
 
   async function handleSubmit(): Promise<void> {
+    if (statusMap.size === 0) {
+      toast.error("No students enrolled in this session to mark attendance");
+      return;
+    }
     setSubmitting(true);
     try {
-      const records = Array.from(statusMap.entries()).map(([student_id, status]) => ({
-        student_id,
-        status,
-      }));
-      const payload: BulkMarkRequest = { records };
-      await api.post(`/teacher/sessions/${id}/mark-bulk`, payload);
+      const records = Array.from(statusMap.entries()).map(([student_id, status]) => ({ student_id, status }));
+      await api.post(`/teacher/sessions/${id}/mark-bulk`, { records } as BulkMarkRequest);
       toast.success("Attendance override applied successfully");
       router.push(`/teacher/sessions/${id}/roster`);
     } catch (err: unknown) {
@@ -107,15 +108,15 @@ export default function ManualAttendancePage(): React.ReactElement {
   const presentPercent = totalCount > 0 ? Math.round((presentCount / totalCount) * 100) : 0;
 
   const filteredStudents = useMemo(() => {
-    return roster
-      ? roster.roster.filter((s) => {
-          const name = (s.full_name || (s as { student_name?: string }).student_name || "").toLowerCase();
-          const enroll = (s.enrollment_number || "").toLowerCase();
-          const q = searchQuery.toLowerCase();
-          return name.includes(q) || enroll.includes(q);
-        })
-      : [];
-  }, [roster, searchQuery]);
+    if (!roster) return [];
+    if (!debouncedSearch.trim()) return roster.roster;
+    const q = debouncedSearch.toLowerCase();
+    return roster.roster.filter((s) => {
+      const name = (s.full_name || (s as { student_name?: string }).student_name || "").toLowerCase();
+      const enroll = (s.enrollment_number || "").toLowerCase();
+      return name.includes(q) || enroll.includes(q);
+    });
+  }, [roster, debouncedSearch]);
 
   if (loading) return <GlassLoader text="Loading session roster..." />;
   if (!roster) return <div className="text-center py-20 text-muted-foreground font-medium">Session not found</div>;

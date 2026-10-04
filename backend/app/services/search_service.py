@@ -11,8 +11,9 @@ class GlobalSearchService:
 
     async def search(self, user: User, query: str) -> GlobalSearchResponse:
         clean_q = query.strip()
+        tid = getattr(user, "tenantId", None)
         if user.role == "ADMIN":
-            return await self.search_for_admin(user.id, clean_q)
+            return await self.search_for_admin(user.id, clean_q, tenant_id=tid)
         elif user.role == "TEACHER":
             return await self.search_for_teacher(user.id, clean_q)
         else:
@@ -195,7 +196,7 @@ class GlobalSearchService:
             results=results,
         )
 
-    async def search_for_admin(self, user_id: str, query: str) -> GlobalSearchResponse:
+    async def search_for_admin(self, user_id: str, query: str, tenant_id: Optional[str] = None) -> GlobalSearchResponse:
         results: List[SearchResultItem] = []
 
         actions = [
@@ -269,16 +270,20 @@ class GlobalSearchService:
             if q_lower in act.title.lower() or (act.subtitle and q_lower in act.subtitle.lower()):
                 results.append(act)
 
-        # 1. Search Students
+        # 1. Search Students (Tenant Scoped)
+        student_where: dict = {
+            "OR": [
+                {"firstName": {"contains": query, "mode": "insensitive"}},
+                {"lastName": {"contains": query, "mode": "insensitive"}},
+                {"enrollmentNumber": {"contains": query, "mode": "insensitive"}},
+                {"user": {"is": {"email": {"contains": query, "mode": "insensitive"}}}},
+            ]
+        }
+        if tenant_id:
+            student_where["user"] = {"is": {"tenantId": tenant_id}}
+
         students = await db.student.find_many(
-            where={
-                "OR": [
-                    {"firstName": {"contains": query, "mode": "insensitive"}},
-                    {"lastName": {"contains": query, "mode": "insensitive"}},
-                    {"enrollmentNumber": {"contains": query, "mode": "insensitive"}},
-                    {"user": {"is": {"email": {"contains": query, "mode": "insensitive"}}}},
-                ]
-            },
+            where=student_where,
             include={"user": True, "department": True},
             take=12,
         )
@@ -296,23 +301,27 @@ class GlobalSearchService:
                 badge="Student",
             ))
 
-        # 2. Search Faculty / Teachers
+        # 2. Search Faculty / Teachers (Tenant Scoped)
+        teacher_where: dict = {
+            "OR": [
+                {"firstName": {"contains": query, "mode": "insensitive"}},
+                {"lastName": {"contains": query, "mode": "insensitive"}},
+                {"employeeId": {"contains": query, "mode": "insensitive"}},
+                {"user": {"is": {"email": {"contains": query, "mode": "insensitive"}}}},
+            ]
+        }
+        if tenant_id:
+            teacher_where["user"] = {"is": {"tenantId": tenant_id}}
+
         teachers = await db.teacher.find_many(
-            where={
-                "OR": [
-                    {"firstName": {"contains": query, "mode": "insensitive"}},
-                    {"lastName": {"contains": query, "mode": "insensitive"}},
-                    {"employeeId": {"contains": query, "mode": "insensitive"}},
-                    {"user": {"is": {"email": {"contains": query, "mode": "insensitive"}}}},
-                ]
-            },
+            where=teacher_where,
             include={"user": True, "department": True, "designation": True},
             take=10,
         )
         for t in teachers:
             full_name = self._resolve_name(t.firstName, t.lastName)
             dept = t.department.name if t.department else "Faculty"
-            desig = t.designation.title if t.designation else "Professor"
+            desig = t.designation.name if t.designation and hasattr(t.designation, "name") else "Professor"
             results.append(SearchResultItem(
                 id=f"teacher-{t.id}",
                 title=f"Prof. {full_name}",
@@ -323,15 +332,19 @@ class GlobalSearchService:
                 badge="Faculty",
             ))
 
-        # 3. Search Academic Classes
+        # 3. Search Academic Classes (Tenant Scoped)
+        class_where: dict = {
+            "OR": [
+                {"name": {"contains": query, "mode": "insensitive"}},
+                {"subject": {"is": {"name": {"contains": query, "mode": "insensitive"}}}},
+                {"subject": {"is": {"code": {"contains": query, "mode": "insensitive"}}}},
+            ]
+        }
+        if tenant_id:
+            class_where["tenantId"] = tenant_id
+
         classes = await db.academicclass.find_many(
-            where={
-                "OR": [
-                    {"name": {"contains": query, "mode": "insensitive"}},
-                    {"subject": {"is": {"name": {"contains": query, "mode": "insensitive"}}}},
-                    {"subject": {"is": {"code": {"contains": query, "mode": "insensitive"}}}},
-                ]
-            },
+            where=class_where,
             include={"subject": True, "teacher": True},
             take=10,
         )

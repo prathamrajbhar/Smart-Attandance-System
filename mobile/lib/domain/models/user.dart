@@ -4,12 +4,18 @@ class TokenResponse {
   final String tokenType;
   final String role;
   final bool mustChangePassword;
+  final String? tenantId;
+  final String? tenantSlug;
+  final String? tenantName;
 
   const TokenResponse({
     required this.accessToken,
     required this.tokenType,
     required this.role,
     this.mustChangePassword = false,
+    this.tenantId,
+    this.tenantSlug,
+    this.tenantName,
   });
 
   factory TokenResponse.fromJson(Map<String, dynamic> json) => TokenResponse(
@@ -17,6 +23,9 @@ class TokenResponse {
         tokenType: json['token_type'] as String,
         role: json['role'] as String,
         mustChangePassword: json['must_change_password'] as bool? ?? false,
+        tenantId: json['tenant_id'] as String?,
+        tenantSlug: json['tenant_slug'] as String?,
+        tenantName: json['tenant_name'] as String?,
       );
 }
 
@@ -58,6 +67,9 @@ class UserProfile {
   final String role;
   final bool isActive;
   final bool mustChangePassword;
+  final String? tenantId;
+  final String? tenantSlug;
+  final String? tenantName;
   final StudentProfile? studentProfile;
 
   const UserProfile({
@@ -66,6 +78,9 @@ class UserProfile {
     required this.role,
     required this.isActive,
     this.mustChangePassword = false,
+    this.tenantId,
+    this.tenantSlug,
+    this.tenantName,
     this.studentProfile,
   });
 
@@ -79,6 +94,9 @@ class UserProfile {
       role: json['role'] as String,
       isActive: json['is_active'] as bool,
       mustChangePassword: json['must_change_password'] as bool? ?? false,
+      tenantId: json['tenant_id'] as String?,
+      tenantSlug: json['tenant_slug'] as String?,
+      tenantName: json['tenant_name'] as String?,
       studentProfile:
           studentJson != null ? StudentProfile.fromJson(studentJson) : null,
     );
@@ -90,6 +108,9 @@ class UserProfile {
         'role': role,
         'is_active': isActive,
         'must_change_password': mustChangePassword,
+        'tenant_id': tenantId,
+        'tenant_slug': tenantSlug,
+        'tenant_name': tenantName,
         'student_profile': studentProfile?.toJson(),
       };
 }

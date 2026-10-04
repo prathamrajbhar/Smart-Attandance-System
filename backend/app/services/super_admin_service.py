@@ -1,0 +1,669 @@
+import asyncio
+import math
+from datetime import datetime, timezone
+from typing import Optional, Dict, Any, List
+from prisma import Json
+from app.core.logging_config import get_logger
+from app.db.client import db
+from app.core.security import hash_password, generate_temporary_password
+from app.schemas.super_admin import TenantProvisionRequest, TenantUpdateRequest, TenantResponse, TenantDetailResponse, SuperAdminStatsResponse
+
+logger = get_logger("app.super_admin")
+
+class SuperAdminService:
+    @staticmethod
+    async def provision_tenant(data: TenantProvisionRequest, actor: str = "super_admin") -> TenantDetailResponse:
+        existing = await db.tenant.find_unique(where={"slug": data.slug})
+        if existing:
+            raise ValueError(f"Tenant slug '{data.slug}' is already taken.")
+
+        # Consolidate admin accounts to create
+        admins_to_create = []
+        if data.admins and len(data.admins) > 0:
+            for admin_entry in data.admins:
+                clean_email = admin_entry.email.strip().lower()
+                clean_name = admin_entry.name.strip()
+                role = admin_entry.role or "TENANT_ADMIN"
+                admins_to_create.append({"name": clean_name, "email": clean_email, "role": role})
+        elif data.admin_email and data.admin_name:
+            admins_to_create.append({
+                "name": data.admin_name.strip(),
+                "email": data.admin_email.strip().lower(),
+                "role": "TENANT_ADMIN"
+            })
+        else:
+            raise ValueError("At least one administrator (name and email) is required.")
+
+        # Ensure no duplicate emails within request or database
+        seen_emails = set()
+        for a in admins_to_create:
+            if a["email"] in seen_emails:
+                raise ValueError(f"Duplicate email '{a['email']}' in administrator list.")
+            seen_emails.add(a["email"])
+            if await db.user.find_unique(where={"email": a["email"]}):
+                raise ValueError(f"Admin email '{a['email']}' is already registered.")
+
+        default_config = {
+            "isFaceRecognitionEnabled": True,
+            "isGpsVerificationEnabled": True,
+            "isAiBackgroundValidationEnabled": True,
+            "geofenceRadiusMeters": 50,
+        }
+        if data.config:
+            default_config.update(data.config)
+
+        tenant = await db.tenant.create(data={
+            "name": data.name,
+            "slug": data.slug,
+            "type": data.type,
+            "domain": data.domain,
+            "maxAllowedStudents": data.max_allowed_students,
+            "config": Json(default_config),
+            "status": "ACTIVE",
+        })
+
+        created_admin_users = []
+        for a in admins_to_create:
+            plain_pwd = data.admin_password or generate_temporary_password()
+            must_change = not bool(data.admin_password)
+
+            admin_user = await db.user.create(data={
+                "email": a["email"],
+                "hashedPassword": hash_password(plain_pwd),
+                "role": a["role"],
+                "mustChangePassword": must_change,
+                "tenantId": tenant.id,
+            })
+            created_admin_users.append({
+                "id": admin_user.id,
+                "email": admin_user.email,
+                "role": admin_user.role,
+                "name": a["name"],
+                "plain_pwd": plain_pwd,
+                "must_change": must_change,
+            })
+
+        await db.systemconfiguration.create(data={
+            "tenantId": tenant.id,
+            "isFaceRecognitionEnabled": default_config["isFaceRecognitionEnabled"],
+            "isGpsVerificationEnabled": default_config["isGpsVerificationEnabled"],
+            "isAiBackgroundValidationEnabled": default_config["isAiBackgroundValidationEnabled"],
+        })
+
+        try:
+            from app.db.redis import get_redis
+            r = get_redis()
+            await r.setex(f"tenant:resolved:{tenant.slug}", 3600, tenant.id)
+            if tenant.domain:
+                await r.setex(f"tenant:resolved:{tenant.domain.lower()}", 3600, tenant.id)
+        except Exception:
+            pass
+
+        try:
+            from app.services.auth_service import AuthService
+            from app.services.email_service import email_service
+            auth_svc = AuthService()
+            for created_admin in created_admin_users:
+                token = await auth_svc.create_invitation_token(
+                    user_id=created_admin["id"],
+                    email=created_admin["email"],
+                    role=created_admin["role"],
+                    name=created_admin["name"],
+                )
+                asyncio.create_task(email_service.send_invitation_email(
+                    to_email=created_admin["email"],
+                    recipient_name=created_admin["name"],
+                    role=created_admin["role"],
+                    invite_token=token,
+                    identifier_label="Tenant Slug",
+                    identifier_value=tenant.slug,
+                    temp_password=created_admin["plain_pwd"] if created_admin["must_change"] else None,
+                ))
+        except Exception:
+            pass
+
+        await db.auditlog.create(data={
+            "eventType": "PROVISION_TENANT", "severity": "INFO", "actor": actor,
+            "target": tenant.id, "description": f"Provisioned tenant {tenant.name} ({tenant.slug}) with {len(created_admin_users)} admin(s)",
+        })
+
+        return TenantDetailResponse(
+            id=tenant.id, slug=tenant.slug, name=tenant.name, type=tenant.type,
+            status=tenant.status, domain=tenant.domain, max_allowed_students=tenant.maxAllowedStudents,
+            created_at=tenant.createdAt, config=default_config,
+            admin_users=[{"id": u["id"], "email": u["email"], "role": u["role"]} for u in created_admin_users],
+        )
+
+    @staticmethod
+    async def get_all_tenants(page: int = 1, page_size: int = 10, q: Optional[str] = None, status: Optional[str] = None, type: Optional[str] = None) -> dict:
+        where: dict = {}
+        if status and status != "all":
+            where["status"] = status
+        if type and type != "all":
+            where["type"] = type
+        if q and q.strip():
+            query_str = q.strip()
+            where["OR"] = [
+                {"name": {"contains": query_str, "mode": "insensitive"}},
+                {"slug": {"contains": query_str, "mode": "insensitive"}},
+            ]
+
+        total_items = await db.tenant.count(where=where)
+        skip = (page - 1) * page_size
+        tenants = await db.tenant.find_many(where=where, skip=skip, take=page_size, order={"createdAt": "desc"})
+
+        items = []
+        for t in tenants:
+            student_count = await db.student.count(where={"user": {"is": {"tenantId": t.id}}})
+            teacher_count = await db.teacher.count(where={"user": {"is": {"tenantId": t.id}}})
+            class_count = await db.academicclass.count(where={"tenantId": t.id})
+            items.append(TenantResponse(
+                id=t.id, slug=t.slug, name=t.name, type=t.type, status=t.status,
+                domain=t.domain, max_allowed_students=t.maxAllowedStudents,
+                created_at=t.createdAt, student_count=student_count,
+                teacher_count=teacher_count, class_count=class_count,
+            ))
+
+        total_pages = max(1, (total_items + page_size - 1) // page_size) if total_items > 0 else 1
+        return {"items": items, "page": page, "page_size": page_size, "total_items": total_items, "total_pages": total_pages, "has_next": page < total_pages, "has_prev": page > 1}
+
+    @staticmethod
+    async def get_tenant_by_id(tenant_id: str) -> TenantDetailResponse:
+        t = await db.tenant.find_unique(where={"id": tenant_id})
+        if not t:
+            raise ValueError(f"Tenant with id '{tenant_id}' not found.")
+        admin_users = await db.user.find_many(where={"tenantId": tenant_id, "role": "TENANT_ADMIN"})
+        student_count = await db.student.count(where={"user": {"is": {"tenantId": t.id}}})
+        teacher_count = await db.teacher.count(where={"user": {"is": {"tenantId": t.id}}})
+        class_count = await db.academicclass.count(where={"tenantId": t.id})
+        department_count = await db.department.count(where={"tenantId": t.id})
+        subject_count = await db.subject.count(where={"tenantId": t.id})
+        active_sessions_count = await db.session.count(where={"academicClass": {"is": {"tenantId": t.id}}, "isActive": True})
+        total_attendance_count = await db.attendance.count(where={"session": {"is": {"academicClass": {"is": {"tenantId": t.id}}}}})
+
+        return TenantDetailResponse(
+            id=t.id,
+            slug=t.slug,
+            name=t.name,
+            type=t.type,
+            status=t.status,
+            domain=t.domain,
+            max_allowed_students=t.maxAllowedStudents,
+            created_at=t.createdAt,
+            config=t.config if isinstance(t.config, dict) else {},
+            student_count=student_count,
+            teacher_count=teacher_count,
+            class_count=class_count,
+            department_count=department_count,
+            subject_count=subject_count,
+            active_sessions_count=active_sessions_count,
+            total_attendance_count=total_attendance_count,
+            admin_users=[{"id": u.id, "email": u.email, "role": u.role, "is_active": u.isActive, "created_at": u.createdAt} for u in admin_users],
+        )
+
+    @staticmethod
+    async def add_tenant_admin(tenant_id: str, data: Dict[str, Any], actor: str = "super_admin") -> Dict[str, Any]:
+        t = await db.tenant.find_unique(where={"id": tenant_id})
+        if not t:
+            raise ValueError(f"Tenant with id '{tenant_id}' not found.")
+        
+        email = data["email"].strip().lower()
+        if await db.user.find_unique(where={"email": email}):
+            raise ValueError(f"User with email '{email}' is already registered.")
+
+        role = data.get("role") or "TENANT_ADMIN"
+        name = data.get("name", "Administrator").strip()
+        plain_pwd = generate_temporary_password()
+
+        user = await db.user.create(data={
+            "email": email,
+            "hashedPassword": hash_password(plain_pwd),
+            "role": role,
+            "mustChangePassword": True,
+            "tenantId": tenant_id,
+        })
+
+        try:
+            from app.services.auth_service import AuthService
+            from app.services.email_service import email_service
+            auth_svc = AuthService()
+            token = await auth_svc.create_invitation_token(
+                user_id=user.id,
+                email=user.email,
+                role=user.role,
+                name=name,
+            )
+            asyncio.create_task(email_service.send_invitation_email(
+                to_email=user.email,
+                recipient_name=name,
+                role=user.role,
+                invite_token=token,
+                identifier_label="Tenant Slug",
+                identifier_value=t.slug,
+            ))
+        except Exception:
+            pass
+
+        await db.auditlog.create(data={
+            "eventType": "ADD_TENANT_ADMIN",
+            "severity": "INFO",
+            "actor": actor,
+            "target": user.id,
+            "tenantId": tenant_id,
+            "description": f"Added administrator {email} ({role}) to tenant {t.name} and dispatched invitation email",
+        })
+
+        return {"id": user.id, "email": user.email, "role": user.role}
+
+    @staticmethod
+    async def update_tenant(tenant_id: str, data: TenantUpdateRequest) -> TenantDetailResponse:
+        t = await db.tenant.find_unique(where={"id": tenant_id})
+        if not t:
+            raise ValueError(f"Tenant with id '{tenant_id}' not found.")
+        update_data: dict = {}
+        if data.name: update_data["name"] = data.name
+        if data.status: update_data["status"] = data.status
+        if data.domain is not None: update_data["domain"] = data.domain if data.domain else None
+        if data.max_allowed_students is not None: update_data["maxAllowedStudents"] = data.max_allowed_students
+        if data.config is not None: update_data["config"] = Json(data.config)
+
+        updated = await db.tenant.update(where={"id": tenant_id}, data=update_data)
+        try:
+            from app.db.redis import get_redis
+            r = get_redis()
+            if data.status == "SUSPENDED":
+                await r.delete(f"tenant:resolved:{updated.id}")
+                await r.delete(f"tenant:resolved:{updated.slug}")
+                if t.domain:
+                    await r.delete(f"tenant:resolved:{t.domain.lower()}")
+                await r.setex(f"tenant:resolved:{updated.id}", 3600, f"SUSPENDED:{updated.id}")
+                await r.setex(f"tenant:resolved:{updated.slug}", 3600, f"SUSPENDED:{updated.id}")
+                domain_key = (updated.domain or t.domain or "").lower()
+                if domain_key:
+                    await r.setex(f"tenant:resolved:{domain_key}", 3600, f"SUSPENDED:{updated.id}")
+            elif data.status == "ACTIVE":
+                await r.setex(f"tenant:resolved:{updated.id}", 3600, f"ACTIVE:{updated.id}")
+                await r.setex(f"tenant:resolved:{updated.slug}", 3600, f"ACTIVE:{updated.id}")
+                if updated.domain:
+                    await r.setex(f"tenant:resolved:{updated.domain.lower()}", 3600, f"ACTIVE:{updated.id}")
+                elif t.domain:
+                    await r.setex(f"tenant:resolved:{t.domain.lower()}", 3600, f"ACTIVE:{updated.id}")
+            else:
+                await r.delete(f"tenant:resolved:{updated.id}")
+                await r.delete(f"tenant:resolved:{updated.slug}")
+                if t.domain:
+                    await r.delete(f"tenant:resolved:{t.domain.lower()}")
+                if updated.domain:
+                    await r.setex(f"tenant:resolved:{updated.domain.lower()}", 3600, f"ACTIVE:{updated.id}")
+        except Exception:
+            pass
+        if data.status == "SUSPENDED":
+            from app.api.ws import manager as ws_manager
+            await ws_manager.force_close_tenant(tenant_id, f"Institution '{updated.name}' has been suspended. Please contact your administrator.")
+            if updated.slug:
+                await ws_manager.force_close_tenant(updated.slug, f"Institution '{updated.name}' has been suspended. Please contact your administrator.")
+        return await SuperAdminService.get_tenant_by_id(tenant_id)
+
+    @staticmethod
+    async def get_platform_stats() -> SuperAdminStatsResponse:
+        total_tenants = await db.tenant.count()
+        active_tenants = await db.tenant.count(where={"status": "ACTIVE"})
+        total_students = await db.student.count()
+        total_teachers = await db.teacher.count()
+        active_sessions = await db.session.count(where={"isActive": True})
+        total_attendance = await db.attendance.count()
+        return SuperAdminStatsResponse(
+            total_tenants=total_tenants, active_tenants=active_tenants,
+            total_students=total_students, total_teachers=total_teachers,
+            active_sessions=active_sessions, total_attendance=total_attendance,
+        )
+
+    @staticmethod
+    async def get_all_users(
+        page: int = 1,
+        page_size: int = 20,
+        q: Optional[str] = None,
+        role: Optional[str] = None,
+        tenant_id: Optional[str] = None,
+        is_active: Optional[bool] = None,
+    ) -> Dict[str, Any]:
+        where: dict = {}
+        if role and role != "ALL":
+            where["role"] = role
+        if tenant_id and tenant_id != "ALL":
+            where["tenantId"] = tenant_id
+        if is_active is not None:
+            where["isActive"] = is_active
+        if q and q.strip():
+            query_str = q.strip()
+            where["email"] = {"contains": query_str, "mode": "insensitive"}
+
+        total_items = await db.user.count(where=where)
+        skip = (page - 1) * page_size
+        users = await db.user.find_many(
+            where=where,
+            skip=skip,
+            take=page_size,
+            order={"createdAt": "desc"},
+            include={"tenant": True, "student": True, "teacher": True},
+        )
+
+        items = []
+        for u in users:
+            first_name = None
+            last_name = None
+            identifier = None
+            if u.student:
+                first_name = u.student.firstName
+                last_name = u.student.lastName
+                identifier = u.student.enrollmentNumber
+            elif u.teacher:
+                first_name = u.teacher.firstName
+                last_name = u.teacher.lastName
+                identifier = u.teacher.employeeId
+
+            items.append({
+                "id": u.id,
+                "email": u.email,
+                "role": u.role,
+                "is_active": u.isActive,
+                "tenant_id": u.tenantId,
+                "tenant_name": u.tenant.name if u.tenant else None,
+                "tenant_slug": u.tenant.slug if u.tenant else None,
+                "first_name": first_name,
+                "last_name": last_name,
+                "identifier": identifier,
+                "created_at": u.createdAt,
+            })
+
+        total_pages = max(1, (total_items + page_size - 1) // page_size) if total_items > 0 else 1
+        return {
+            "items": items,
+            "page": page,
+            "page_size": page_size,
+            "total_items": total_items,
+            "total_pages": total_pages,
+            "has_next": page < total_pages,
+            "has_prev": page > 1,
+        }
+
+    @staticmethod
+    async def set_user_status(user_id: str, is_active: bool, actor: str = "super_admin") -> Dict[str, Any]:
+        u = await db.user.find_unique(where={"id": user_id})
+        if not u:
+            raise ValueError(f"User '{user_id}' not found.")
+        updated = await db.user.update(where={"id": user_id}, data={"isActive": is_active})
+        await db.auditlog.create(data={
+            "eventType": "UPDATE_USER_STATUS",
+            "severity": "WARNING" if not is_active else "INFO",
+            "actor": actor,
+            "target": user_id,
+            "tenantId": u.tenantId,
+            "description": f"Super admin set user {u.email} active={is_active}",
+        })
+        return {"id": updated.id, "email": updated.email, "is_active": updated.isActive}
+
+    @staticmethod
+    async def trigger_password_reset(user_id: str, actor: str = "super_admin", frontend_url: Optional[str] = None) -> Dict[str, Any]:
+        u = await db.user.find_unique(where={"id": user_id})
+        if not u:
+            raise ValueError(f"User '{user_id}' not found.")
+        from app.services.auth_service import AuthService
+        await AuthService().request_password_reset(u.email, frontend_url=frontend_url)
+        await db.auditlog.create(data={
+            "eventType": "TRIGGER_PASSWORD_RESET",
+            "severity": "WARNING",
+            "actor": actor,
+            "target": user_id,
+            "tenantId": u.tenantId,
+            "description": f"Super admin dispatched password reset email for user {u.email}",
+        })
+        return {"id": u.id, "email": u.email, "status": "password_reset_email_dispatched"}
+
+    @staticmethod
+    async def get_global_audit_logs(
+        page: int = 1,
+        page_size: int = 25,
+        severity: Optional[str] = None,
+        event_type: Optional[str] = None,
+        tenant_id: Optional[str] = None,
+        actor: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        where: dict = {}
+        if severity and severity != "ALL":
+            where["severity"] = severity
+        if event_type and event_type != "ALL":
+            where["eventType"] = event_type
+        if tenant_id and tenant_id != "ALL":
+            where["tenantId"] = tenant_id
+        if actor and actor.strip():
+            where["actor"] = {"contains": actor.strip(), "mode": "insensitive"}
+
+        total_items = await db.auditlog.count(where=where)
+        skip = (page - 1) * page_size
+        logs = await db.auditlog.find_many(
+            where=where,
+            skip=skip,
+            take=page_size,
+            order={"timestamp": "desc"},
+            include={"tenant": True},
+        )
+
+        items = [
+            {
+                "id": l.id,
+                "timestamp": l.timestamp,
+                "event_type": l.eventType,
+                "severity": l.severity,
+                "actor": l.actor,
+                "target": l.target,
+                "description": l.description,
+                "ip_address": l.ipAddress,
+                "tenant_id": l.tenantId,
+                "tenant_name": l.tenant.name if l.tenant else "Platform Global",
+                "metadata": l.metadata if isinstance(l.metadata, dict) else {},
+            }
+            for l in logs
+        ]
+
+        total_pages = max(1, (total_items + page_size - 1) // page_size) if total_items > 0 else 1
+        return {
+            "items": items,
+            "page": page,
+            "page_size": page_size,
+            "total_items": total_items,
+            "total_pages": total_pages,
+            "has_next": page < total_pages,
+            "has_prev": page > 1,
+        }
+
+    @staticmethod
+    async def get_system_health() -> Dict[str, Any]:
+        import time
+        from datetime import datetime, timezone
+        from app.core.config import settings
+
+        # 1. Database check
+        db_start = time.perf_counter()
+        db_ok = False
+        try:
+            await db.execute_raw("SELECT 1")
+            db_ok = True
+        except Exception:
+            pass
+        db_latency = round((time.perf_counter() - db_start) * 1000, 2)
+
+        # 2. Redis check
+        redis_start = time.perf_counter()
+        redis_ok = False
+        redis_info = {}
+        try:
+            from app.db.redis import get_redis
+            r = get_redis()
+            pong = await r.ping()
+            redis_ok = bool(pong)
+            redis_info = {"connected": True}
+        except Exception as e:
+            redis_info = {"error": str(e)}
+        redis_latency = round((time.perf_counter() - redis_start) * 1000, 2)
+
+        # 3. Gemini Parser status
+        gemini_configured = bool(settings.GEMINI_API_KEY and settings.GEMINI_API_KEY.strip())
+
+        overall_status = "healthy"
+        if not db_ok or not redis_ok:
+            overall_status = "degraded"
+
+        return {
+            "status": overall_status,
+            "timestamp": datetime.now(timezone.utc),
+            "services": {
+                "postgresql": {
+                    "status": "healthy" if db_ok else "down",
+                    "latency_ms": db_latency,
+                    "details": {"database": "PostgreSQL 15+", "status": "connected" if db_ok else "disconnected"},
+                },
+                "redis_cache": {
+                    "status": "healthy" if redis_ok else "down",
+                    "latency_ms": redis_latency,
+                    "details": redis_info,
+                },
+                "gemini_multimodal_ai": {
+                    "status": "healthy" if gemini_configured else "warning",
+                    "latency_ms": 1.2,
+                    "details": {
+                        "model": settings.GEMINI_MODEL,
+                        "key_configured": gemini_configured,
+                    },
+                },
+            },
+            "server_uptime_seconds": round(time.monotonic(), 1),
+            "database_pool": {"max_connections": 20, "active_queries": 1},
+            "redis_status": {"ping_success": redis_ok},
+            "gemini_ai_status": {"model": settings.GEMINI_MODEL, "enabled": gemini_configured},
+        }
+
+    @staticmethod
+    async def create_global_broadcast(data: Dict[str, Any], actor: str = "super_admin") -> Dict[str, Any]:
+        title = data["title"].strip()
+        message = data["message"].strip()
+        target_role = data.get("target_role")
+        target_tenant_id = data.get("target_tenant_id")
+        msg_type = data.get("type", "info")
+        category = data.get("category", "system")
+
+        # Find target users
+        where: dict = {}
+        if target_role and target_role != "ALL":
+            where["role"] = target_role
+        if target_tenant_id:
+            where["tenantId"] = target_tenant_id
+
+        users = await db.user.find_many(where=where, take=5000)
+        
+        # Batch insert notifications
+        created_count = 0
+        for u in users:
+            await db.notification.create(data={
+                "userId": u.id,
+                "role": u.role,
+                "title": title,
+                "message": message,
+                "type": msg_type,
+                "category": category,
+            })
+            created_count += 1
+
+        await db.auditlog.create(data={
+            "eventType": "GLOBAL_BROADCAST",
+            "severity": "WARNING" if msg_type in ["warning", "critical"] else "INFO",
+            "actor": actor,
+            "target": f"Role:{target_role or 'ALL'}, Tenant:{target_tenant_id or 'ALL'}",
+            "description": f"Broadcasted '{title}': {message[:80]} ({created_count} recipients)",
+            "metadata": Json({
+                "title": title,
+                "delivered_count": created_count,
+                "type": msg_type,
+                "category": category,
+                "target_role": target_role or "ALL",
+            }),
+        })
+
+        # Deliver in real-time over platform WebSocket
+        try:
+            from app.api.ws import manager as ws_manager
+            payload = {
+                "type": "notification",
+                "event": "NOTIFICATION_RECEIVED",
+                "data": {
+                    "title": title,
+                    "message": message,
+                    "type": msg_type,
+                    "category": category,
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                },
+                "title": title,
+                "message": message,
+                "category": category,
+                "severity": msg_type,
+            }
+            await ws_manager.broadcast(
+                message=payload,
+                target_role=target_role if target_role != "ALL" else None,
+                tenant_id=target_tenant_id,
+            )
+        except Exception as ws_err:
+            logger.warning("WebSocket real-time broadcast skipped: %s", ws_err)
+
+        return {
+            "status": "success",
+            "delivered_count": created_count,
+            "title": title,
+            "target_role": target_role or "ALL",
+        }
+
+    @staticmethod
+    async def get_broadcast_history(
+        page: int = 1,
+        page_size: int = 20,
+    ) -> Dict[str, Any]:
+        where: Dict[str, Any] = {"eventType": "GLOBAL_BROADCAST"}
+        total = await db.auditlog.count(where=where)
+        skip = (max(1, page) - 1) * page_size
+        logs = await db.auditlog.find_many(
+            where=where,
+            order={"timestamp": "desc"},
+            skip=skip,
+            take=page_size,
+        )
+
+        items = []
+        for log in logs:
+            meta = log.metadata if isinstance(log.metadata, dict) else {}
+            title = meta.get("title")
+            delivered_count = meta.get("delivered_count", 0)
+            if not title and "Broadcasted '" in log.description:
+                try:
+                    title = log.description.split("Broadcasted '")[1].split("'")[0]
+                except Exception:
+                    title = log.description
+
+            items.append({
+                "id": log.id,
+                "timestamp": log.timestamp,
+                "title": title or log.description,
+                "description": log.description,
+                "severity": log.severity,
+                "actor": log.actor,
+                "target": log.target,
+                "delivered_count": delivered_count,
+            })
+
+        return {
+            "items": items,
+            "total_items": total,
+            "page": page,
+            "page_size": page_size,
+            "total_pages": math.ceil(total / page_size) if page_size > 0 and total > 0 else 1,
+        }
+

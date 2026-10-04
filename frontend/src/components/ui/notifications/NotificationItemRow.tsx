@@ -39,13 +39,13 @@ function getIcon(type: string, category: string) {
   if (category === "leave") {
     return <Calendar size={13} className="text-amber-500" />;
   }
-  if (category === "attendance" || type === "warning") {
+  if (category === "maintenance" || category === "attendance" || type === "warning") {
     return <AlertTriangle size={13} className="text-amber-500" />;
   }
-  if (type === "danger" || category === "security") {
+  if (type === "danger" || type === "critical" || category === "security") {
     return <ShieldAlert size={13} className="text-rose-500" />;
   }
-  if (type === "success") {
+  if (type === "success" || category === "update") {
     return <CheckCircle2 size={13} className="text-emerald-500" />;
   }
   if (category === "device") {

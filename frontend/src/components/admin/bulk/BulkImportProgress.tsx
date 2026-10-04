@@ -36,7 +36,7 @@ export default function BulkImportProgress({
         <div className="flex items-center justify-between text-xs">
           <span className="font-semibold text-foreground flex items-center gap-2">
             <Loader2 size={13} className="animate-spin text-primary" />
-            Processing Batch {Math.min(currentBatchIndex + 1, batches.length)} of {batches.length}...
+            Importing Batch {Math.min(currentBatchIndex + 1, batches.length)} of {batches.length}...
           </span>
           <span className="font-mono text-xs font-bold text-primary">{percentage}%</span>
         </div>
@@ -47,8 +47,8 @@ export default function BulkImportProgress({
           />
         </div>
         <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-          <span>{processedRecords} of {totalRecords} records committed</span>
-          <span>10 records / batch</span>
+          <span>{processedRecords} of {totalRecords} records processed</span>
+          <span>10 records per batch</span>
         </div>
       </div>
 
@@ -65,7 +65,7 @@ export default function BulkImportProgress({
 
         <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl">
           <p className="text-[10px] uppercase tracking-wider font-semibold text-indigo-600 dark:text-indigo-400">
-            Invites Sent
+            Invitations Sent
           </p>
           <p className="text-xl font-bold font-mono text-indigo-600 dark:text-indigo-400 mt-0.5 flex items-center gap-1.5">
             <Mail size={16} /> {invitationsSent}
@@ -74,7 +74,7 @@ export default function BulkImportProgress({
 
         <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl">
           <p className="text-[10px] uppercase tracking-wider font-semibold text-rose-600 dark:text-rose-400">
-            Failed / Skipped
+            Failed
           </p>
           <p className="text-xl font-bold font-mono text-rose-600 dark:text-rose-400 mt-0.5">
             {failedCount}
@@ -85,7 +85,7 @@ export default function BulkImportProgress({
       {/* Live Batch Queue List */}
       <div className="rounded-xl border border-border overflow-hidden bg-card">
         <div className="px-3 py-2 bg-secondary/50 border-b border-border text-xs font-semibold text-muted-foreground flex justify-between">
-          <span>Batch Queue Tracker</span>
+          <span>Import Progress by Batch</span>
           <span>Status</span>
         </div>
         <div className="max-h-[160px] overflow-y-auto divide-y divide-border">
@@ -109,7 +109,7 @@ export default function BulkImportProgress({
                   <span className="text-foreground">
                     Batch #{batch.batchNumber}{" "}
                     <span className="text-muted-foreground text-[11px]">
-                      (Records {batch.startIndex + 1}–{batch.endIndex})
+                      (Rows {batch.startIndex + 1}–{batch.endIndex})
                     </span>
                   </span>
                 </div>
@@ -121,7 +121,7 @@ export default function BulkImportProgress({
                     </span>
                   )}
                   {batch.status === "processing" && (
-                    <span className="text-[11px] text-primary font-medium">Ingesting...</span>
+                    <span className="text-[11px] text-primary font-medium">Processing...</span>
                   )}
                   {batch.status === "queued" && (
                     <span className="text-[11px] text-muted-foreground">Waiting</span>
@@ -133,10 +133,10 @@ export default function BulkImportProgress({
         </div>
       </div>
 
-      {/* Emergency Abort Action */}
+      {/* Action footer */}
       <div className="flex items-center justify-between pt-1">
         <span className="text-[11px] text-muted-foreground">
-          Do not close this window while batches are committing.
+          Please keep this window open until the import finishes.
         </span>
         <button
           type="button"
@@ -144,7 +144,7 @@ export default function BulkImportProgress({
           disabled={isAborting}
           className="text-xs text-rose-500 hover:text-rose-600 flex items-center gap-1 font-medium transition-colors cursor-pointer disabled:opacity-50"
         >
-          <ShieldAlert size={13} /> {isAborting ? "Aborting..." : "Abort Remaining"}
+          <ShieldAlert size={13} /> {isAborting ? "Stopping..." : "Stop Import"}
         </button>
       </div>
     </div>

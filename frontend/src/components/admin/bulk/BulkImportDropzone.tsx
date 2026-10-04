@@ -42,8 +42,8 @@ export default function BulkImportDropzone({
         const hasCode = code.length >= 2;
         const isValid = hasName && hasCode;
         let validationError: string | undefined;
-        if (!hasName) validationError = "Department name is required (min 2 chars)";
-        else if (!hasCode) validationError = "Department code is required (min 2 chars)";
+        if (!hasName) validationError = "Department name is required (min 2 characters)";
+        else if (!hasCode) validationError = "Department code is required (min 2 characters)";
 
         records.push({
           id: `row-${i}-${Date.now()}`,
@@ -63,8 +63,8 @@ export default function BulkImportDropzone({
         const hasCode = code.length >= 2;
         const isValid = hasName && hasCode;
         let validationError: string | undefined;
-        if (!hasName) validationError = "Subject name is required (min 2 chars)";
-        else if (!hasCode) validationError = "Subject code is required (min 2 chars)";
+        if (!hasName) validationError = "Subject name is required (min 2 characters)";
+        else if (!hasCode) validationError = "Subject code is required (min 2 characters)";
 
         records.push({
           id: `row-${i}-${Date.now()}`,
@@ -104,8 +104,8 @@ export default function BulkImportDropzone({
         const hasCode = code.length >= 2;
         const isValid = hasName && hasCode;
         let validationError: string | undefined;
-        if (!hasName) validationError = "Designation name is required (min 2 chars)";
-        else if (!hasCode) validationError = "Designation code is required (min 2 chars)";
+        if (!hasName) validationError = "Designation title is required (min 2 characters)";
+        else if (!hasCode) validationError = "Designation code is required (min 2 characters)";
 
         records.push({
           id: `row-${i}-${Date.now()}`,
@@ -131,9 +131,9 @@ export default function BulkImportDropzone({
         const isValid = isValidEmail && hasName && hasSubject;
 
         let validationError: string | undefined;
-        if (!hasName) validationError = "Class name is required (min 2 chars)";
+        if (!hasName) validationError = "Class name is required (min 2 characters)";
         else if (!hasSubject) validationError = "Subject code is required";
-        else if (!isValidEmail) validationError = "Valid teacher email is required";
+        else if (!isValidEmail) validationError = "A valid teacher email address is required";
 
         records.push({
           id: `row-${i}-${Date.now()}`,
@@ -160,7 +160,7 @@ export default function BulkImportDropzone({
 
         let validationError: string | undefined;
         if (!isValidEmail) validationError = "Invalid email format";
-        else if (!hasIdentifier) validationError = "Identifier too short (min 3 chars)";
+        else if (!hasIdentifier) validationError = "ID too short (min 3 characters)";
         else if (!firstName) validationError = "First name is required";
 
         records.push({
@@ -176,7 +176,7 @@ export default function BulkImportDropzone({
     }
 
     if (records.length === 0) {
-      onError("No valid records found in the uploaded file. Check headers and column format.");
+      onError("No valid records found in the uploaded file. Please check your headers and column format.");
       return;
     }
 
@@ -267,14 +267,14 @@ export default function BulkImportDropzone({
     <div className="space-y-4">
       <div className="flex items-center justify-between text-xs">
         <span className="text-muted-foreground flex items-center gap-1.5">
-          <FileSpreadsheet size={14} className="text-primary" /> Supported format: UTF-8 CSV
+          <FileSpreadsheet size={14} className="text-primary" /> Supported format: CSV (.csv)
         </span>
         <button
           type="button"
           onClick={handleDownloadSample}
           className="text-primary hover:text-primary/80 flex items-center gap-1.5 font-medium transition-colors cursor-pointer"
         >
-          <Download size={13} /> Download Sample Template
+          <Download size={13} /> Download Sample CSV
         </button>
       </div>
 
@@ -291,7 +291,7 @@ export default function BulkImportDropzone({
         <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3 text-primary group-hover:scale-105 transition-transform">
           <Upload size={20} />
         </div>
-        <p className="text-sm font-semibold text-foreground">Click to select or drag and drop CSV</p>
+        <p className="text-sm font-semibold text-foreground">Click to choose a file or drag and drop your CSV here</p>
         <p className="text-xs text-muted-foreground mt-1">{columnGuide}</p>
         <input
           ref={fileInputRef}
@@ -308,7 +308,7 @@ export default function BulkImportDropzone({
       <div className="flex items-start gap-2 p-3 bg-secondary/30 rounded-lg border border-border/50 text-[11px] text-muted-foreground">
         <AlertCircle size={14} className="text-muted-foreground shrink-0 mt-0.5" />
         <span>
-          Records are processed in automatic sequential batches of <strong>10</strong> with real-time verification and optional onboarding invitations.
+          Records are uploaded in automatic batches for high reliability. You will be able to review all rows before starting the import.
         </span>
       </div>
     </div>

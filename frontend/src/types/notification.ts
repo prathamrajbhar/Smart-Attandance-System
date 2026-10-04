@@ -1,11 +1,13 @@
-export type NotificationType = "info" | "success" | "warning" | "danger";
+export type NotificationType = "info" | "success" | "warning" | "danger" | "critical";
 
 export type NotificationCategory =
   | "attendance"
   | "leave"
   | "device"
   | "security"
-  | "system";
+  | "system"
+  | "maintenance"
+  | "update";
 
 export interface NotificationItem {
   id: string;
@@ -35,4 +37,14 @@ export interface NotificationBroadcastCreate {
   link?: string | null;
 }
 
-export type NotificationFilterTab = "all" | "unread" | "attendance" | "system";
+export type NotificationFilterTab =
+  | "all"
+  | "unread"
+  | "attendance"
+  | "leave"
+  | "device"
+  | "security"
+  | "system"
+  | "maintenance"
+  | "update";
+

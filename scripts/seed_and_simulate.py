@@ -46,7 +46,7 @@ async def run_pipeline(config: SeedingConfig, clean: bool) -> None:
     if clean:
         await clean_database(config)
 
-    async with async_playwright() as p, httpx.AsyncClient(timeout=30.0) as http_client:
+    async with async_playwright() as p, httpx.AsyncClient(timeout=30.0, verify=False) as http_client:
         browser = await p.chromium.launch(
             headless=config.headless,
             args=["--no-sandbox", "--disable-dev-shm-usage"],
@@ -116,7 +116,13 @@ async def run_pipeline(config: SeedingConfig, clean: bool) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Automated Data Seeding & User Simulation Suite")
-    parser.add_argument("--clean", action="store_true", help="Wipe local database and reset to clean slate before seeding")
+    parser.add_argument("--clean", action="store_true", help="Wipe local database and reset to clean slate before seeding (IGNORED in production)")
+    parser.add_argument("--prod", action="store_true", help="Target production environment (https://smart_attandance_system.bytemap.in)")
+    parser.add_argument("--allow-remote", action="store_true", help="Allow targeting remote non-localhost endpoints")
+    parser.add_argument("--backend-url", type=str, default=None, help="Custom backend base URL")
+    parser.add_argument("--frontend-url", type=str, default=None, help="Custom frontend base URL")
+    parser.add_argument("--admin-email", type=str, default=None, help="Admin email")
+    parser.add_argument("--admin-password", type=str, default=None, help="Admin password")
     parser.add_argument("--days", type=int, default=20, help="Number of simulated academic days (default: 20)")
     parser.add_argument("--students-per-section", type=int, default=35, help="Number of students per section (default: 35)")
     parser.add_argument("--headless", action="store_true", default=True, help="Run Playwright in headless mode")
@@ -125,15 +131,42 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    config = SeedingConfig(
-        simulation_days=args.days,
-        students_per_section=args.students_per_section,
-        headless=args.headless,
-        skip_yopmail_browser=args.skip_yopmail_browser,
-    )
+    backend_url = args.backend_url
+    frontend_url = args.frontend_url
+    allow_remote = args.allow_remote or args.prod
+    skip_yopmail = args.skip_yopmail_browser
 
-    asyncio.run(run_pipeline(config, clean=args.clean))
+    if args.prod:
+        backend_url = backend_url or "https://smart_attandance_system.bytemap.in"
+        frontend_url = frontend_url or "https://smart-attandance-system-theta.vercel.app"
+        allow_remote = True
+        skip_yopmail = True
+
+    config_kwargs = {
+        "simulation_days": args.days,
+        "students_per_section": args.students_per_section,
+        "headless": args.headless,
+        "skip_yopmail_browser": skip_yopmail,
+        "allow_remote": allow_remote,
+    }
+
+    if backend_url:
+        config_kwargs["backend_base_url"] = backend_url
+    if frontend_url:
+        config_kwargs["frontend_base_url"] = frontend_url
+    if args.admin_email:
+        config_kwargs["admin_email"] = args.admin_email
+    if args.admin_password:
+        config_kwargs["admin_password"] = args.admin_password
+
+    config = SeedingConfig(**config_kwargs)
+
+    # In production, never wipe the database
+    is_clean = args.clean and not args.prod and not allow_remote
+
+    asyncio.run(run_pipeline(config, clean=is_clean))
 
 
 if __name__ == "__main__":
     main()
+

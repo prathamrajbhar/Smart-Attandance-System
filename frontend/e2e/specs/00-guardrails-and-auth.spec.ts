@@ -17,25 +17,26 @@ test.describe("00: Environment Guardrails, Authentication & Password Recovery", 
     await loginPage.expectLoginSuccess("ADMIN");
 
     // Verify Admin Sidebar Modules
-    await expect(page.getByRole("link", { name: "Overview" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Students" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Teachers" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Classes" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "AI Scanner" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Audit Log" })).toBeVisible();
+    const sidebar = page.locator("aside");
+    await expect(sidebar.getByRole("link", { name: "Overview" })).toBeVisible();
+    await expect(sidebar.getByRole("link", { name: "Students" })).toBeVisible();
+    await expect(sidebar.getByRole("link", { name: "Teachers" })).toBeVisible();
+    await expect(sidebar.getByRole("link", { name: "Classes", exact: true })).toBeVisible();
+    await expect(sidebar.getByRole("link", { name: "AI Scanner", exact: true })).toBeVisible();
+    await expect(sidebar.getByRole("link", { name: "Audit Log" })).toBeVisible();
 
     // Verify System Setup Accordion
     await adminOverviewPage.openSystemSetupAccordion();
-    await expect(page.getByRole("link", { name: "Departments" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Subjects" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Classrooms" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Designations" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Verification Settings" })).toBeVisible();
+    await expect(sidebar.getByRole("link", { name: "Departments" })).toBeVisible();
+    await expect(sidebar.getByRole("link", { name: "Subjects" })).toBeVisible();
+    await expect(sidebar.getByRole("link", { name: "Classrooms" })).toBeVisible();
+    await expect(sidebar.getByRole("link", { name: "Designations" })).toBeVisible();
+    await expect(sidebar.getByRole("link", { name: "Verification Settings" })).toBeVisible();
 
     // Verify Session Persistence across page reload
     await page.reload();
     await adminOverviewPage.waitForPageLoaded();
-    await expect(page.getByRole("link", { name: "Overview" })).toBeVisible();
+    await expect(sidebar.getByRole("link", { name: "Overview" })).toBeVisible();
 
     // Perform Secure Logout
     await adminOverviewPage.logout();
@@ -52,17 +53,18 @@ test.describe("00: Environment Guardrails, Authentication & Password Recovery", 
     await loginPage.expectLoginSuccess("TEACHER");
 
     // Verify Teacher Sidebar Modules
-    await expect(page.getByRole("link", { name: "Overview" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "My Classes" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Sessions" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Review Queue" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Leave Requests" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Device Changes" })).toBeVisible();
+    const teacherSidebar = page.locator("aside");
+    await expect(teacherSidebar.getByRole("link", { name: "Overview" })).toBeVisible();
+    await expect(teacherSidebar.getByRole("link", { name: "My Classes" })).toBeVisible();
+    await expect(teacherSidebar.getByRole("link", { name: "Sessions" })).toBeVisible();
+    await expect(teacherSidebar.getByRole("link", { name: "Review Queue" })).toBeVisible();
+    await expect(teacherSidebar.getByRole("link", { name: "Leave Requests" })).toBeVisible();
+    await expect(teacherSidebar.getByRole("link", { name: "Device Changes" })).toBeVisible();
 
     // Verify Analytics & Reports Group
-    await expect(page.getByRole("link", { name: "Class Analytics" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Attendance History" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Profile & Security" })).toBeVisible();
+    await expect(teacherSidebar.getByRole("link", { name: "Class Analytics" })).toBeVisible();
+    await expect(teacherSidebar.getByRole("link", { name: "Attendance History" })).toBeVisible();
+    await expect(teacherSidebar.getByRole("link", { name: "Profile & Security" })).toBeVisible();
 
     // Perform Logout
     await teacherOverviewPage.logout();
@@ -92,5 +94,24 @@ test.describe("00: Environment Guardrails, Authentication & Password Recovery", 
     await loginPage.goto();
     await loginPage.login(generateYopmail("nonexistent"), "WrongPassword123!");
     await loginPage.expectToastMessage(/Incorrect|Login failed|Invalid|credentials/i);
+  });
+
+  test("enforces unauthenticated route protection and redirects to login", async ({ page }) => {
+    await page.goto("/admin/dashboard");
+    await expect(page).toHaveURL(/\/login/);
+
+    await page.goto("/teacher/dashboard");
+    await expect(page).toHaveURL(/\/login/);
+
+    await page.goto("/super-admin/dashboard");
+    await expect(page).toHaveURL(/\/login/);
+  });
+
+  test("handles onboarding invitation page with missing or invalid token safely", async ({ page }) => {
+    await page.goto("/onboarding");
+    await expect(page.getByText(/Missing invitation token|Invalid/i).first()).toBeVisible({ timeout: 10000 });
+
+    await page.goto("/onboarding?token=expired-or-malformed-token");
+    await expect(page.getByText(/Failed to verify|Invalid/i).first()).toBeVisible({ timeout: 10000 });
   });
 });

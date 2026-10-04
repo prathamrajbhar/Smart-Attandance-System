@@ -92,6 +92,25 @@ def test_review_flagged_attendance(mock_teacher_user, mock_teacher_profile):
         assert "Approved" in response.json()["message"]
     app.dependency_overrides.clear()
 
+
+def test_get_attendance_by_id_bola_forbidden(mock_teacher_user, mock_teacher_profile):
+    app.dependency_overrides[get_current_user] = lambda: mock_teacher_user
+    app.dependency_overrides[get_current_teacher] = lambda: mock_teacher_profile
+
+    mock_rec = MagicMock()
+    mock_rec.id = "att-rec-99"
+    mock_rec.session = MagicMock()
+    mock_rec.session.academicClass = MagicMock()
+    mock_rec.session.academicClass.teacherId = "other-teacher-id-999"
+
+    with patch("app.repositories.attendance_repo.AttendanceRepository.get_by_id", new_callable=AsyncMock) as mock_get:
+        mock_get.return_value = mock_rec
+        response = client.get("/api/v1/teacher/attendance/att-rec-99")
+        assert response.status_code == 403
+        assert "Access denied" in response.json()["detail"]
+    app.dependency_overrides.clear()
+
+
 def test_manual_override_attendance(mock_teacher_user, mock_teacher_profile):
     app.dependency_overrides[get_current_user] = lambda: mock_teacher_user
     app.dependency_overrides[get_current_teacher] = lambda: mock_teacher_profile

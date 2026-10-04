@@ -3,7 +3,7 @@ from functools import wraps
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from prisma.models import User
 
-from app.api.dependencies import RoleChecker, get_current_user
+from app.api.dependencies import RoleChecker, get_current_user, get_tenant_context
 from app.db.client import db
 from app.repositories.attendance_repo import AttendanceRepository
 from app.schemas.student import StudentCreate, StudentResponse, StudentUpdate
@@ -60,16 +60,84 @@ def _handle_generic_err(func):
     return wrapper
 
 
+# ---------------------------------------------------------------------------
+# Ownership guard helpers — always filter by BOTH id AND tenantId
+# ---------------------------------------------------------------------------
+
+async def _require_student_in_tenant(student_id: str, tenant_id: str) -> None:
+    if not db.is_connected():
+        return
+    record = await db.student.find_first(
+        where={"id": student_id, "user": {"is": {"tenantId": tenant_id}}}
+    )
+    if not record:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student not found.")
+
+
+async def _require_teacher_in_tenant(teacher_id: str, tenant_id: str) -> None:
+    if not db.is_connected():
+        return
+    record = await db.teacher.find_first(
+        where={"id": teacher_id, "user": {"is": {"tenantId": tenant_id}}}
+    )
+    if not record:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Teacher not found.")
+
+
+async def _require_class_in_tenant(class_id: str, tenant_id: str) -> None:
+    if not db.is_connected():
+        return
+    record = await db.academicclass.find_first(where={"id": class_id, "tenantId": tenant_id})
+    if not record:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Class not found.")
+
+
+async def _require_department_in_tenant(dept_id: str, tenant_id: str) -> None:
+    if not db.is_connected():
+        return
+    record = await db.department.find_first(where={"id": dept_id, "tenantId": tenant_id})
+    if not record:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Department not found.")
+
+
+async def _require_subject_in_tenant(subject_id: str, tenant_id: str) -> None:
+    if not db.is_connected():
+        return
+    record = await db.subject.find_first(where={"id": subject_id, "tenantId": tenant_id})
+    if not record:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Subject not found.")
+
+
+async def _require_classroom_in_tenant(classroom_id: str, tenant_id: str) -> None:
+    if not db.is_connected():
+        return
+    record = await db.classroom.find_first(where={"id": classroom_id, "tenantId": tenant_id})
+    if not record:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Classroom not found.")
+
+
+async def _require_designation_in_tenant(desig_id: str, tenant_id: str) -> None:
+    if not db.is_connected():
+        return
+    record = await db.designation.find_first(where={"id": desig_id, "tenantId": tenant_id})
+    if not record:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Designation not found.")
+
+
+# ---------------------------------------------------------------------------
+# Students
+# ---------------------------------------------------------------------------
+
 @router.post("/users/student", response_model=StudentResponse, status_code=status.HTTP_201_CREATED)
 @_handle_generic_err
-async def create_student(data: StudentCreate, request: Request, current_user: User = Depends(get_current_user), admin_service: AdminService = Depends()):
-    return await admin_service.create_student(data, actor=current_user.email, ip=_get_client_ip(request))
-
-
-@router.post("/users/teacher", response_model=TeacherResponse, status_code=status.HTTP_201_CREATED)
-@_handle_generic_err
-async def create_teacher(data: TeacherCreate, request: Request, current_user: User = Depends(get_current_user), admin_service: AdminService = Depends()):
-    return await admin_service.create_teacher(data, actor=current_user.email, ip=_get_client_ip(request))
+async def create_student(
+    data: StudentCreate,
+    request: Request,
+    tenant_id: str = Depends(get_tenant_context),
+    current_user: User = Depends(get_current_user),
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.create_student(data, actor=current_user.email, ip=_get_client_ip(request), tenant_id=tenant_id)
 
 
 @router.post("/users/students/bulk", response_model=BulkImportResponse, status_code=status.HTTP_200_OK)
@@ -77,6 +145,7 @@ async def create_teacher(data: TeacherCreate, request: Request, current_user: Us
 async def bulk_create_students(
     data: StudentBulkCreateRequest,
     request: Request,
+    tenant_id: str = Depends(get_tenant_context),
     current_user: User = Depends(get_current_user),
     admin_service: AdminService = Depends(),
 ):
@@ -85,118 +154,8 @@ async def bulk_create_students(
         send_invite=data.send_invite,
         actor=current_user.email,
         ip=_get_client_ip(request),
+        tenant_id=tenant_id,
     )
-
-
-@router.post("/users/teachers/bulk", response_model=BulkImportResponse, status_code=status.HTTP_200_OK)
-@_handle_generic_err
-async def bulk_create_teachers(
-    data: TeacherBulkCreateRequest,
-    request: Request,
-    current_user: User = Depends(get_current_user),
-    admin_service: AdminService = Depends(),
-):
-    return await admin_service.bulk_create_teachers(
-        data.teachers,
-        send_invite=data.send_invite,
-        actor=current_user.email,
-        ip=_get_client_ip(request),
-    )
-
-
-
-@router.post("/classes/bulk", response_model=BulkImportResponse, status_code=status.HTTP_200_OK)
-@_handle_generic_err
-async def bulk_create_classes(
-    data: ClassBulkCreateRequest,
-    request: Request,
-    current_user: User = Depends(get_current_user),
-    admin_service: AdminService = Depends(),
-):
-    return await admin_service.bulk_create_classes(
-        data.classes,
-        actor=current_user.email,
-        ip=_get_client_ip(request),
-    )
-
-
-@router.post("/departments/bulk", response_model=BulkImportResponse, status_code=status.HTTP_200_OK)
-@_handle_generic_err
-async def bulk_create_departments(
-    data: DepartmentBulkCreateRequest,
-    request: Request,
-    current_user: User = Depends(get_current_user),
-    admin_service: AdminService = Depends(),
-):
-    return await admin_service.bulk_create_departments(
-        data.departments,
-        actor=current_user.email,
-        ip=_get_client_ip(request),
-    )
-
-
-@router.post("/subjects/bulk", response_model=BulkImportResponse, status_code=status.HTTP_200_OK)
-@_handle_generic_err
-async def bulk_create_subjects(
-    data: SubjectBulkCreateRequest,
-    request: Request,
-    current_user: User = Depends(get_current_user),
-    admin_service: AdminService = Depends(),
-):
-    return await admin_service.bulk_create_subjects(
-        data.subjects,
-        actor=current_user.email,
-        ip=_get_client_ip(request),
-    )
-
-
-@router.post("/classrooms/bulk", response_model=BulkImportResponse, status_code=status.HTTP_200_OK)
-@_handle_generic_err
-async def bulk_create_classrooms(
-    data: ClassroomBulkCreateRequest,
-    request: Request,
-    current_user: User = Depends(get_current_user),
-    admin_service: AdminService = Depends(),
-):
-    return await admin_service.bulk_create_classrooms(
-        data.classrooms,
-        actor=current_user.email,
-        ip=_get_client_ip(request),
-    )
-
-
-@router.post("/designations/bulk", response_model=BulkImportResponse, status_code=status.HTTP_200_OK)
-@_handle_generic_err
-async def bulk_create_designations(
-    data: DesignationBulkCreateRequest,
-    request: Request,
-    current_user: User = Depends(get_current_user),
-    admin_service: AdminService = Depends(),
-):
-    return await admin_service.bulk_create_designations(
-        data.designations,
-        actor=current_user.email,
-        ip=_get_client_ip(request),
-    )
-
-
-@router.post("/classes", response_model=ClassResponse, status_code=status.HTTP_201_CREATED)
-@_handle_value_err
-async def create_class(data: ClassCreate, request: Request, current_user: User = Depends(get_current_user), admin_service: AdminService = Depends()):
-    return await admin_service.create_class(data, actor=current_user.email, ip=_get_client_ip(request))
-
-
-@router.put("/classes/{class_id}/assign-teacher", response_model=ClassResponse)
-@_handle_value_err
-async def assign_teacher(class_id: str, data: AssignTeacherRequest, request: Request, current_user: User = Depends(get_current_user), admin_service: AdminService = Depends()):
-    return await admin_service.assign_teacher(class_id=class_id, teacher_id=data.teacher_id, actor=current_user.email, ip=_get_client_ip(request))
-
-
-@router.post("/classes/{class_id}/enroll", response_model=EnrollStudentsResponse, status_code=status.HTTP_200_OK)
-@_handle_value_err
-async def enroll_students(class_id: str, data: EnrollRequest, request: Request, current_user: User = Depends(get_current_user), admin_service: AdminService = Depends()) -> EnrollStudentsResponse:
-    enrolled_count = await admin_service.enroll_students(class_id=class_id, student_ids=data.student_ids, actor=current_user.email, ip=_get_client_ip(request))
-    return EnrollStudentsResponse(enrolled_count=enrolled_count, class_id=class_id, message=f"Successfully enrolled {enrolled_count} students")
 
 
 @router.get("/users/students", response_model=PaginatedResponse[StudentResponse], dependencies=[Depends(rate_limiter(requests_limit=120, window_seconds=60))])
@@ -209,16 +168,24 @@ async def get_students(
     department_id: str | None = None,
     semester: int | None = None,
     batch: str | None = None,
+    tenant_id: str = Depends(get_tenant_context),
     admin_service: AdminService = Depends(),
 ):
     return await admin_service.get_all_students(
-        page=page, page_size=min(page_size, 1000), sort_by=sort_by, sort_order=sort_order, q=q, department_id=department_id, semester=semester, batch=batch
+        page=page, page_size=min(page_size, 1000), sort_by=sort_by, sort_order=sort_order,
+        q=q, department_id=department_id, semester=semester, batch=batch, tenant_id=tenant_id,
     )
 
 
 @router.get("/users/students/{id}", response_model=StudentResponse)
-async def get_student_by_id(id: str, admin_service: AdminService = Depends()):
-    student = await db.student.find_unique(where={"id": id}, include={"user": True, "department": True})
+async def get_student_by_id(
+    id: str,
+    tenant_id: str = Depends(get_tenant_context),
+):
+    student = await db.student.find_first(
+        where={"id": id, "user": {"is": {"tenantId": tenant_id}}},
+        include={"user": True, "department": True},
+    )
     if not student:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student not found")
     return StudentResponse(
@@ -233,9 +200,50 @@ async def get_student_by_id(id: str, admin_service: AdminService = Depends()):
 
 @router.put("/users/students/{id}", response_model=StudentResponse)
 @_handle_generic_err
-async def update_student(id: str, data: StudentUpdate, request: Request, current_user: User = Depends(get_current_user), admin_service: AdminService = Depends()):
+async def update_student(
+    id: str,
+    data: StudentUpdate,
+    request: Request,
+    tenant_id: str = Depends(get_tenant_context),
+    current_user: User = Depends(get_current_user),
+    admin_service: AdminService = Depends(),
+):
+    await _require_student_in_tenant(id, tenant_id)
     return await admin_service.update_student(id, data.model_dump(exclude_unset=True), actor=current_user.email, ip=_get_client_ip(request))
 
+
+# ---------------------------------------------------------------------------
+# Teachers
+# ---------------------------------------------------------------------------
+
+@router.post("/users/teacher", response_model=TeacherResponse, status_code=status.HTTP_201_CREATED)
+@_handle_generic_err
+async def create_teacher(
+    data: TeacherCreate,
+    request: Request,
+    tenant_id: str = Depends(get_tenant_context),
+    current_user: User = Depends(get_current_user),
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.create_teacher(data, actor=current_user.email, ip=_get_client_ip(request), tenant_id=tenant_id)
+
+
+@router.post("/users/teachers/bulk", response_model=BulkImportResponse, status_code=status.HTTP_200_OK)
+@_handle_generic_err
+async def bulk_create_teachers(
+    data: TeacherBulkCreateRequest,
+    request: Request,
+    tenant_id: str = Depends(get_tenant_context),
+    current_user: User = Depends(get_current_user),
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.bulk_create_teachers(
+        data.teachers,
+        send_invite=data.send_invite,
+        actor=current_user.email,
+        ip=_get_client_ip(request),
+        tenant_id=tenant_id,
+    )
 
 
 @router.get("/users/teachers", response_model=PaginatedResponse[TeacherResponse], dependencies=[Depends(rate_limiter(requests_limit=120, window_seconds=60))])
@@ -246,17 +254,24 @@ async def get_teachers(
     sort_order: str = "asc",
     q: str | None = None,
     department_id: str | None = None,
+    tenant_id: str = Depends(get_tenant_context),
     admin_service: AdminService = Depends(),
 ):
     return await admin_service.get_all_teachers(
-        page=page, page_size=min(page_size, 100), sort_by=sort_by, sort_order=sort_order, q=q, department_id=department_id
+        page=page, page_size=min(page_size, 100), sort_by=sort_by, sort_order=sort_order,
+        q=q, department_id=department_id, tenant_id=tenant_id,
     )
 
 
-
 @router.get("/users/teachers/{id}", response_model=TeacherResponse)
-async def get_teacher_by_id(id: str):
-    teacher = await db.teacher.find_unique(where={"id": id}, include={"user": True, "department": True, "designation": True})
+async def get_teacher_by_id(
+    id: str,
+    tenant_id: str = Depends(get_tenant_context),
+):
+    teacher = await db.teacher.find_first(
+        where={"id": id, "user": {"is": {"tenantId": tenant_id}}},
+        include={"user": True, "department": True, "designation": True},
+    )
     if not teacher:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Teacher not found")
     return TeacherResponse(
@@ -272,18 +287,35 @@ async def get_teacher_by_id(id: str):
 
 @router.put("/users/teachers/{id}", response_model=TeacherResponse)
 @_handle_generic_err
-async def update_teacher(id: str, data: TeacherUpdate, request: Request, current_user: User = Depends(get_current_user), admin_service: AdminService = Depends()):
+async def update_teacher(
+    id: str,
+    data: TeacherUpdate,
+    request: Request,
+    tenant_id: str = Depends(get_tenant_context),
+    current_user: User = Depends(get_current_user),
+    admin_service: AdminService = Depends(),
+):
+    await _require_teacher_in_tenant(id, tenant_id)
     return await admin_service.update_teacher(id, data.model_dump(exclude_unset=True), actor=current_user.email, ip=_get_client_ip(request))
 
+
+# ---------------------------------------------------------------------------
+# Password Reset
+# ---------------------------------------------------------------------------
 
 @router.post("/users/{user_id}/reset-password", response_model=MessageResponse, status_code=status.HTTP_200_OK)
 @router.put("/users/{user_id}/reset-password", response_model=MessageResponse, status_code=status.HTTP_200_OK)
 async def trigger_user_password_reset(
     user_id: str,
     request: Request,
+    tenant_id: str = Depends(get_tenant_context),
     current_user: User = Depends(get_current_user),
     admin_service: AdminService = Depends(),
 ) -> MessageResponse:
+    # Verify the target user belongs to this tenant before resetting their password
+    target_user = await db.user.find_first(where={"id": user_id, "tenantId": tenant_id})
+    if not target_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
     try:
         from app.core.url_resolver import resolve_frontend_url
         frontend_url = resolve_frontend_url(request)
@@ -303,6 +335,39 @@ async def trigger_user_password_reset(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err))
 
 
+# ---------------------------------------------------------------------------
+# Classes
+# ---------------------------------------------------------------------------
+
+@router.post("/classes", response_model=ClassResponse, status_code=status.HTTP_201_CREATED)
+@_handle_value_err
+async def create_class(
+    data: ClassCreate,
+    request: Request,
+    tenant_id: str = Depends(get_tenant_context),
+    current_user: User = Depends(get_current_user),
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.create_class(data, actor=current_user.email, ip=_get_client_ip(request), tenant_id=tenant_id)
+
+
+@router.post("/classes/bulk", response_model=BulkImportResponse, status_code=status.HTTP_200_OK)
+@_handle_generic_err
+async def bulk_create_classes(
+    data: ClassBulkCreateRequest,
+    request: Request,
+    tenant_id: str = Depends(get_tenant_context),
+    current_user: User = Depends(get_current_user),
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.bulk_create_classes(
+        data.classes,
+        actor=current_user.email,
+        ip=_get_client_ip(request),
+        tenant_id=tenant_id,
+    )
+
+
 @router.get("/classes", response_model=PaginatedResponse[ClassResponse], dependencies=[Depends(rate_limiter(requests_limit=120, window_seconds=60))])
 async def get_classes(
     page: int = 1,
@@ -311,16 +376,24 @@ async def get_classes(
     sort_order: str = "asc",
     q: str | None = None,
     subject_id: str | None = None,
+    tenant_id: str = Depends(get_tenant_context),
     admin_service: AdminService = Depends(),
 ):
     return await admin_service.get_all_classes(
-        page=page, page_size=min(page_size, 100), sort_by=sort_by, sort_order=sort_order, q=q, subject_id=subject_id
+        page=page, page_size=min(page_size, 100), sort_by=sort_by, sort_order=sort_order,
+        q=q, subject_id=subject_id, tenant_id=tenant_id,
     )
 
 
 @router.get("/classes/{class_id}", response_model=ClassResponse)
-async def get_class_by_id(class_id: str, admin_service: AdminService = Depends()):
-    cls = await db.academicclass.find_unique(where={"id": class_id}, include={"subject": True, "classroom": True, "enrollments": True})
+async def get_class_by_id(
+    class_id: str,
+    tenant_id: str = Depends(get_tenant_context),
+):
+    cls = await db.academicclass.find_first(
+        where={"id": class_id, "tenantId": tenant_id},
+        include={"subject": True, "classroom": True, "enrollments": True},
+    )
     if not cls:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Class not found")
     return ClassResponse(
@@ -333,22 +406,89 @@ async def get_class_by_id(class_id: str, admin_service: AdminService = Depends()
     )
 
 
-
 @router.put("/classes/{class_id}", response_model=ClassResponse)
 @_handle_generic_err
-async def update_class(class_id: str, data: ClassUpdate, request: Request, current_user: User = Depends(get_current_user), admin_service: AdminService = Depends()):
+async def update_class(
+    class_id: str,
+    data: ClassUpdate,
+    request: Request,
+    tenant_id: str = Depends(get_tenant_context),
+    current_user: User = Depends(get_current_user),
+    admin_service: AdminService = Depends(),
+):
+    await _require_class_in_tenant(class_id, tenant_id)
     return await admin_service.update_class(class_id, data.model_dump(exclude_unset=True), actor=current_user.email, ip=_get_client_ip(request))
 
 
-# --- Departments ---
+@router.put("/classes/{class_id}/assign-teacher", response_model=ClassResponse)
+@_handle_value_err
+async def assign_teacher(
+    class_id: str,
+    data: AssignTeacherRequest,
+    request: Request,
+    tenant_id: str = Depends(get_tenant_context),
+    current_user: User = Depends(get_current_user),
+    admin_service: AdminService = Depends(),
+):
+    await _require_class_in_tenant(class_id, tenant_id)
+    await _require_teacher_in_tenant(data.teacher_id, tenant_id)
+    return await admin_service.assign_teacher(class_id=class_id, teacher_id=data.teacher_id, actor=current_user.email, ip=_get_client_ip(request))
+
+
+@router.post("/classes/{class_id}/enroll", response_model=EnrollStudentsResponse, status_code=status.HTTP_200_OK)
+@_handle_value_err
+async def enroll_students(
+    class_id: str,
+    data: EnrollRequest,
+    request: Request,
+    tenant_id: str = Depends(get_tenant_context),
+    current_user: User = Depends(get_current_user),
+    admin_service: AdminService = Depends(),
+) -> EnrollStudentsResponse:
+    await _require_class_in_tenant(class_id, tenant_id)
+    enrolled_count = await admin_service.enroll_students(
+        class_id=class_id, student_ids=data.student_ids,
+        actor=current_user.email, ip=_get_client_ip(request), tenant_id=tenant_id,
+    )
+    return EnrollStudentsResponse(enrolled_count=enrolled_count, class_id=class_id, message=f"Successfully enrolled {enrolled_count} students")
+
+
+# ---------------------------------------------------------------------------
+# Departments
+# ---------------------------------------------------------------------------
+
+@router.post("/departments/bulk", response_model=BulkImportResponse, status_code=status.HTTP_200_OK)
+@_handle_generic_err
+async def bulk_create_departments(
+    data: DepartmentBulkCreateRequest,
+    request: Request,
+    tenant_id: str = Depends(get_tenant_context),
+    current_user: User = Depends(get_current_user),
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.bulk_create_departments(
+        data.departments,
+        actor=current_user.email,
+        ip=_get_client_ip(request),
+        tenant_id=tenant_id,
+    )
+
+
 @router.get("/departments", response_model=list[DepartmentResponse])
-async def get_departments(admin_service: AdminService = Depends()):
-    return await admin_service.get_all_departments()
+async def get_departments(
+    tenant_id: str = Depends(get_tenant_context),
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.get_all_departments(tenant_id=tenant_id)
 
 
 @router.get("/departments/{id}", response_model=DepartmentResponse)
-async def get_department(id: str, admin_service: AdminService = Depends()):
-    dept = await admin_service.get_department_by_id(id)
+async def get_department(
+    id: str,
+    tenant_id: str = Depends(get_tenant_context),
+    admin_service: AdminService = Depends(),
+):
+    dept = await admin_service.get_department_by_id(id, tenant_id=tenant_id)
     if not dept:
         raise HTTPException(status_code=404, detail="Department not found")
     return dept
@@ -356,18 +496,35 @@ async def get_department(id: str, admin_service: AdminService = Depends()):
 
 @router.post("/departments", response_model=DepartmentResponse)
 @_handle_generic_err
-async def create_department(data: DepartmentCreate, admin_service: AdminService = Depends()):
-    return await admin_service.create_department(data.name, data.code, data.head, data.description)
+async def create_department(
+    data: DepartmentCreate,
+    tenant_id: str = Depends(get_tenant_context),
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.create_department(data.name, data.code, data.head, data.description, tenant_id=tenant_id)
 
 
 @router.put("/departments/{id}", response_model=DepartmentResponse)
 @_handle_generic_err
-async def update_department(id: str, data: DepartmentUpdate, admin_service: AdminService = Depends()):
+async def update_department(
+    id: str,
+    data: DepartmentUpdate,
+    tenant_id: str = Depends(get_tenant_context),
+    admin_service: AdminService = Depends(),
+):
+    await _require_department_in_tenant(id, tenant_id)
     return await admin_service.update_department(id, data.model_dump(exclude_unset=True))
 
 
 @router.delete("/departments/{id}", response_model=MessageResponse)
-async def delete_department(id: str, request: Request, current_user: User = Depends(get_current_user), admin_service: AdminService = Depends()) -> MessageResponse:
+async def delete_department(
+    id: str,
+    request: Request,
+    tenant_id: str = Depends(get_tenant_context),
+    current_user: User = Depends(get_current_user),
+    admin_service: AdminService = Depends(),
+) -> MessageResponse:
+    await _require_department_in_tenant(id, tenant_id)
     try:
         await admin_service.delete_department(id, actor=current_user.email, ip=_get_client_ip(request))
         return MessageResponse(status="success", message="Department deleted successfully")
@@ -377,15 +534,42 @@ async def delete_department(id: str, request: Request, current_user: User = Depe
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-# --- Subjects ---
+# ---------------------------------------------------------------------------
+# Subjects
+# ---------------------------------------------------------------------------
+
+@router.post("/subjects/bulk", response_model=BulkImportResponse, status_code=status.HTTP_200_OK)
+@_handle_generic_err
+async def bulk_create_subjects(
+    data: SubjectBulkCreateRequest,
+    request: Request,
+    tenant_id: str = Depends(get_tenant_context),
+    current_user: User = Depends(get_current_user),
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.bulk_create_subjects(
+        data.subjects,
+        actor=current_user.email,
+        ip=_get_client_ip(request),
+        tenant_id=tenant_id,
+    )
+
+
 @router.get("/subjects", response_model=list[SubjectResponse])
-async def get_subjects(admin_service: AdminService = Depends()):
-    return await admin_service.get_all_subjects()
+async def get_subjects(
+    tenant_id: str = Depends(get_tenant_context),
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.get_all_subjects(tenant_id=tenant_id)
 
 
 @router.get("/subjects/{id}", response_model=SubjectResponse)
-async def get_subject(id: str, admin_service: AdminService = Depends()):
-    sub = await admin_service.get_subject_by_id(id)
+async def get_subject(
+    id: str,
+    tenant_id: str = Depends(get_tenant_context),
+    admin_service: AdminService = Depends(),
+):
+    sub = await admin_service.get_subject_by_id(id, tenant_id=tenant_id)
     if not sub:
         raise HTTPException(status_code=404, detail="Subject not found")
     return sub
@@ -393,18 +577,35 @@ async def get_subject(id: str, admin_service: AdminService = Depends()):
 
 @router.post("/subjects", response_model=SubjectResponse)
 @_handle_generic_err
-async def create_subject(data: SubjectCreate, admin_service: AdminService = Depends()):
-    return await admin_service.create_subject(data.name, data.code, data.description)
+async def create_subject(
+    data: SubjectCreate,
+    tenant_id: str = Depends(get_tenant_context),
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.create_subject(data.name, data.code, data.description, tenant_id=tenant_id)
 
 
 @router.put("/subjects/{id}", response_model=SubjectResponse)
 @_handle_generic_err
-async def update_subject(id: str, data: SubjectUpdate, admin_service: AdminService = Depends()):
+async def update_subject(
+    id: str,
+    data: SubjectUpdate,
+    tenant_id: str = Depends(get_tenant_context),
+    admin_service: AdminService = Depends(),
+):
+    await _require_subject_in_tenant(id, tenant_id)
     return await admin_service.update_subject(id, data.model_dump(exclude_unset=True))
 
 
 @router.delete("/subjects/{id}", response_model=MessageResponse)
-async def delete_subject(id: str, request: Request, current_user: User = Depends(get_current_user), admin_service: AdminService = Depends()) -> MessageResponse:
+async def delete_subject(
+    id: str,
+    request: Request,
+    tenant_id: str = Depends(get_tenant_context),
+    current_user: User = Depends(get_current_user),
+    admin_service: AdminService = Depends(),
+) -> MessageResponse:
+    await _require_subject_in_tenant(id, tenant_id)
     try:
         await admin_service.delete_subject(id, actor=current_user.email, ip=_get_client_ip(request))
         return MessageResponse(status="success", message="Subject deleted successfully")
@@ -414,15 +615,42 @@ async def delete_subject(id: str, request: Request, current_user: User = Depends
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-# --- Classrooms ---
+# ---------------------------------------------------------------------------
+# Classrooms
+# ---------------------------------------------------------------------------
+
+@router.post("/classrooms/bulk", response_model=BulkImportResponse, status_code=status.HTTP_200_OK)
+@_handle_generic_err
+async def bulk_create_classrooms(
+    data: ClassroomBulkCreateRequest,
+    request: Request,
+    tenant_id: str = Depends(get_tenant_context),
+    current_user: User = Depends(get_current_user),
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.bulk_create_classrooms(
+        data.classrooms,
+        actor=current_user.email,
+        ip=_get_client_ip(request),
+        tenant_id=tenant_id,
+    )
+
+
 @router.get("/classrooms", response_model=list[ClassroomResponse])
-async def get_classrooms(admin_service: AdminService = Depends()):
-    return await admin_service.get_all_classrooms()
+async def get_classrooms(
+    tenant_id: str = Depends(get_tenant_context),
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.get_all_classrooms(tenant_id=tenant_id)
 
 
 @router.get("/classrooms/{id}", response_model=ClassroomResponse)
-async def get_classroom(id: str, admin_service: AdminService = Depends()):
-    classroom = await admin_service.get_classroom_by_id(id)
+async def get_classroom(
+    id: str,
+    tenant_id: str = Depends(get_tenant_context),
+    admin_service: AdminService = Depends(),
+):
+    classroom = await admin_service.get_classroom_by_id(id, tenant_id=tenant_id)
     if not classroom:
         raise HTTPException(status_code=404, detail="Classroom not found")
     return classroom
@@ -430,18 +658,35 @@ async def get_classroom(id: str, admin_service: AdminService = Depends()):
 
 @router.post("/classrooms", response_model=ClassroomResponse)
 @_handle_generic_err
-async def create_classroom(data: ClassroomCreate, admin_service: AdminService = Depends()):
-    return await admin_service.create_classroom(data.name, data.building, data.capacity)
+async def create_classroom(
+    data: ClassroomCreate,
+    tenant_id: str = Depends(get_tenant_context),
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.create_classroom(data.name, data.building, data.capacity, tenant_id=tenant_id)
 
 
 @router.put("/classrooms/{id}", response_model=ClassroomResponse)
 @_handle_generic_err
-async def update_classroom(id: str, data: ClassroomUpdate, admin_service: AdminService = Depends()):
+async def update_classroom(
+    id: str,
+    data: ClassroomUpdate,
+    tenant_id: str = Depends(get_tenant_context),
+    admin_service: AdminService = Depends(),
+):
+    await _require_classroom_in_tenant(id, tenant_id)
     return await admin_service.update_classroom(id, data.model_dump(exclude_unset=True))
 
 
 @router.delete("/classrooms/{id}", response_model=MessageResponse)
-async def delete_classroom(id: str, request: Request, current_user: User = Depends(get_current_user), admin_service: AdminService = Depends()) -> MessageResponse:
+async def delete_classroom(
+    id: str,
+    request: Request,
+    tenant_id: str = Depends(get_tenant_context),
+    current_user: User = Depends(get_current_user),
+    admin_service: AdminService = Depends(),
+) -> MessageResponse:
+    await _require_classroom_in_tenant(id, tenant_id)
     try:
         await admin_service.delete_classroom(id, actor=current_user.email, ip=_get_client_ip(request))
         return MessageResponse(status="success", message="Classroom deleted successfully")
@@ -451,15 +696,42 @@ async def delete_classroom(id: str, request: Request, current_user: User = Depen
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-# --- Designations ---
+# ---------------------------------------------------------------------------
+# Designations
+# ---------------------------------------------------------------------------
+
+@router.post("/designations/bulk", response_model=BulkImportResponse, status_code=status.HTTP_200_OK)
+@_handle_generic_err
+async def bulk_create_designations(
+    data: DesignationBulkCreateRequest,
+    request: Request,
+    tenant_id: str = Depends(get_tenant_context),
+    current_user: User = Depends(get_current_user),
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.bulk_create_designations(
+        data.designations,
+        actor=current_user.email,
+        ip=_get_client_ip(request),
+        tenant_id=tenant_id,
+    )
+
+
 @router.get("/designations", response_model=list[DesignationResponse])
-async def get_designations(admin_service: AdminService = Depends()):
-    return await admin_service.get_all_designations()
+async def get_designations(
+    tenant_id: str = Depends(get_tenant_context),
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.get_all_designations(tenant_id=tenant_id)
 
 
 @router.get("/designations/{id}", response_model=DesignationResponse)
-async def get_designation(id: str, admin_service: AdminService = Depends()):
-    desig = await admin_service.get_designation_by_id(id)
+async def get_designation(
+    id: str,
+    tenant_id: str = Depends(get_tenant_context),
+    admin_service: AdminService = Depends(),
+):
+    desig = await admin_service.get_designation_by_id(id, tenant_id=tenant_id)
     if not desig:
         raise HTTPException(status_code=404, detail="Designation not found")
     return desig
@@ -467,18 +739,35 @@ async def get_designation(id: str, admin_service: AdminService = Depends()):
 
 @router.post("/designations", response_model=DesignationResponse)
 @_handle_generic_err
-async def create_designation(data: DesignationCreate, admin_service: AdminService = Depends()):
-    return await admin_service.create_designation(data.name, data.code, data.description)
+async def create_designation(
+    data: DesignationCreate,
+    tenant_id: str = Depends(get_tenant_context),
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.create_designation(data.name, data.code, data.description, tenant_id=tenant_id)
 
 
 @router.put("/designations/{id}", response_model=DesignationResponse)
 @_handle_generic_err
-async def update_designation(id: str, data: DesignationUpdate, admin_service: AdminService = Depends()):
+async def update_designation(
+    id: str,
+    data: DesignationUpdate,
+    tenant_id: str = Depends(get_tenant_context),
+    admin_service: AdminService = Depends(),
+):
+    await _require_designation_in_tenant(id, tenant_id)
     return await admin_service.update_designation(id, data.model_dump(exclude_unset=True))
 
 
 @router.delete("/designations/{id}", response_model=MessageResponse)
-async def delete_designation(id: str, request: Request, current_user: User = Depends(get_current_user), admin_service: AdminService = Depends()) -> MessageResponse:
+async def delete_designation(
+    id: str,
+    request: Request,
+    tenant_id: str = Depends(get_tenant_context),
+    current_user: User = Depends(get_current_user),
+    admin_service: AdminService = Depends(),
+) -> MessageResponse:
+    await _require_designation_in_tenant(id, tenant_id)
     try:
         await admin_service.delete_designation(id, actor=current_user.email, ip=_get_client_ip(request))
         return MessageResponse(status="success", message="Designation deleted successfully")
@@ -488,7 +777,10 @@ async def delete_designation(id: str, request: Request, current_user: User = Dep
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-# --- Misc Admin ---
+# ---------------------------------------------------------------------------
+# Audit Logs & Stats
+# ---------------------------------------------------------------------------
+
 @router.get("/audit", response_model=PaginatedResponse[AuditLogResponse], dependencies=[Depends(rate_limiter(requests_limit=120, window_seconds=60))])
 async def get_audit_logs(
     page: int = 1,
@@ -499,6 +791,7 @@ async def get_audit_logs(
     severity: str | None = None,
     start_date: str | None = None,
     end_date: str | None = None,
+    tenant_id: str = Depends(get_tenant_context),
     admin_service: AdminService = Depends(),
 ):
     return await admin_service.get_audit_logs(
@@ -510,12 +803,16 @@ async def get_audit_logs(
         severity=severity,
         start_date=start_date,
         end_date=end_date,
+        tenant_id=tenant_id,
     )
 
 
 @router.get("/audit/export", dependencies=[Depends(rate_limiter(requests_limit=10, window_seconds=60))])
-async def export_audit_logs(admin_service: AdminService = Depends()):
-    csv_data = await admin_service.export_audit_logs_csv()
+async def export_audit_logs(
+    tenant_id: str = Depends(get_tenant_context),
+    admin_service: AdminService = Depends(),
+):
+    csv_data = await admin_service.export_audit_logs_csv(tenant_id=tenant_id)
     return Response(
         content=csv_data,
         media_type="text/csv",
@@ -523,19 +820,25 @@ async def export_audit_logs(admin_service: AdminService = Depends()):
     )
 
 
-
-
 @router.get("/stats", response_model=AdminStatsResponse)
-async def get_admin_stats(admin_service: AdminService = Depends()):
-    return await admin_service.get_stats()
+async def get_admin_stats(
+    tenant_id: str = Depends(get_tenant_context),
+    admin_service: AdminService = Depends(),
+):
+    return await admin_service.get_stats(tenant_id=tenant_id)
 
+
+# ---------------------------------------------------------------------------
+# Absentee Scan
+# ---------------------------------------------------------------------------
 
 @router.post("/scan-absentees", response_model=list[AbsenteeAnomalyItem], status_code=status.HTTP_200_OK)
 async def scan_absentee_anomalies(
     contamination: float = 0.10,
+    tenant_id: str = Depends(get_tenant_context),
     attendance_repo: AttendanceRepository = Depends(),
 ) -> list[AbsenteeAnomalyItem]:
-    records = await attendance_repo.get_all_absences()
+    records = await attendance_repo.get_all_absences(tenant_id=tenant_id)
     if not records or len(records) < 5:
         return []
 
@@ -579,21 +882,54 @@ async def scan_absentee_anomalies(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Outlier pattern extraction failed: {str(err)}")
 
 
-# --- System Config ---
+# ---------------------------------------------------------------------------
+# System Config — scoped to tenant
+# ---------------------------------------------------------------------------
 from app.schemas.system_config import SystemConfigResponse, SystemConfigUpdate
 from app.services.system_config_service import SystemConfigService
 
 @router.get("/config", response_model=SystemConfigResponse)
-async def get_system_config(config_service: SystemConfigService = Depends()):
-    return await config_service.get_config()
+async def get_system_config(
+    tenant_id: str = Depends(get_tenant_context),
+    config_service: SystemConfigService = Depends(),
+):
+    return await config_service.get_config(tenant_id=tenant_id)
 
 
 @router.patch("/config", response_model=SystemConfigResponse)
-async def update_system_config(data: SystemConfigUpdate, config_service: SystemConfigService = Depends()):
+async def update_system_config(
+    data: SystemConfigUpdate,
+    tenant_id: str = Depends(get_tenant_context),
+    config_service: SystemConfigService = Depends(),
+):
     return await config_service.update_config(
+        tenant_id=tenant_id,
         is_face_recognition_enabled=data.is_face_recognition_enabled,
         is_gps_verification_enabled=data.is_gps_verification_enabled,
         is_ai_background_validation_enabled=data.is_ai_background_validation_enabled,
     )
 
 
+# ---------------------------------------------------------------------------
+# Biometrics Purge
+# ---------------------------------------------------------------------------
+
+@router.post("/biometrics/purge-photos")
+async def purge_biometric_photos(
+    retention_days: int = 30,
+    tenant_id: str = Depends(get_tenant_context),
+    current_user: User = Depends(get_current_user),
+    admin_service: AdminService = Depends(),
+):
+    from app.services.biometric_consent_service import BiometricConsentService
+    service = BiometricConsentService()
+    result = await service.purge_attendance_photos(retention_days=retention_days, tenant_id=tenant_id)
+    await admin_service._log_action(
+        "PURGE_BIOMETRICS",
+        "WARN",
+        actor=current_user.email,
+        target="attendance_photos",
+        description=f"Purged raw photos for records older than {retention_days} days (Count: {result['purged_count']})",
+        tenant_id=tenant_id,
+    )
+    return result

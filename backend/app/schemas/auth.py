@@ -29,6 +29,9 @@ class Token(BaseModel):
     token_type: str = Field("bearer", description="Token protocol type")
     role: str = Field(..., description="Role of the authenticated user")
     must_change_password: bool = Field(default=False, description="Flag indicating user must set a new password")
+    tenant_id: Optional[str] = Field(None, description="UUID of the user's institution/tenant")
+    tenant_slug: Optional[str] = Field(None, description="Tenant slug")
+    tenant_name: Optional[str] = Field(None, description="Tenant institution name")
 
 
 class StudentProfileBrief(BaseModel):
@@ -69,6 +72,9 @@ class UserProfileResponse(BaseModel):
     role: str = Field(..., description="Assigned role of the user")
     is_active: bool = Field(..., description="System status flag")
     must_change_password: bool = Field(default=False, description="Flag indicating user must set a new password")
+    tenant_id: Optional[str] = Field(None, description="UUID of the user's institution/tenant")
+    tenant_slug: Optional[str] = Field(None, description="Tenant slug")
+    tenant_name: Optional[str] = Field(None, description="Tenant institution name")
     student_profile: Optional[StudentProfileBrief] = Field(None, description="Detailed student profile if role is STUDENT")
     teacher_profile: Optional[TeacherProfileBrief] = Field(None, description="Detailed teacher profile if role is TEACHER")
 

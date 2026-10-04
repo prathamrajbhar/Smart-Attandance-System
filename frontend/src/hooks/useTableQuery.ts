@@ -62,6 +62,8 @@ export function useTableQuery<T>({
     router.replace(newUrl, { scroll: false });
   }, [debouncedQuery, currentPage, pageSize, sortBy, sortOrder, filterValue, pathname, router, defaultPageSize]);
 
+  const serializedExtraParams = JSON.stringify(extraParams || {});
+
   const fetchData = useCallback(async (): Promise<void> => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -102,7 +104,8 @@ export function useTableQuery<T>({
     } finally {
       setLoading(false);
     }
-  }, [endpoint, currentPage, pageSize, sortBy, sortOrder, debouncedQuery, filterValue, filterKey, JSON.stringify(extraParams)]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [endpoint, currentPage, pageSize, sortBy, sortOrder, debouncedQuery, filterValue, filterKey, serializedExtraParams]);
 
   useEffect(() => {
     void fetchData();

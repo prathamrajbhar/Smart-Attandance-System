@@ -60,8 +60,22 @@ class AuthRepository {
 
       await _storage.saveToken(tokenResponse.accessToken);
       await _storage.saveUserRole(tokenResponse.role);
+      if (tokenResponse.tenantId != null) {
+        await _storage.saveTenantInfo(
+          id: tokenResponse.tenantId!,
+          slug: tokenResponse.tenantSlug,
+          name: tokenResponse.tenantName,
+        );
+      }
 
       final profile = await _authApi.getProfile();
+      if (profile.tenantId != null) {
+        await _storage.saveTenantInfo(
+          id: profile.tenantId!,
+          slug: profile.tenantSlug,
+          name: profile.tenantName,
+        );
+      }
       await _hive.cacheProfile(profile);
 
       return (profile: profile, status: _computeAuthStatus(profile));
@@ -94,6 +108,13 @@ class AuthRepository {
 
     try {
       final profile = await _authApi.getProfile();
+      if (profile.tenantId != null) {
+        await _storage.saveTenantInfo(
+          id: profile.tenantId!,
+          slug: profile.tenantSlug,
+          name: profile.tenantName,
+        );
+      }
       await _hive.cacheProfile(profile);
 
       return (profile: profile, status: _computeAuthStatus(profile));

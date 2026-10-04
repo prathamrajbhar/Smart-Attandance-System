@@ -90,13 +90,7 @@ export default function GlassTable<T extends Record<string, unknown>>({
     );
   }
 
-  if (data.length === 0) {
-    return (
-      <div className={cn("rounded-xl border border-border bg-card p-12 text-center shadow-sm", className)}>
-        <p className="text-sm font-medium text-muted-foreground">{emptyMessage}</p>
-      </div>
-    );
-  }
+  const isEmpty = data.length === 0;
 
   return (
     <div className={cn("rounded-xl border border-border bg-card shadow-sm overflow-hidden", className)}>
@@ -132,25 +126,33 @@ export default function GlassTable<T extends Record<string, unknown>>({
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {paginated.map((row, i) => {
-              const rowId = rowKey ? rowKey(row) : (row.id != null ? String(row.id) : String(i));
-              return (
-                <tr
-                  key={rowId}
-                  onClick={onRowClick ? () => onRowClick(row) : undefined}
-                  className={cn(
-                    "transition-colors hover:bg-muted/50",
-                    onRowClick && "cursor-pointer"
-                  )}
-                >
-                {columns.map((col) => (
-                  <td key={col.key} className="p-4 text-sm text-foreground align-middle">
-                    {col.render ? col.render(row) : (row[col.key] as React.ReactNode) ?? "—"}
-                  </td>
-                ))}
-                </tr>
-              );
-            })}
+            {isEmpty ? (
+              <tr>
+                <td colSpan={columns.length} className="p-12 text-center text-sm font-medium text-muted-foreground">
+                  {emptyMessage}
+                </td>
+              </tr>
+            ) : (
+              paginated.map((row, i) => {
+                const rowId = rowKey ? rowKey(row) : (row.id != null ? String(row.id) : String(i));
+                return (
+                  <tr
+                    key={rowId}
+                    onClick={onRowClick ? () => onRowClick(row) : undefined}
+                    className={cn(
+                      "transition-colors hover:bg-muted/50",
+                      onRowClick && "cursor-pointer"
+                    )}
+                  >
+                    {columns.map((col) => (
+                      <td key={col.key} className="p-4 text-sm text-foreground align-middle">
+                        {col.render ? col.render(row) : (row[col.key] as React.ReactNode) ?? "—"}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>

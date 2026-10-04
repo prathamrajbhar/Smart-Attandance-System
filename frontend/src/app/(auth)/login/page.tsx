@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Mail, Lock, Shield } from "lucide-react";
+import { Mail, Lock, Shield, AlertTriangle } from "lucide-react";
 import toast from "react-hot-toast";
 
 import api, { getApiErrorMessage, applyValidationErrorsToForm } from "@/lib/api";
@@ -21,6 +21,7 @@ export default function LoginPage(): React.ReactElement {
   const { login, setUser } = useAuthStore();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [pendingProfile, setPendingProfile] = useState<UserProfile | null>(null);
+  const [suspensionError, setSuspensionError] = useState<string | null>(null);
 
   const {
     register,
@@ -29,18 +30,17 @@ export default function LoginPage(): React.ReactElement {
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+    defaultValues: { email: "", password: "" },
   });
 
   function handleSuccessRedirect(profile: UserProfile): void {
-    const destination = profile.role === "ADMIN" ? "/admin/dashboard" : "/teacher/classes";
-    router.push(destination);
+    if (profile.role === "SUPER_ADMIN") router.push("/super-admin/dashboard");
+    else if (profile.role === "ADMIN" || profile.role === "TENANT_ADMIN") router.push("/admin/dashboard");
+    else router.push("/teacher/classes");
   }
 
   async function onSubmit(formData: LoginFormData): Promise<void> {
+    setSuspensionError(null);
     const cleanEmail = formData.email.trim().toLowerCase();
     try {
       const { data: tokenData } = await api.post<TokenResponse>("/auth/login", {
@@ -52,9 +52,7 @@ export default function LoginPage(): React.ReactElement {
       });
 
       if (profile.role === "STUDENT") {
-        setError("email", {
-          message: "Student accounts must access via the Smart Attendance Mobile App.",
-        });
+        setError("email", { message: "Student accounts must access via the Smart Attendance Mobile App." });
         toast.error("Access Restricted: Student accounts must use the Mobile App.");
         return;
       }
@@ -70,23 +68,29 @@ export default function LoginPage(): React.ReactElement {
       toast.success("Welcome back!");
       handleSuccessRedirect(profile);
     } catch (err: unknown) {
-      const handled = applyValidationErrorsToForm(err, setError);
-      if (!handled) {
-        toast.error(getApiErrorMessage(err, "Login failed. Please check your credentials."));
+      const errorMsg = getApiErrorMessage(err, "Login failed. Please check your credentials.");
+      if (errorMsg.toLowerCase().includes("suspended") || errorMsg.toLowerCase().includes("suspension")) {
+        setSuspensionError(errorMsg);
+        toast.error("Institution Suspended: Access is temporarily restricted.");
+        return;
       }
+      const handled = applyValidationErrorsToForm(err, setError);
+      if (!handled) toast.error(errorMsg);
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-      <div className="w-full max-w-md">
+    <div className="w-full max-w-md mx-auto my-auto py-8">
+      <div className="w-full">
         <div className="text-center mb-6">
-          <div className="inline-flex p-3 rounded-xl bg-primary text-primary-foreground shadow-sm mb-3">
-            <Shield size={28} />
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground font-[Outfit]">
-            Smart Attendance
-          </h1>
+          <Link href="/login" className="inline-block group cursor-pointer hover:opacity-90 transition-opacity">
+            <div className="inline-flex p-3 rounded-xl bg-primary text-primary-foreground shadow-sm mb-3 group-hover:scale-105 transition-transform">
+              <Shield size={28} />
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground font-[Outfit]">
+              Smart Attendance
+            </h1>
+          </Link>
           <p className="text-xs text-muted-foreground mt-1">
             Enterprise Verification & Management Suite
           </p>
@@ -103,6 +107,16 @@ export default function LoginPage(): React.ReactElement {
               Access your administrator or faculty account
             </p>
           </div>
+
+          {suspensionError && (
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-left flex gap-3 items-start animate-in fade-in duration-200">
+              <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-amber-500">Institution Suspended</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{suspensionError}</p>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-3.5">
             <GlassInput

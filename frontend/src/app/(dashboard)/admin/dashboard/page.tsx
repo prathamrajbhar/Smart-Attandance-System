@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { 
   Users, GraduationCap, BookOpen, ShieldCheck, RefreshCw, Megaphone 
 } from "lucide-react";
@@ -11,10 +12,10 @@ import GlassLoader from "@/components/ui/GlassLoader";
 import AdminQuickActions from "@/components/admin/AdminQuickActions";
 import SystemNodesCard from "@/components/admin/SystemNodesCard";
 import SystemEventsCard from "@/components/admin/SystemEventsCard";
-import BroadcastNotificationModal from "@/components/admin/BroadcastNotificationModal";
 import type { AdminStatsResponse, SystemHealthResponse, AuditLogResponse, SystemConfigResponse } from "@/types";
 
 export default function AdminDashboardPage(): React.ReactElement {
+  const router = useRouter();
   const { user } = useAuthStore();
   const [stats, setStats] = useState<AdminStatsResponse | null>(null);
   const [health, setHealth] = useState<SystemHealthResponse | null>(null);
@@ -22,7 +23,6 @@ export default function AdminDashboardPage(): React.ReactElement {
   const [config, setConfig] = useState<SystemConfigResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [isBroadcastOpen, setIsBroadcastOpen] = useState(false);
 
   const greeting = (() => {
     const hour = new Date().getHours();
@@ -45,7 +45,7 @@ export default function AdminDashboardPage(): React.ReactElement {
       const [statsRes, healthRes, auditRes, configRes] = await Promise.allSettled([
         api.get<AdminStatsResponse>("/admin/stats"),
         api.get<SystemHealthResponse>("/health"),
-        api.get<AuditLogResponse[]>("/admin/audit"),
+        api.get<AuditLogResponse[]>("/admin/audit", { params: { page_size: 10 } }),
         api.get<SystemConfigResponse>("/admin/config"),
       ]);
 
@@ -66,36 +66,8 @@ export default function AdminDashboardPage(): React.ReactElement {
   }, []);
 
   useEffect(() => {
-    let isMounted = true;
-    const load = async () => {
-      try {
-        const [statsRes, healthRes, auditRes, configRes] = await Promise.allSettled([
-          api.get<AdminStatsResponse>("/admin/stats"),
-          api.get<SystemHealthResponse>("/health"),
-          api.get<{ items: AuditLogResponse[] } | AuditLogResponse[]>("/admin/audit"),
-          api.get<SystemConfigResponse>("/admin/config"),
-        ]);
-        if (isMounted) {
-          if (statsRes.status === "fulfilled") setStats(statsRes.value.data);
-          if (healthRes.status === "fulfilled") setHealth(healthRes.value.data);
-          if (auditRes.status === "fulfilled") {
-            const raw = auditRes.value.data;
-            const items = Array.isArray(raw) ? raw : (raw as { items?: AuditLogResponse[] })?.items || [];
-            setAuditEvents(items);
-          }
-          if (configRes.status === "fulfilled") setConfig(configRes.value.data);
-          setLoading(false);
-        }
-      } catch {
-        if (isMounted) {
-          setStats({ studentCount: 0, teacherCount: 0, classCount: 0 });
-          setLoading(false);
-        }
-      }
-    };
-    void load();
-    return () => { isMounted = false; };
-  }, []);
+    void fetchDashboardData();
+  }, [fetchDashboardData]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -133,11 +105,11 @@ export default function AdminDashboardPage(): React.ReactElement {
         {/* Header Action Buttons */}
         <div className="flex items-center gap-2.5 z-10 self-start md:self-center">
           <button
-            onClick={() => setIsBroadcastOpen(true)}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-border bg-secondary/50 text-xs font-semibold text-foreground hover:bg-secondary hover:border-slate-300 dark:hover:border-slate-700 transition-all shadow-2xs"
+            onClick={() => router.push("/admin/notifications/broadcast")}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-border bg-secondary/50 text-xs font-semibold text-foreground hover:bg-secondary hover:border-slate-300 dark:hover:border-slate-700 transition-all shadow-2xs cursor-pointer"
           >
             <Megaphone size={14} className="text-indigo-600 dark:text-indigo-400" />
-            <span>Broadcast</span>
+            <span>Broadcast Studio</span>
           </button>
 
           <button
@@ -209,13 +181,6 @@ export default function AdminDashboardPage(): React.ReactElement {
         <SystemNodesCard health={health} config={config} />
         <SystemEventsCard events={auditEvents} />
       </div>
-
-      {/* Broadcast Modal */}
-      <BroadcastNotificationModal
-        isOpen={isBroadcastOpen}
-        onClose={() => setIsBroadcastOpen(false)}
-        onSuccess={() => void fetchDashboardData()}
-      />
     </div>
   );
 }

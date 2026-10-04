@@ -6,11 +6,14 @@ from app.api.dependencies import RoleChecker, get_current_user
 from app.schemas.common import ActionSuccessResponse, MessageResponse
 from app.schemas.notification import (
     NotificationBroadcastCreate,
+    NotificationBulkDeleteRequest,
     NotificationListResponse,
     NotificationResponse,
 )
 from app.services.notification_service import (
     broadcast_announcement,
+    delete_all_user_notifications,
+    delete_multiple_notifications,
     delete_notification,
     get_user_notifications,
     mark_all_notifications_read,
@@ -26,7 +29,7 @@ async def list_notifications(
     unread_only: bool = Query(False, description="Filter only unread notifications"),
     category: Optional[str] = Query(None, description="Category filter (attendance, leave, system, etc.)"),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(10, ge=1, le=100),
     current_user: User = Depends(get_current_user),
 ):
     """Retrieve notifications for the current authenticated user + active role broadcasts."""
@@ -59,6 +62,25 @@ async def mark_all_read(
     """Mark all notifications for the current authenticated user as read."""
     count = await mark_all_notifications_read(current_user.id, current_user.role)
     return ActionSuccessResponse(success=True, message=f"{count} notifications marked as read")
+
+
+@router.post("/bulk-delete", response_model=ActionSuccessResponse)
+async def bulk_delete_notifications(
+    payload: NotificationBulkDeleteRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """Delete multiple notifications by ID."""
+    count = await delete_multiple_notifications(payload.ids, current_user.id)
+    return ActionSuccessResponse(success=True, message=f"{count} notifications deleted")
+
+
+@router.delete("/all", response_model=ActionSuccessResponse)
+async def clear_all_notifications(
+    current_user: User = Depends(get_current_user),
+):
+    """Delete all notifications for the current user."""
+    count = await delete_all_user_notifications(current_user.id, current_user.role)
+    return ActionSuccessResponse(success=True, message=f"{count} notifications cleared")
 
 
 @router.delete("/{notification_id}", response_model=ActionSuccessResponse)

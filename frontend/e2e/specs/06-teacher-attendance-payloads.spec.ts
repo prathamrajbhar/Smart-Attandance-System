@@ -11,12 +11,12 @@ test.describe("06: Teacher Portal - Attendance Marking & API Payload Inspection"
     page,
   }) => {
     // Intercept manual bulk mark endpoint
-    let interceptedPayload: { records?: Array<{ student_id: string; status: string }> } | null = null;
+    const payloadRef: { current: { records?: Array<{ student_id: string; status: string }> } | null } = { current: null };
 
     await page.route("**/teacher/sessions/*/mark-bulk", async (route) => {
       const request = route.request();
       if (request.method() === "POST") {
-        interceptedPayload = request.postDataJSON() as { records?: Array<{ student_id: string; status: string }> };
+        payloadRef.current = request.postDataJSON() as { records?: Array<{ student_id: string; status: string }> };
       }
       await route.fulfill({
         status: 200,
@@ -24,7 +24,7 @@ test.describe("06: Teacher Portal - Attendance Marking & API Payload Inspection"
         body: JSON.stringify({
           success: true,
           message: "Attendance override applied successfully",
-          updated_count: interceptedPayload?.records?.length || 0,
+          updated_count: payloadRef.current?.records?.length || 0,
         }),
       });
     });
@@ -78,13 +78,14 @@ test.describe("06: Teacher Portal - Attendance Marking & API Payload Inspection"
     await submitBtn.click();
 
     // Assert exact intercepted payload structure
-    expect(interceptedPayload).not.toBeNull();
-    expect(interceptedPayload).toHaveProperty("records");
-    expect(Array.isArray(interceptedPayload?.records)).toBe(true);
-    expect(interceptedPayload?.records?.length).toBeGreaterThan(0);
+    const payload = payloadRef.current;
+    expect(payload).not.toBeNull();
+    expect(payload).toHaveProperty("records");
+    expect(Array.isArray(payload?.records)).toBe(true);
+    expect(payload?.records?.length).toBeGreaterThan(0);
 
     // Validate payload item schema & status enum
-    const firstRecord = interceptedPayload?.records?.[0];
+    const firstRecord = payload?.records?.[0];
     expect(firstRecord).toBeDefined();
     expect(typeof firstRecord?.student_id).toBe("string");
     expect(["Present", "Absent", "Flagged", "Approved"]).toContain(firstRecord?.status);

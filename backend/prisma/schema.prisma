@@ -15,6 +15,25 @@ enum Role {
   STUDENT
   TEACHER
   ADMIN
+  SUPER_ADMIN
+  PLATFORM_SUPPORT
+  TENANT_ADMIN
+  CAMPUS_DIRECTOR
+  DEPT_HEAD
+  PARENT
+}
+
+enum TenantType {
+  SCHOOL
+  COLLEGE
+  COACHING_CENTER
+}
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+  TRIAL
+  EXPIRED
 }
 
 enum LeaveStatus {
@@ -29,8 +48,55 @@ enum DeviceChangeStatus {
   REJECTED
 }
 
+model Tenant {
+  id                 String       @id @default(uuid())
+  slug               String       @unique
+  name               String
+  type               TenantType   @default(COLLEGE)
+  status             TenantStatus @default(ACTIVE)
+  domain             String?      @unique
+  maxAllowedStudents Int          @default(500) @map("max_allowed_students")
+  config             Json?
+  createdAt          DateTime     @default(now()) @map("created_at")
+  updatedAt          DateTime     @updatedAt @map("updated_at")
+
+  users         User[]
+  campuses      Campus[]
+  departments   Department[]
+  subjects      Subject[]
+  classrooms    Classroom[]
+  designations  Designation[]
+  classes       AcademicClass[]
+  auditLogs     AuditLog[]
+  systemConfig  SystemConfiguration?
+  cohorts       AcademicCohort[]
+  timeSlots     TimeSlot[]
+
+  @@map("tenants")
+}
+
+model Campus {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  name      String
+  code      String
+  address   String?
+  latitude  Float?
+  longitude Float?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant  Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  classes AcademicClass[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@map("campuses")
+}
+
 model User {
   id                 String   @id @default(uuid())
+  tenantId           String?  @map("tenant_id")
   email              String   @unique
   hashedPassword     String   @map("hashed_password")
   role               Role     @default(STUDENT)
@@ -39,10 +105,12 @@ model User {
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
 
+  tenant        Tenant?        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   student       Student?
   teacher       Teacher?
   notifications Notification[]
 
+  @@index([tenantId])
   @@map("users")
 }
 
@@ -53,6 +121,8 @@ model Student {
   firstName        String?                     @map("first_name")
   lastName         String?                     @map("last_name")
   phone            String?                     @map("phone")
+  guardianPhone    String?                     @map("guardian_phone")
+  guardianEmail    String?                     @map("guardian_email")
   gender           String?                     @map("gender")
   dateOfBirth      DateTime?                   @map("date_of_birth")
   semester         Int?                        @map("semester")
@@ -72,6 +142,7 @@ model Student {
   enrollments          Enrollment[]
   leaveRequests        LeaveRequest[]
   deviceChangeRequests DeviceChangeRequest[]
+  cohortMemberships    CohortStudent[]
 
   @@index([departmentId, createdAt])
   @@index([semester, batch])
@@ -98,6 +169,9 @@ model Teacher {
   department  Department      @relation(fields: [departmentId], references: [id])
   designation Designation     @relation(fields: [designationId], references: [id])
   classes     AcademicClass[]
+  cohortCourses         CohortCourse[]
+  originalSubstitutions TeacherSubstitution[] @relation("OriginalFaculty")
+  assignedSubstitutions TeacherSubstitution[] @relation("SubstituteFaculty")
 
   @@index([departmentId, designationId])
   @@map("teachers")
@@ -105,6 +179,8 @@ model Teacher {
 
 model AcademicClass {
   id          String   @id @default(uuid())
+  tenantId    String?  @map("tenant_id")
+  campusId    String?  @map("campus_id")
   name        String
   subjectId   String   @map("subject_id")
   classroomId String?  @map("classroom_id")
@@ -115,6 +191,8 @@ model AcademicClass {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
+  tenant      Tenant?      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  campus      Campus?      @relation(fields: [campusId], references: [id], onDelete: SetNull)
   teacher     Teacher      @relation(fields: [teacherId], references: [id])
   subject     Subject      @relation(fields: [subjectId], references: [id])
   classroom   Classroom?   @relation(fields: [classroomId], references: [id])
@@ -122,22 +200,25 @@ model AcademicClass {
   geofence    Geofence?
   enrollments Enrollment[]
 
+  @@index([tenantId])
   @@index([teacherId, semester])
   @@index([subjectId])
   @@map("classes")
 }
 
 model Session {
-  id              String   @id @default(uuid())
-  academicClassId String   @map("class_id")
-  startTime       DateTime @map("start_time")
-  endTime         DateTime @map("end_time")
-  isActive        Boolean  @default(true) @map("is_active")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id               String          @id @default(uuid())
+  academicClassId  String          @map("class_id")
+  timetableEntryId String?         @map("timetable_entry_id")
+  startTime        DateTime        @map("start_time")
+  endTime          DateTime        @map("end_time")
+  isActive         Boolean         @default(true) @map("is_active")
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
 
-  academicClass AcademicClass @relation(fields: [academicClassId], references: [id])
-  attendance    Attendance[]
+  academicClass  AcademicClass   @relation(fields: [academicClassId], references: [id])
+  timetableEntry TimetableEntry? @relation("TimetableToSession", fields: [timetableEntryId], references: [id])
+  attendance     Attendance[]
 
   @@map("sessions")
 }
@@ -196,55 +277,70 @@ model Enrollment {
 
 model Department {
   id          String   @id @default(uuid())
-  name        String   @unique
-  code        String   @unique
+  tenantId    String?  @map("tenant_id")
+  name        String
+  code        String
   head        String?
   description String?
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
+  tenant   Tenant?   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   teachers Teacher[]
   students Student[]
+  cohorts  AcademicCohort[]
 
+  @@index([tenantId])
   @@map("departments")
 }
 
 model Subject {
   id          String   @id @default(uuid())
-  name        String   @unique
-  code        String   @unique
+  tenantId    String?  @map("tenant_id")
+  name        String
+  code        String
   description String?
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  classes AcademicClass[]
+  tenant        Tenant?         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  classes       AcademicClass[]
+  cohortCourses CohortCourse[]
 
+  @@index([tenantId])
   @@map("subjects")
 }
 
 model Classroom {
   id        String   @id @default(uuid())
-  name      String   @unique
+  tenantId  String?  @map("tenant_id")
+  name      String
   building  String?
   capacity  Int?
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  classes AcademicClass[]
+  tenant           Tenant?          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  classes          AcademicClass[]
+  timetableEntries TimetableEntry[]
 
+  @@index([tenantId])
   @@map("classrooms")
 }
 
 model Designation {
   id          String   @id @default(uuid())
-  name        String   @unique
-  code        String   @unique
+  tenantId    String?  @map("tenant_id")
+  name        String
+  code        String
   description String?
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
+  tenant   Tenant?   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   teachers Teacher[]
 
+  @@index([tenantId])
   @@map("designations")
 }
 
@@ -268,6 +364,7 @@ model LeaveRequest {
 
 model AuditLog {
   id          String   @id @default(uuid())
+  tenantId    String?  @map("tenant_id")
   timestamp   DateTime @default(now())
   eventType   String   @map("event_type")
   severity    String
@@ -277,6 +374,9 @@ model AuditLog {
   ipAddress   String?  @map("ip_address")
   metadata    Json?
 
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, timestamp])
   @@index([eventType, timestamp])
   @@index([timestamp])
   @@map("audit_logs")
@@ -299,10 +399,13 @@ model DeviceChangeRequest {
 
 model SystemConfiguration {
   id                              String   @id @default(uuid())
+  tenantId                        String?  @unique @map("tenant_id")
   isFaceRecognitionEnabled        Boolean  @default(true) @map("is_face_recognition_enabled")
   isGpsVerificationEnabled        Boolean  @default(true) @map("is_gps_verification_enabled")
   isAiBackgroundValidationEnabled Boolean  @default(true) @map("is_ai_background_validation_enabled")
   updatedAt                       DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@map("system_configurations")
 }
@@ -325,3 +428,125 @@ model Notification {
   @@index([role, createdAt])
   @@map("notifications")
 }
+
+model AcademicCohort {
+  id           String          @id @default(uuid())
+  tenantId     String?         @map("tenant_id")
+  departmentId String          @map("department_id")
+  name         String
+  semester     Int
+  academicYear String          @map("academic_year")
+  documentUrl  String?         @map("document_url")
+  documentKey  String?         @map("document_key")
+  isActive     Boolean         @default(true) @map("is_active")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+
+  tenant       Tenant?         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  department   Department      @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  students     CohortStudent[]
+  batches      CohortBatch[]
+  courses      CohortCourse[]
+
+  @@unique([departmentId, name, semester, academicYear])
+  @@index([tenantId])
+  @@map("academic_cohorts")
+}
+
+model CohortStudent {
+  id        String         @id @default(uuid())
+  cohortId  String         @map("cohort_id")
+  studentId String         @map("student_id")
+  batchId   String?        @map("batch_id")
+  rollNo    String?        @map("roll_no")
+
+  cohort    AcademicCohort @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  student   Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  batch     CohortBatch?   @relation(fields: [batchId], references: [id])
+
+  @@unique([cohortId, studentId])
+  @@map("cohort_students")
+}
+
+model CohortBatch {
+  id       String          @id @default(uuid())
+  cohortId String          @map("cohort_id")
+  name     String
+
+  cohort   AcademicCohort  @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  students CohortStudent[]
+  timetable TimetableEntry[]
+
+  @@unique([cohortId, name])
+  @@map("cohort_batches")
+}
+
+model CohortCourse {
+  id               String          @id @default(uuid())
+  cohortId         String          @map("cohort_id")
+  subjectId        String          @map("subject_id")
+  primaryTeacherId String          @map("primary_teacher_id")
+
+  cohort           AcademicCohort  @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  subject          Subject         @relation(fields: [subjectId], references: [id])
+  primaryTeacher   Teacher         @relation(fields: [primaryTeacherId], references: [id])
+  timetableEntries TimetableEntry[]
+
+  @@unique([cohortId, subjectId])
+  @@map("cohort_courses")
+}
+
+model TimeSlot {
+  id         String          @id @default(uuid())
+  tenantId   String?         @map("tenant_id")
+  slotNumber Int             @map("slot_number")
+  name       String
+  startTime  String          @map("start_time")
+  endTime    String          @map("end_time")
+  isBreak    Boolean         @default(false) @map("is_break")
+
+  tenant     Tenant?         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  timetableEntries TimetableEntry[]
+
+  @@unique([tenantId, slotNumber])
+  @@map("time_slots")
+}
+
+model TimetableEntry {
+  id             String          @id @default(uuid())
+  cohortCourseId String          @map("cohort_course_id")
+  timeSlotId     String          @map("time_slot_id")
+  classroomId    String?         @map("classroom_id")
+  batchId        String?         @map("batch_id")
+  dayOfWeek      Int             @map("day_of_week")
+
+  cohortCourse   CohortCourse    @relation(fields: [cohortCourseId], references: [id], onDelete: Cascade)
+  timeSlot       TimeSlot        @relation(fields: [timeSlotId], references: [id])
+  classroom      Classroom?      @relation(fields: [classroomId], references: [id])
+  batch          CohortBatch?    @relation(fields: [batchId], references: [id])
+  substitutions  TeacherSubstitution[]
+  sessions       Session[]       @relation("TimetableToSession")
+
+  @@unique([cohortCourseId, timeSlotId, dayOfWeek, batchId])
+  @@index([dayOfWeek, timeSlotId])
+  @@map("timetable_entries")
+}
+
+model TeacherSubstitution {
+  id                  String         @id @default(uuid())
+  timetableEntryId    String         @map("timetable_entry_id")
+  originalTeacherId   String         @map("original_teacher_id")
+  substituteTeacherId String         @map("substitute_teacher_id")
+  date                DateTime       @map("date")
+  reason              String?
+  status              String         @default("APPROVED")
+  createdAt           DateTime       @default(now()) @map("created_at")
+
+  timetableEntry      TimetableEntry @relation(fields: [timetableEntryId], references: [id], onDelete: Cascade)
+  originalTeacher     Teacher        @relation("OriginalFaculty", fields: [originalTeacherId], references: [id])
+  substituteTeacher   Teacher        @relation("SubstituteFaculty", fields: [substituteTeacherId], references: [id])
+
+  @@unique([timetableEntryId, date])
+  @@map("teacher_substitutions")
+}
+

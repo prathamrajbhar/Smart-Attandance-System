@@ -15,12 +15,18 @@ void main() {
         'token_type': 'bearer',
         'role': 'STUDENT',
         'must_change_password': true,
+        'tenant_id': 'tenant_abc123',
+        'tenant_slug': 'apex-tech',
+        'tenant_name': 'Apex Institute of Technology',
       };
       final tokenResp = TokenResponse.fromJson(json);
       expect(tokenResp.accessToken, 'jwt_test_token_123');
       expect(tokenResp.tokenType, 'bearer');
       expect(tokenResp.role, 'STUDENT');
       expect(tokenResp.mustChangePassword, isTrue);
+      expect(tokenResp.tenantId, 'tenant_abc123');
+      expect(tokenResp.tenantSlug, 'apex-tech');
+      expect(tokenResp.tenantName, 'Apex Institute of Technology');
     });
 
     test('UserProfile & StudentProfile serialization roundtrip', () {
@@ -29,6 +35,9 @@ void main() {
         'email': 'cse2025001@smartattendance.edu.in',
         'role': 'STUDENT',
         'is_active': true,
+        'tenant_id': 'tenant_abc123',
+        'tenant_slug': 'apex-tech',
+        'tenant_name': 'Apex Institute of Technology',
         'student_profile': {
           'id': 'std_001',
           'enrollment_number': 'CSE2025001',
@@ -41,11 +50,17 @@ void main() {
       final profile = UserProfile.fromJson(userJson);
       expect(profile.id, 'usr_001');
       expect(profile.email, 'cse2025001@smartattendance.edu.in');
+      expect(profile.tenantId, 'tenant_abc123');
+      expect(profile.tenantSlug, 'apex-tech');
+      expect(profile.tenantName, 'Apex Institute of Technology');
       expect(profile.hasFaceRegistered, isTrue);
       expect(profile.studentProfile?.firstName, 'Aarav');
 
       final serialized = profile.toJson();
       expect(serialized['id'], 'usr_001');
+      expect(serialized['tenant_id'], 'tenant_abc123');
+      expect(serialized['tenant_slug'], 'apex-tech');
+      expect(serialized['tenant_name'], 'Apex Institute of Technology');
       expect(serialized['student_profile']['enrollment_number'], 'CSE2025001');
     });
 

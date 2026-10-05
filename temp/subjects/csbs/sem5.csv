@@ -1,0 +1,13 @@
+branch,branch_slug,semester,subject_name,subject_code,subject_type,credits,comment,details_url,attachment_url
+B.Tech (Computer Science and Business Systems),csbs,5,Software Design with UML,2CSBS5101,Professional Core,3,,,https://d2z4x7fn3a0wyp.cloudfront.net/subject/software-design-with-uml/software-design-with-uml.pdf
+B.Tech (Computer Science and Business Systems),csbs,5,Compiler Design,2CSBS5102,Professional Core,5,,,https://d2z4x7fn3a0wyp.cloudfront.net/subject/compiler-design/compiler-design-1.pdf
+B.Tech (Computer Science and Business Systems),csbs,5,Fundamentals of Management,2CSBS5103,Professional Core,2,,,https://d2z4x7fn3a0wyp.cloudfront.net/subject/fundamentals-of-management/fundamentals-of-management.pdf
+B.Tech (Computer Science and Business Systems),csbs,5,Business strategy,2CSBS5104,Professional Core,2,,,https://d2z4x7fn3a0wyp.cloudfront.net/subject/business-strategy/business-strategy.pdf
+B.Tech (Computer Science and Business Systems),csbs,5,Business Communication & Value Science-III,2CSBS5105,Professional Core,2,,,https://d2z4x7fn3a0wyp.cloudfront.net/subject/business-communication-value-science-iii/business-communication-value-science-3.pdf
+B.Tech (Computer Science and Business Systems),csbs,5,Conversational Systems,2CSBSPE5101,Professional Elective,4,,,https://d2z4x7fn3a0wyp.cloudfront.net/subject/conversational-systems/conversational-systems.pdf
+B.Tech (Computer Science and Business Systems),csbs,5,"Cloud, Microservices & Application",2CSBSPE5102,Professional Elective,4,,,https://d2z4x7fn3a0wyp.cloudfront.net/subject/cloud-microservices-application/cloud-microservices-applications.pdf
+B.Tech (Computer Science and Business Systems),csbs,5,Machine Learning,2CSBSPE5103,Professional Elective,4,,,https://d2z4x7fn3a0wyp.cloudfront.net/subject/machine-learning/machine-learning-1.pdf
+B.Tech (Computer Science and Business Systems),csbs,5,Behavioural Economics,2CSBSPE5104,Professional Elective,4,,,https://d2z4x7fn3a0wyp.cloudfront.net/subject/behavioural-economics/behavioural-economics.pdf
+B.Tech (Computer Science and Business Systems),csbs,5,Computational Finance & Modeling,2CSBSPE5105,Professional Elective,4,,,https://d2z4x7fn3a0wyp.cloudfront.net/subject/computational-finance-modeling/computational-modelling-and-finance.pdf
+B.Tech (Computer Science and Business Systems),csbs,5,Industrial Psychology,2CSBSPE5106,Professional Elective,4,,,https://d2z4x7fn3a0wyp.cloudfront.net/subject/industrial-psychology/industrial-psychology.pdf
+B.Tech (Computer Science and Business Systems),csbs,5,Mini Project,2CSBS5106,Professional Core,1,,,https://d2z4x7fn3a0wyp.cloudfront.net/subject/2csbs5106/2csbs5106-mini-project.pdf

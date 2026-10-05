@@ -34,11 +34,10 @@ export const tenantProvisionSchema = z.object({
     .max(100, "Domain cannot exceed 100 characters")
     .optional()
     .or(z.literal("")),
-  max_allowed_students: z.coerce
+  license_count: z.coerce
     .number()
-    .int("Capacity must be a whole number")
-    .min(10, "Minimum capacity is 10 students")
-    .max(100000, "Maximum capacity is 100,000 students"),
+    .int("License count must be a whole number")
+    .min(0, "License count cannot be negative"),
   admins: z
     .array(tenantAdminItemSchema)
     .min(1, "At least one administrator account must be configured")

@@ -140,7 +140,7 @@ def mock_student_profile(mock_student_user):
 @pytest.fixture
 def mock_academic_class(mock_teacher_profile):
     subject = SimpleNamespace(id="sub-ai-101", name="Artificial Intelligence", code="CS601")
-    classroom = SimpleNamespace(id="room-lh-02", name="Lecture Hall 2", building="Tech Block A", capacity=80)
+    classroom = SimpleNamespace(id="room-lh-02", name="Lecture Hall 2", building="Tech Block A")
     return SimpleNamespace(
         id="cls-ai-601",
         name="AI & Pattern Recognition - Sec A",
@@ -149,7 +149,6 @@ def mock_academic_class(mock_teacher_profile):
         teacherId=mock_teacher_profile.id,
         semester=6,
         batch="2022-2026",
-        maxStudents=60,
         subject=subject,
         classroom=classroom,
         teacher=mock_teacher_profile,

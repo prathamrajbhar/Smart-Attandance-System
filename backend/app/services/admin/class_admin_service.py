@@ -32,7 +32,7 @@ class ClassAdminService:
         create_data = {k: v for k, v in {
             "name": data.name, "teacherId": data.teacher_id, "subjectId": data.subject_id,
             "classroomId": data.classroom_id, "semester": data.semester,
-            "batch": data.batch, "maxStudents": data.max_students,
+            "batch": data.batch,
         }.items() if v is not None}
         if tenant_id:
             create_data["tenantId"] = tenant_id
@@ -44,7 +44,7 @@ class ClassAdminService:
         return ClassResponse(
             id=cls.id, name=cls.name, subject_name=cls.subject.name, subject_code=cls.subject.code,
             teacherId=cls.teacherId, classroom_name=cls.classroom.name if cls.classroom else None,
-            semester=cls.semester, batch=cls.batch, max_students=cls.maxStudents,
+            semester=cls.semester, batch=cls.batch,
             enrolled_count=len(cls.enrollments) if cls.enrollments else 0,
             enrolled_student_ids=[e.studentId for e in cls.enrollments] if cls.enrollments else [],
         )
@@ -82,7 +82,7 @@ class ClassAdminService:
                 id=c.id, name=c.name, subject_name=c.subject.name if c.subject else "",
                 subject_code=c.subject.code if c.subject else "", teacherId=c.teacherId,
                 classroom_name=c.classroom.name if c.classroom else None,
-                semester=c.semester, batch=c.batch, max_students=c.maxStudents,
+                semester=c.semester, batch=c.batch,
                 enrolled_count=len(c.enrollments) if c.enrollments else 0,
                 enrolled_student_ids=[e.studentId for e in c.enrollments] if c.enrollments else [],
             ) for c in classes
@@ -123,7 +123,7 @@ class ClassAdminService:
 
         mapping = {
             "name": "name", "subject_id": "subjectId", "classroom_id": "classroomId",
-            "teacher_id": "teacherId", "semester": "semester", "batch": "batch", "max_students": "maxStudents",
+            "teacher_id": "teacherId", "semester": "semester", "batch": "batch",
         }
         update_data = {mapping[k]: v for k, v in data.items() if k in mapping and v is not None}
         cls = await db.academicclass.update(where={"id": class_id}, data=update_data, include={"subject": True, "classroom": True, "enrollments": True})
@@ -131,7 +131,7 @@ class ClassAdminService:
             id=cls.id, name=cls.name, subject_name=cls.subject.name if cls.subject else "",
             subject_code=cls.subject.code if cls.subject else "", teacherId=cls.teacherId,
             classroom_name=cls.classroom.name if cls.classroom else None,
-            semester=cls.semester, batch=cls.batch, max_students=cls.maxStudents,
+            semester=cls.semester, batch=cls.batch,
             enrolled_count=len(cls.enrollments) if cls.enrollments else 0,
             enrolled_student_ids=[e.studentId for e in cls.enrollments] if cls.enrollments else [],
         )
@@ -155,7 +155,7 @@ class ClassAdminService:
             id=cls.id, name=cls.name, subject_name=cls.subject.name if cls.subject else "",
             subject_code=cls.subject.code if cls.subject else "", teacherId=cls.teacherId,
             classroom_name=cls.classroom.name if cls.classroom else None,
-            semester=cls.semester, batch=cls.batch, max_students=cls.maxStudents,
+            semester=cls.semester, batch=cls.batch,
             enrolled_count=len(cls.enrollments) if cls.enrollments else 0,
             enrolled_student_ids=[e.studentId for e in cls.enrollments] if cls.enrollments else [],
         )

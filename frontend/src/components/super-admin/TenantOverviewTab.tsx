@@ -11,8 +11,10 @@ interface TenantOverviewTabProps {
 
 export default function TenantOverviewTab({ tenant }: TenantOverviewTabProps): React.ReactElement {
   const studentCount = tenant.student_count || 0;
-  const maxStudents = tenant.max_allowed_students || 1;
-  const capacityPct = Math.min(100, Math.round((studentCount / maxStudents) * 100));
+  const teacherCount = tenant.teacher_count || 0;
+  const totalUsers = studentCount + teacherCount;
+  const licenseCount = tenant.license_count || 1;
+  const capacityPct = Math.min(100, Math.round((totalUsers / licenseCount) * 100));
 
   return (
     <div className="space-y-6">
@@ -24,9 +26,9 @@ export default function TenantOverviewTab({ tenant }: TenantOverviewTabProps): R
               <GraduationCap size={20} />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Enrolled Students</p>
+              <p className="text-xs text-muted-foreground">License Usage</p>
               <p className="text-xl font-bold text-foreground font-[Outfit]">
-                {studentCount.toLocaleString()} / {maxStudents.toLocaleString()}
+                {totalUsers.toLocaleString()} / {licenseCount.toLocaleString()}
               </p>
             </div>
           </div>

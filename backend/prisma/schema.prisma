@@ -48,31 +48,55 @@ enum DeviceChangeStatus {
   REJECTED
 }
 
-model Tenant {
-  id                 String       @id @default(uuid())
-  slug               String       @unique
-  name               String
-  type               TenantType   @default(COLLEGE)
-  status             TenantStatus @default(ACTIVE)
-  domain             String?      @unique
-  maxAllowedStudents Int          @default(500) @map("max_allowed_students")
-  config             Json?
-  createdAt          DateTime     @default(now()) @map("created_at")
-  updatedAt          DateTime     @updatedAt @map("updated_at")
+enum LicenseRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
 
-  users         User[]
-  campuses      Campus[]
-  departments   Department[]
-  subjects      Subject[]
-  classrooms    Classroom[]
-  designations  Designation[]
-  classes       AcademicClass[]
-  auditLogs     AuditLog[]
-  systemConfig  SystemConfiguration?
-  cohorts       AcademicCohort[]
-  timeSlots     TimeSlot[]
+model Tenant {
+  id            String       @id @default(uuid())
+  slug          String       @unique
+  name          String
+  type          TenantType   @default(COLLEGE)
+  status        TenantStatus @default(ACTIVE)
+  domain        String?      @unique
+  licenseCount  Int          @default(0) @map("license_count")
+  config        Json?
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  users            User[]
+  campuses         Campus[]
+  departments      Department[]
+  subjects         Subject[]
+  classrooms       Classroom[]
+  designations     Designation[]
+  classes          AcademicClass[]
+  auditLogs        AuditLog[]
+  systemConfig     SystemConfiguration?
+  cohorts          AcademicCohort[]
+  timeSlots        TimeSlot[]
+  licenseRequests  LicenseRequest[]
 
   @@map("tenants")
+}
+
+model LicenseRequest {
+  id             String              @id @default(uuid())
+  tenant         Tenant              @relation(fields: [tenantId], references: [id])
+  tenantId       String
+  requestedBy    User                @relation(fields: [requestedById], references: [id])
+  requestedById  String
+  requestedCount Int
+  status         LicenseRequestStatus @default(PENDING)
+  processedBy    User?               @relation("ProcessedBy", fields: [processedById], references: [id])
+  processedById  String?
+  processedAt    DateTime?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@map("license_requests")
 }
 
 model Campus {
@@ -105,10 +129,12 @@ model User {
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
 
-  tenant        Tenant?        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  student       Student?
-  teacher       Teacher?
-  notifications Notification[]
+  tenant                     Tenant?          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  student                    Student?
+  teacher                    Teacher?
+  notifications              Notification[]
+  licenseRequestsAsRequester LicenseRequest[]
+  licenseRequestsAsProcessor LicenseRequest[] @relation("ProcessedBy")
 
   @@index([tenantId])
   @@map("users")
@@ -187,7 +213,6 @@ model AcademicClass {
   teacherId   String   @map("teacher_id")
   semester    Int?     @map("semester")
   batch       String?  @map("batch")
-  maxStudents Int?     @map("max_students")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -316,7 +341,6 @@ model Classroom {
   tenantId  String?  @map("tenant_id")
   name      String
   building  String?
-  capacity  Int?
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

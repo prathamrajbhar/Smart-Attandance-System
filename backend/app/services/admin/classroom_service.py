@@ -16,8 +16,8 @@ class ClassroomService:
         return await db.classroom.find_first(where=where)
 
     @staticmethod
-    async def create_classroom(name: str, building: Optional[str] = None, capacity: Optional[int] = None, tenant_id: Optional[str] = None) -> Classroom:
-        data = {"name": name, "building": building, "capacity": capacity}
+    async def create_classroom(name: str, building: Optional[str] = None, tenant_id: Optional[str] = None) -> Classroom:
+        data = {"name": name, "building": building}
         if tenant_id:
             data["tenantId"] = tenant_id
         return await db.classroom.create(data=data)

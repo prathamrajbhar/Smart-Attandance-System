@@ -30,7 +30,7 @@ async def run_migration():
                     "name": DEFAULT_TENANT_NAME,
                     "type": "COLLEGE",
                     "status": "ACTIVE",
-                    "maxAllowedStudents": 1000,
+                    "licenseCount": 1000,
                     "config": Json({
                         "isFaceRecognitionEnabled": True,
                         "isGpsVerificationEnabled": True,

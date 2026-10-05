@@ -1,0 +1,7 @@
+branch,branch_slug,semester,subject_name,subject_code,subject_type,credits,comment,details_url,attachment_url
+BACHELOR OF TECHNOLOGY IN ELECTRONICS AND COMMUNICATION ENGINEERING,ece,4,Analog Communications,2EC4101,Professional Core,4,,,https://d2z4x7fn3a0wyp.cloudfront.net/subject/analog-communications/2ec4101-ac.pdf
+BACHELOR OF TECHNOLOGY IN ELECTRONICS AND COMMUNICATION ENGINEERING,ece,4,Electromagnetic Theory,2EC4102,Professional Core,4,,,https://d2z4x7fn3a0wyp.cloudfront.net/subject/electromagnetic-theory/2ec4102-emt.pdf
+BACHELOR OF TECHNOLOGY IN ELECTRONICS AND COMMUNICATION ENGINEERING,ece,4,Digital Signal Processing,2EC4103,Professional Core,4,,,https://d2z4x7fn3a0wyp.cloudfront.net/subject/digital-signal-processing/2ec4103-dsp.pdf
+BACHELOR OF TECHNOLOGY IN ELECTRONICS AND COMMUNICATION ENGINEERING,ece,4,Object Oriented Programming,2EC4104,Core,4,,,https://d2z4x7fn3a0wyp.cloudfront.net/subject/object-oriented-programming/2ec4104-oop.pdf
+BACHELOR OF TECHNOLOGY IN ELECTRONICS AND COMMUNICATION ENGINEERING,ece,4,Data Structures,2EC4105,Core,4,,,https://d2z4x7fn3a0wyp.cloudfront.net/subject/data-structures/2ec4105-ds.pdf
+BACHELOR OF TECHNOLOGY IN ELECTRONICS AND COMMUNICATION ENGINEERING,ece,4,Digital Design using HDL,2EC4106,Professional Core,2,,,https://d2z4x7fn3a0wyp.cloudfront.net/subject/digital-design-using-hdl/2ec4106-ddhdl.pdf

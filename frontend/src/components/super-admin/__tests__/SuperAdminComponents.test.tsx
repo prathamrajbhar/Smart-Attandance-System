@@ -22,7 +22,7 @@ const mockTenants: Tenant[] = [
     name: "Apex Institute of Technology",
     type: "COLLEGE",
     status: "ACTIVE",
-    max_allowed_students: 1500,
+    license_count: 1500,
     created_at: "2026-01-15T00:00:00.000Z",
   },
   {
@@ -31,7 +31,7 @@ const mockTenants: Tenant[] = [
     name: "Oakridge High School",
     type: "SCHOOL",
     status: "SUSPENDED",
-    max_allowed_students: 800,
+    license_count: 800,
     created_at: "2026-02-10T00:00:00.000Z",
   },
 ];

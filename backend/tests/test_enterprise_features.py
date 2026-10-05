@@ -115,7 +115,7 @@ async def test_quota_enforcement():
 
     mock_db = AsyncMock()
     mock_tenant = MagicMock()
-    mock_tenant.maxAllowedStudents = 10
+    mock_tenant.licenseCount = 10
     mock_db.tenant.find_unique = AsyncMock(return_value=mock_tenant)
     mock_db.user.count = AsyncMock(return_value=10)  # Quota is full
 

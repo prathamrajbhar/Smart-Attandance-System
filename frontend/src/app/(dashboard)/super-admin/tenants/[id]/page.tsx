@@ -42,7 +42,7 @@ export default function TenantDetailPage(): React.ReactElement {
   const handleSaveSettings = async (payload: {
     name: string;
     domain?: string;
-    max_allowed_students: number;
+    license_count: number;
     config: Record<string, unknown>;
   }): Promise<void> => {
     setSavingConfig(true);

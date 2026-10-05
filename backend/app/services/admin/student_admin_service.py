@@ -35,12 +35,12 @@ class StudentAdminService:
 
         if tenant_id and _check_db_connected(database):
             tenant = await database.tenant.find_unique(where={"id": tenant_id})
-            if tenant and tenant.maxAllowedStudents:
-                current_count = await database.user.count(where={"tenantId": tenant_id, "role": "STUDENT"})
-                if current_count >= tenant.maxAllowedStudents:
+            if tenant:
+                current_count = await database.user.count(where={"tenantId": tenant_id, "role": {"in": ["STUDENT", "TEACHER"]}})
+                if current_count >= tenant.licenseCount:
                     raise ValueError(
-                        f"License seat quota exceeded ({current_count}/{tenant.maxAllowedStudents}). "
-                        "Upgrade your institutional subscription tier to enroll additional students."
+                        f"License seat quota exceeded ({current_count}/{tenant.licenseCount}). "
+                        "Request additional licenses from your super administrator."
                     )
 
         plain_password = data.password

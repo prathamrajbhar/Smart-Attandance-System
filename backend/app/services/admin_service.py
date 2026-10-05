@@ -168,8 +168,8 @@ class AdminService:
     async def get_classroom_by_id(self, id: str, tenant_id: Optional[str] = None) -> Optional[Classroom]:
         return await ClassroomService.get_classroom_by_id(id, tenant_id=tenant_id)
 
-    async def create_classroom(self, name: str, building: Optional[str] = None, capacity: Optional[int] = None, tenant_id: Optional[str] = None) -> Classroom:
-        return await ClassroomService.create_classroom(name, building, capacity, tenant_id=tenant_id)
+    async def create_classroom(self, name: str, building: Optional[str] = None, tenant_id: Optional[str] = None) -> Classroom:
+        return await ClassroomService.create_classroom(name, building, tenant_id=tenant_id)
 
     async def update_classroom(self, id: str, data: dict, tenant_id: Optional[str] = None) -> Classroom:
         return await ClassroomService.update_classroom(id, data, tenant_id=tenant_id)
@@ -257,7 +257,7 @@ class AdminService:
         imported, failed, errors = 0, 0, []
         for idx, item in enumerate(classrooms):
             try:
-                await ClassroomService.create_classroom(name=item.name, building=item.building, capacity=item.capacity, tenant_id=tenant_id)
+                await ClassroomService.create_classroom(name=item.name, building=item.building, tenant_id=tenant_id)
                 imported += 1
             except Exception as e:
                 errors.append(f"Row {idx + 1} ({item.name}): {str(e)}")

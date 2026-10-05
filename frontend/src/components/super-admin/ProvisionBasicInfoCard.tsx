@@ -80,11 +80,11 @@ export default function ProvisionBasicInfoCard({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <GlassInput
-            label="Maximum Student Limit"
+            label="License Count"
             type="number"
-            placeholder="500"
-            {...register("max_allowed_students")}
-            error={errors.max_allowed_students?.message}
+            placeholder="0"
+            {...register("license_count")}
+            error={errors.license_count?.message}
           />
 
           <div>

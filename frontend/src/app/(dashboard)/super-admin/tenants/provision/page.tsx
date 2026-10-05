@@ -35,7 +35,7 @@ export default function ProvisionTenantPage(): React.ReactElement {
       slug: "",
       type: "COLLEGE",
       domain: "",
-      max_allowed_students: 500,
+      license_count: 0,
       admins: [
         {
           name: "",
@@ -67,7 +67,7 @@ export default function ProvisionTenantPage(): React.ReactElement {
         slug: formData.slug.trim(),
         type: formData.type,
         domain: formData.domain ? formData.domain.trim() : undefined,
-        max_allowed_students: formData.max_allowed_students,
+        license_count: formData.license_count,
         admins: formData.admins.map((admin) => ({
           name: admin.name.trim(),
           email: admin.email.trim().toLowerCase(),

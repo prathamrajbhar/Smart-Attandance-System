@@ -104,7 +104,6 @@ async def seed_classes_and_enroll(
         "teacher_id": teacher["id"],
         "semester": 6,
         "batch": "2022-2026",
-        "max_students": 60,
     }
     print(f"  -> Scheduling Academic Class '{class_payload['name']}'...")
     academic_class = await client.post("/admin/classes", class_payload)

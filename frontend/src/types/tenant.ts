@@ -8,7 +8,7 @@ export interface Tenant {
   type: TenantType;
   status: TenantStatus;
   domain?: string | null;
-  max_allowed_students: number;
+  license_count: number;
   created_at: string;
   student_count?: number;
   teacher_count?: number;
@@ -32,6 +32,45 @@ export interface TenantDetail extends Tenant {
   admin_users: TenantDetailAdminUser[];
 }
 
+export type LicenseRequestStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+export interface LicenseRequestItem {
+  id: string;
+  tenant_id: string;
+  tenant_name?: string | null;
+  tenant_slug?: string | null;
+  requested_by_id: string;
+  requested_by_email?: string | null;
+  requested_by_name?: string | null;
+  requested_count: number;
+  status: LicenseRequestStatus;
+  processed_by_id?: string | null;
+  processed_by_email?: string | null;
+  processed_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaginatedLicenseRequests {
+  items: LicenseRequestItem[];
+  total_items: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+  has_next: boolean;
+  has_prev: boolean;
+}
+
+export interface TenantLicenseUsage {
+  tenant_id: string;
+  tenant_name: string;
+  license_count: number;
+  student_count: number;
+  teacher_count: number;
+  total_used: number;
+  remaining: number;
+}
+
 export interface SuperAdminStats {
   total_tenants: number;
   active_tenants: number;
@@ -52,7 +91,7 @@ export interface TenantProvisionRequest {
   slug: string;
   type: TenantType;
   domain?: string;
-  max_allowed_students?: number;
+  license_count?: number;
   admin_email?: string;
   admin_name?: string;
   admin_password?: string;
@@ -64,7 +103,7 @@ export interface TenantUpdateRequest {
   name?: string;
   status?: TenantStatus;
   domain?: string;
-  max_allowed_students?: number;
+  license_count?: number;
   config?: Record<string, unknown>;
 }
 

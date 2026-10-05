@@ -8,6 +8,8 @@ from app.schemas.super_admin import (
     GlobalUserStatusUpdateRequest, GlobalUserPasswordResetRequest,
     GlobalBroadcastRequest, PlatformHealthResponse,
     PaginatedBroadcastHistory,
+    LicenseRequestProcessRequest, LicenseRequestProcessedResponse,
+    PaginatedLicenseRequests,
 )
 from app.services.super_admin_service import SuperAdminService
 
@@ -53,6 +55,31 @@ async def update_tenant(tenant_id: str, data: TenantUpdateRequest):
         return await SuperAdminService.update_tenant(tenant_id, data)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@router.get("/license-requests", response_model=PaginatedLicenseRequests)
+async def list_license_requests(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    status: Optional[str] = None,
+):
+    return await SuperAdminService.get_license_requests(status=status, page=page, page_size=page_size)
+
+
+@router.post("/license-requests/{request_id}/process", response_model=LicenseRequestProcessedResponse)
+async def process_license_request(
+    request_id: str,
+    data: LicenseRequestProcessRequest,
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        return await SuperAdminService.process_license_request(
+            request_id=request_id,
+            super_admin_user_id=current_user.id,
+            approve=data.approve,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.post("/tenants/{tenant_id}/admins", status_code=status.HTTP_201_CREATED)

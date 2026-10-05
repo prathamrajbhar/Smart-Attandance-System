@@ -25,7 +25,7 @@ def generate_institution_data() -> Dict[str, Any]:
         ("St. Xavier's Senior Secondary School", "xavier-school", "SCHOOL", 800),
         ("Pinnacle Medical & Engineering Coaching", "pinnacle-prep", "COACHING_CENTER", 400),
     ]
-    name, slug, t_type, max_students = random.choice(institutions)
+    name, slug, t_type, license_count = random.choice(institutions)
     suffix = random.randint(10, 99)
     admin_first = fake.first_name()
     admin_last = fake.last_name()
@@ -33,7 +33,7 @@ def generate_institution_data() -> Dict[str, Any]:
         "name": f"{name} {suffix}",
         "slug": f"{slug}-{suffix}",
         "type": t_type,
-        "max_allowed_students": max_students,
+        "license_count": license_count,
         "admin_name": f"Dr. {admin_first} {admin_last}",
         "admin_email": f"director.{admin_first.lower()}.{suffix}@yopmail.com",
     }
@@ -57,9 +57,9 @@ def get_preset_designations() -> List[Dict[str, str]]:
 
 def get_preset_classrooms() -> List[Dict[str, Any]]:
     return [
-        {"name": "Turing Lecture Hall 101", "building": "Engineering Block A", "capacity": 80},
-        {"name": "Ramanujan Computing Lab 202", "building": "Advanced Tech Wing", "capacity": 60},
-        {"name": "Shannon Seminar Room 305", "building": "Innovation Tower", "capacity": 45},
+        {"name": "Turing Lecture Hall 101", "building": "Engineering Block A"},
+        {"name": "Ramanujan Computing Lab 202", "building": "Advanced Tech Wing"},
+        {"name": "Shannon Seminar Room 305", "building": "Innovation Tower"},
     ]
 
 

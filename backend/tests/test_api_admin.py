@@ -96,7 +96,6 @@ def test_create_class_and_assign_teacher(mock_admin_user):
             classroom_name="LH 1",
             semester=7,
             batch="2021-2025",
-            max_students=75,
             enrolled_count=0,
         )
         resp_create = client.post("/api/v1/admin/classes", json={
@@ -106,7 +105,6 @@ def test_create_class_and_assign_teacher(mock_admin_user):
             "teacher_id": "tch-profile-202",
             "semester": 7,
             "batch": "2021-2025",
-            "max_students": 75,
         })
         assert resp_create.status_code == 201
         assert resp_create.json()["name"] == "Cloud Computing Sec B"
@@ -119,7 +117,6 @@ def test_create_class_and_assign_teacher(mock_admin_user):
             teacherId="tch-profile-303",
             semester=7,
             batch="2021-2025",
-            max_students=75,
             enrolled_count=0,
         )
         resp_assign = client.put("/api/v1/admin/classes/cls-new-99/assign-teacher", json={

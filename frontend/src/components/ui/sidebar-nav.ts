@@ -2,7 +2,7 @@ import React from "react";
 import {
   LayoutDashboard, Users, GraduationCap, BookOpen, Building2, ScanSearch,
   ScrollText, Radio, ClipboardCheck, BarChart3, Sliders,
-  FileText, Smartphone, User, Calendar, Activity, Bell
+  FileText, Smartphone, User, Calendar, Activity, Bell, KeyRound
 } from "lucide-react";
 
 export interface NavItem {
@@ -14,6 +14,7 @@ export interface NavItem {
 export const superAdminLinks: NavItem[] = [
   { label: "Overview", href: "/super-admin/dashboard", icon: React.createElement(LayoutDashboard, { size: 17 }) },
   { label: "Institutions", href: "/super-admin/tenants", icon: React.createElement(Building2, { size: 17 }) },
+  { label: "License Requests", href: "/super-admin/licenses", icon: React.createElement(KeyRound, { size: 17 }) },
   { label: "Platform Health", href: "/super-admin/system", icon: React.createElement(Activity, { size: 17 }) },
   { label: "Security & Audit", href: "/super-admin/audit", icon: React.createElement(ScrollText, { size: 17 }) },
   { label: "Announcements", href: "/super-admin/broadcasts", icon: React.createElement(Radio, { size: 17 }) },
@@ -27,6 +28,7 @@ export const adminLinks: NavItem[] = [
   { label: "Classes", href: "/admin/classes", icon: React.createElement(BookOpen, { size: 17 }) },
   { label: "Timetable Hub", href: "/admin/timetable", icon: React.createElement(Calendar, { size: 17 }) },
   { label: "AI Scanner", href: "/admin/scanner", icon: React.createElement(ScanSearch, { size: 17 }) },
+  { label: "Licenses", href: "/admin/licenses", icon: React.createElement(KeyRound, { size: 17 }) },
   { label: "Notifications", href: "/admin/notifications", icon: React.createElement(Bell, { size: 17 }) },
   { label: "Audit Log", href: "/admin/audit", icon: React.createElement(ScrollText, { size: 17 }) },
 ];

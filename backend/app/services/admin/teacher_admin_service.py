@@ -37,6 +37,16 @@ class TeacherAdminService:
             if not await database.designation.find_unique(where={"id": data.designation_id}):
                 raise ValueError(f"Designation with id '{data.designation_id}' not found.")
 
+        if tenant_id and _check_db_connected(database):
+            tenant = await database.tenant.find_unique(where={"id": tenant_id})
+            if tenant:
+                current_count = await database.user.count(where={"tenantId": tenant_id, "role": {"in": ["STUDENT", "TEACHER"]}})
+                if current_count >= tenant.licenseCount:
+                    raise ValueError(
+                        f"License seat quota exceeded ({current_count}/{tenant.licenseCount}). "
+                        "Request additional licenses from your super administrator."
+                    )
+
         plain_password = data.password
         must_change = False
         if not plain_password:

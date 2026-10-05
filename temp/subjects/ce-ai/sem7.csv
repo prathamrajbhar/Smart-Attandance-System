@@ -1,0 +1,7 @@
+branch,branch_slug,semester,subject_name,subject_code,subject_type,credits,comment,details_url,attachment_url
+BACHELOR OF TECHNOLOGY IN COMPUTER ENGINEERING (ARTIFICIAL INTELLIGENCE),ce-ai,7,Compiler Design,2CEIT701,Professional Core,4,,,https://d2z4x7fn3a0wyp.cloudfront.net/subject/compiler-design/2ceit701compiler-design.pdf
+BACHELOR OF TECHNOLOGY IN COMPUTER ENGINEERING (ARTIFICIAL INTELLIGENCE),ce-ai,7,Computer Vision,2CEAI701,Professional Core,4,,,https://d2z4x7fn3a0wyp.cloudfront.net/subject/computer-vision/2ceai701-computer-vision.pdf
+BACHELOR OF TECHNOLOGY IN COMPUTER ENGINEERING (ARTIFICIAL INTELLIGENCE),ce-ai,7,Minor Project,2CEIT705,Professional Core,8,,,https://d2z4x7fn3a0wyp.cloudfront.net/subject/minor-project/2ceit705-minor-project.pdf
+BACHELOR OF TECHNOLOGY IN COMPUTER ENGINEERING (ARTIFICIAL INTELLIGENCE),ce-ai,7,ML-Ops,2CEAI702,Professional Elective,4,,,https://d2z4x7fn3a0wyp.cloudfront.net/subject/ml-ops/2ceai702.pdf
+BACHELOR OF TECHNOLOGY IN COMPUTER ENGINEERING (ARTIFICIAL INTELLIGENCE),ce-ai,7,Big Data Analytics (AI),2CEIT702,Professional Elective,4,,,https://d2z4x7fn3a0wyp.cloudfront.net/subject/big-data-analytics/2ceit702big-data-analytics-ai.pdf
+BACHELOR OF TECHNOLOGY IN COMPUTER ENGINEERING (ARTIFICIAL INTELLIGENCE),ce-ai,7,Reinforcement Learning,2CEAI703,Professional Elective,4,,,https://d2z4x7fn3a0wyp.cloudfront.net/subject/reinforcement-learning/reinforcement-learning.pdf

@@ -92,7 +92,7 @@ export default function TenantTable({
                 day: "numeric",
               }) : "N/A";
 
-              const maxStudents = tenant.max_allowed_students ?? (tenant as unknown as { maxAllowedStudents?: number }).maxAllowedStudents;
+              const licenseCount = tenant.license_count ?? (tenant as unknown as { licenseCount?: number }).licenseCount;
 
               return (
                 <tr key={tenant.id} className="hover:bg-muted/30 transition-colors">
@@ -122,7 +122,7 @@ export default function TenantTable({
                   </td>
 
                   <td className="px-4 py-3.5 text-foreground font-medium">
-                    {maxStudents ? maxStudents.toLocaleString() : "Unlimited"} students
+                    {licenseCount ? `${licenseCount.toLocaleString()} licenses` : "Unlimited"}
                   </td>
 
                   <td className="px-4 py-3.5 text-muted-foreground text-[11px]">

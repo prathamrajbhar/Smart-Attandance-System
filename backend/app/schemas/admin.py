@@ -12,7 +12,6 @@ class ClassCreate(BaseModel):
     classroom_id: Optional[str] = Field(None, max_length=64, description="UUID of the assigned Classroom (optional)")
     semester: Optional[int] = Field(None, ge=1, le=8, description="Academic semester (1–8)")
     batch: Optional[str] = Field(None, max_length=20, description="Batch year range e.g. 2022-2026")
-    max_students: Optional[int] = Field(None, ge=1, le=1000, description="Maximum student capacity for the class")
 
     @field_validator("name", "batch", mode="before")
     @classmethod
@@ -29,7 +28,6 @@ class ClassUpdate(BaseModel):
     classroom_id: Optional[str] = Field(None, max_length=64)
     semester: Optional[int] = Field(None, ge=1, le=8)
     batch: Optional[str] = Field(None, max_length=20)
-    max_students: Optional[int] = Field(None, ge=1, le=1000)
 
     @field_validator("name", "batch", mode="before")
     @classmethod
@@ -68,7 +66,6 @@ class ClassResponse(BaseModel):
     classroom_name: Optional[str] = Field(None, description="Resolved classroom name")
     semester: Optional[int] = Field(None, description="Academic semester")
     batch: Optional[str] = Field(None, description="Batch year range")
-    max_students: Optional[int] = Field(None, description="Maximum student capacity")
     enrolled_count: int = Field(0, description="Current number of enrolled students")
     enrolled_student_ids: list[str] = Field(default_factory=list, description="List of student IDs currently enrolled")
 
@@ -193,7 +190,6 @@ class ClassBulkItem(BaseModel):
     classroom_name: Optional[str] = Field(None, max_length=100)
     semester: Optional[int] = Field(None, ge=1, le=8)
     batch: Optional[str] = Field(None, max_length=20)
-    max_students: Optional[int] = Field(None, ge=1, le=1000)
 
     @field_validator("teacher_email", mode="before")
     @classmethod
@@ -235,7 +231,6 @@ class SubjectBulkCreateRequest(BaseModel):
 class ClassroomBulkItem(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     building: Optional[str] = Field(None, max_length=100)
-    capacity: Optional[int] = Field(None, ge=1, le=1000)
 
 
 class ClassroomBulkCreateRequest(BaseModel):

@@ -42,7 +42,6 @@ class ClassroomCreate(BaseModel):
 
     name: str = Field(..., min_length=1, max_length=100, description="Room number or hall name")
     building: Optional[str] = Field(None, max_length=100, description="Campus block / building")
-    capacity: Optional[int] = Field(None, ge=1, le=1000, description="Seating capacity")
 
     @field_validator("name", "building", mode="before")
     @classmethod
@@ -55,7 +54,6 @@ class ClassroomUpdate(BaseModel):
 
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     building: Optional[str] = Field(None, max_length=100)
-    capacity: Optional[int] = Field(None, ge=1, le=1000)
 
     @field_validator("name", "building", mode="before")
     @classmethod
@@ -69,7 +67,6 @@ class ClassroomResponse(BaseModel):
     id: str
     name: str
     building: Optional[str] = None
-    capacity: Optional[int] = None
 
 
 class DesignationCreate(BaseModel):

@@ -5,17 +5,24 @@ from app.db.client import db
 
 class BulkImportService:
     @staticmethod
+    async def _check_license_capacity(tenant_id: str, additional_count: int) -> None:
+        """Check if tenant has enough license capacity for additional users."""
+        if not tenant_id:
+            return
+        tenant = await db.tenant.find_unique(where={"id": tenant_id})
+        if not tenant:
+            return
+        current_count = await db.user.count(where={"tenantId": tenant_id, "role": {"in": ["STUDENT", "TEACHER"]}})
+        if current_count + additional_count > tenant.licenseCount:
+            available = max(0, tenant.licenseCount - current_count)
+            raise ValueError(
+                f"Bulk import exceeds license capacity. Available seats: {available}, requested: {additional_count}. "
+                "Request additional licenses from your super administrator."
+            )
+
+    @staticmethod
     async def bulk_create_students(students: list, send_invite: bool = True, tenant_id: Optional[str] = None) -> dict:
-        if tenant_id:
-            tenant = await db.tenant.find_unique(where={"id": tenant_id})
-            if tenant and tenant.maxAllowedStudents:
-                current_count = await db.user.count(where={"tenantId": tenant_id, "role": "STUDENT"})
-                if current_count + len(students) > tenant.maxAllowedStudents:
-                    available = max(0, tenant.maxAllowedStudents - current_count)
-                    raise ValueError(
-                        f"Bulk import exceeds license capacity. Available seats: {available}, requested: {len(students)}. "
-                        "Upgrade your institutional subscription tier."
-                    )
+        await BulkImportService._check_license_capacity(tenant_id, len(students))
 
         imported_count = 0
         failed_count = 0
@@ -88,6 +95,8 @@ class BulkImportService:
 
     @staticmethod
     async def bulk_create_teachers(teachers: list, send_invite: bool = True, tenant_id: Optional[str] = None) -> dict:
+        await BulkImportService._check_license_capacity(tenant_id, len(teachers))
+
         imported_count = 0
         failed_count = 0
         invitations_sent = 0
@@ -241,7 +250,7 @@ class BulkImportService:
                 class_data = {
                     "name": item.name, "subjectId": subject.id, "teacherId": teacher.id,
                     "classroomId": classroom_id, "semester": item.semester,
-                    "batch": item.batch, "maxStudents": item.max_students,
+                    "batch": item.batch,
                 }
                 if tenant_id:
                     class_data["tenantId"] = tenant_id

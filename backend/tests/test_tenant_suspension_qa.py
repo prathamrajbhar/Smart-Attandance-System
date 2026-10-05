@@ -197,12 +197,12 @@ async def test_super_admin_suspend_and_reactivate_lifecycle(super_admin_token):
     now = datetime.now(timezone.utc)
     tenant_active = SimpleNamespace(
         id="tenant-01", slug="demo-school", name="Demo School",
-        type="SCHOOL", status="ACTIVE", domain="portal.demo.edu", maxAllowedStudents=500,
+        type="SCHOOL", status="ACTIVE", domain="portal.demo.edu", licenseCount=500,
         createdAt=now, updatedAt=now, config={},
     )
     tenant_suspended = SimpleNamespace(
         id="tenant-01", slug="demo-school", name="Demo School",
-        type="SCHOOL", status="SUSPENDED", domain="portal.demo.edu", maxAllowedStudents=500,
+        type="SCHOOL", status="SUSPENDED", domain="portal.demo.edu", licenseCount=500,
         createdAt=now, updatedAt=now, config={},
     )
 

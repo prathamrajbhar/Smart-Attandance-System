@@ -10,6 +10,9 @@ import type {
   PlatformHealth,
   GlobalBroadcastRequest,
   PaginatedBroadcasts,
+  LicenseRequestItem,
+  PaginatedLicenseRequests,
+  TenantLicenseUsage,
 } from "@/types/tenant";
 
 export interface TenantListParams {
@@ -66,6 +69,12 @@ export interface PaginatedAuditLogs {
   total_pages: number;
   has_next: boolean;
   has_prev: boolean;
+}
+
+export interface LicenseRequestListParams {
+  page?: number;
+  page_size?: number;
+  status?: string;
 }
 
 export const superAdminService = {
@@ -127,6 +136,36 @@ export const superAdminService = {
     const { data } = await api.get<PaginatedBroadcasts>("/super-admin/broadcasts", {
       params: { page, page_size: pageSize },
     });
+    return data;
+  },
+
+  async getLicenseRequests(params?: LicenseRequestListParams): Promise<PaginatedLicenseRequests> {
+    const { data } = await api.get<PaginatedLicenseRequests>("/super-admin/license-requests", { params });
+    return data;
+  },
+
+  async processLicenseRequest(requestId: string, approve: boolean): Promise<LicenseRequestItem> {
+    const { data } = await api.post<LicenseRequestItem>(
+      `/super-admin/license-requests/${requestId}/process`,
+      { approve }
+    );
+    return data;
+  },
+
+  async requestLicenses(requestedCount: number): Promise<LicenseRequestItem> {
+    const { data } = await api.post<LicenseRequestItem>("/admin/licenses/request", {
+      requested_count: requestedCount,
+    });
+    return data;
+  },
+
+  async getLicenseUsage(): Promise<TenantLicenseUsage> {
+    const { data } = await api.get<TenantLicenseUsage>("/admin/licenses");
+    return data;
+  },
+
+  async getTenantLicenseRequests(): Promise<PaginatedLicenseRequests> {
+    const { data } = await api.get<PaginatedLicenseRequests>("/admin/licenses/requests");
     return data;
   },
 };

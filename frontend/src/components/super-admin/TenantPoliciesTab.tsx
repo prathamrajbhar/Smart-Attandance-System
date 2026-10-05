@@ -12,7 +12,7 @@ interface TenantPoliciesTabProps {
   onSave: (payload: {
     name: string;
     domain?: string;
-    max_allowed_students: number;
+    license_count: number;
     config: Record<string, unknown>;
   }) => Promise<void>;
   saving: boolean;
@@ -27,7 +27,7 @@ export default function TenantPoliciesTab({
 
   const [name, setName] = useState(tenant.name || "");
   const [domain, setDomain] = useState(tenant.domain || "");
-  const [maxStudents, setMaxStudents] = useState<number>(tenant.max_allowed_students || 500);
+  const [licenseCount, setLicenseCount] = useState<number>(tenant.license_count || 0);
 
   const [faceEnabled, setFaceEnabled] = useState(cfg.isFaceRecognitionEnabled !== false);
   const [gpsEnabled, setGpsEnabled] = useState(cfg.isGpsVerificationEnabled !== false);
@@ -41,7 +41,7 @@ export default function TenantPoliciesTab({
     await onSave({
       name,
       domain: domain.trim() || undefined,
-      max_allowed_students: Number(maxStudents),
+      license_count: Number(licenseCount),
       config: {
         isFaceRecognitionEnabled: faceEnabled,
         isGpsVerificationEnabled: gpsEnabled,
@@ -73,11 +73,11 @@ export default function TenantPoliciesTab({
             onChange={(e) => setDomain(e.target.value)}
           />
           <GlassInput
-            label="Max Student Capacity"
+            label="License Count"
             type="number"
-            value={maxStudents}
-            onChange={(e) => setMaxStudents(Number(e.target.value))}
-            min={10}
+            value={licenseCount}
+            onChange={(e) => setLicenseCount(Number(e.target.value))}
+            min={0}
             required
           />
         </div>

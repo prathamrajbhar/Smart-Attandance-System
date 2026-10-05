@@ -14,7 +14,7 @@ class TenantProvisionRequest(BaseModel):
     slug: str = Field(..., min_length=2, max_length=50, pattern=r"^[a-z0-9-]+$")
     type: str = Field(default="COLLEGE", pattern=r"^(SCHOOL|COLLEGE|COACHING_CENTER)$")
     domain: Optional[str] = None
-    max_allowed_students: int = Field(default=500, ge=10, le=100000)
+    license_count: int = Field(default=0, ge=0)
     admin_email: Optional[EmailStr] = None
     admin_name: Optional[str] = Field(None, min_length=2, max_length=100)
     admin_password: Optional[str] = None
@@ -26,7 +26,7 @@ class TenantUpdateRequest(BaseModel):
     name: Optional[str] = None
     status: Optional[str] = Field(None, pattern=r"^(ACTIVE|SUSPENDED|TRIAL|EXPIRED)$")
     domain: Optional[str] = None
-    max_allowed_students: Optional[int] = Field(None, ge=10)
+    license_count: Optional[int] = Field(None, ge=0)
     config: Optional[Dict[str, Any]] = None
 
 
@@ -37,7 +37,7 @@ class TenantResponse(BaseModel):
     type: str
     status: str
     domain: Optional[str] = None
-    max_allowed_students: int
+    license_count: int
     created_at: datetime
     student_count: Optional[int] = 0
     teacher_count: Optional[int] = 0
@@ -51,6 +51,53 @@ class TenantDetailResponse(TenantResponse):
     subject_count: Optional[int] = 0
     active_sessions_count: Optional[int] = 0
     total_attendance_count: Optional[int] = 0
+
+
+class LicenseRequestCreate(BaseModel):
+    requested_count: int = Field(..., ge=1, le=100000)
+
+
+class LicenseRequestProcessRequest(BaseModel):
+    approve: bool
+
+
+class LicenseRequestItem(BaseModel):
+    id: str
+    tenant_id: str
+    tenant_name: Optional[str] = None
+    tenant_slug: Optional[str] = None
+    requested_by_id: str
+    requested_by_email: Optional[str] = None
+    requested_by_name: Optional[str] = None
+    requested_count: int
+    status: str
+    processed_by_id: Optional[str] = None
+    processed_by_email: Optional[str] = None
+    processed_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class PaginatedLicenseRequests(BaseModel):
+    items: List[LicenseRequestItem]
+    total_items: int
+    page: int
+    page_size: int
+    total_pages: int
+    has_next: bool
+    has_prev: bool
+
+
+class LicenseRequestProcessedResponse(BaseModel):
+    id: str
+    tenant_id: str
+    requested_by_id: str
+    requested_count: int
+    status: str
+    processed_by_id: Optional[str] = None
+    processed_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
 
 
 class SuperAdminStatsResponse(BaseModel):

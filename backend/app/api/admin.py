@@ -23,8 +23,10 @@ from app.schemas.master_data import (
     DesignationCreate, DesignationUpdate, DesignationResponse,
 )
 from app.schemas.pagination import PaginatedResponse
+from app.schemas.super_admin import LicenseRequestCreate
 from app.core.rate_limit import rate_limiter
 from app.services.admin_service import AdminService
+from app.services.super_admin_service import SuperAdminService
 from app.services.absentee_scanner import run_absentee_scan
 
 admin_protection = Depends(RoleChecker(allowed_roles=["ADMIN"]))
@@ -400,7 +402,7 @@ async def get_class_by_id(
         id=cls.id, name=cls.name, subject_name=cls.subject.name if cls.subject else "",
         subject_code=cls.subject.code if cls.subject else "", teacherId=cls.teacherId,
         classroom_name=cls.classroom.name if cls.classroom else None,
-        semester=cls.semester, batch=cls.batch, max_students=cls.maxStudents,
+        semester=cls.semester, batch=cls.batch,
         enrolled_count=len(cls.enrollments) if cls.enrollments else 0,
         enrolled_student_ids=[e.studentId for e in cls.enrollments] if cls.enrollments else [],
     )
@@ -663,7 +665,7 @@ async def create_classroom(
     tenant_id: str = Depends(get_tenant_context),
     admin_service: AdminService = Depends(),
 ):
-    return await admin_service.create_classroom(data.name, data.building, data.capacity, tenant_id=tenant_id)
+    return await admin_service.create_classroom(data.name, data.building, tenant_id=tenant_id)
 
 
 @router.put("/classrooms/{id}", response_model=ClassroomResponse)
@@ -908,6 +910,53 @@ async def update_system_config(
         is_gps_verification_enabled=data.is_gps_verification_enabled,
         is_ai_background_validation_enabled=data.is_ai_background_validation_enabled,
     )
+
+
+# ---------------------------------------------------------------------------
+# License Requests — scoped to tenant
+# ---------------------------------------------------------------------------
+
+@router.get("/licenses")
+async def get_license_usage(
+    tenant_id: str = Depends(get_tenant_context),
+):
+    try:
+        return await SuperAdminService.get_tenant_license_usage(tenant_id=tenant_id)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@router.post("/licenses/request", status_code=status.HTTP_201_CREATED)
+async def create_license_request(
+    data: LicenseRequestCreate,
+    tenant_id: str = Depends(get_tenant_context),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        return await SuperAdminService.create_license_request(
+            tenant_id=tenant_id,
+            requested_by_user_id=current_user.id,
+            requested_count=data.requested_count,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.get("/licenses/requests")
+async def list_tenant_license_requests(
+    tenant_id: str = Depends(get_tenant_context),
+):
+    result = await SuperAdminService.get_license_requests(page=1, page_size=100)
+    items = [item for item in result["items"] if item["tenant_id"] == tenant_id]
+    return {
+        "items": items,
+        "total_items": len(items),
+        "page": 1,
+        "page_size": 100,
+        "total_pages": 1,
+        "has_next": False,
+        "has_prev": False,
+    }
 
 
 # ---------------------------------------------------------------------------

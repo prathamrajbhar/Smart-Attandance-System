@@ -23,7 +23,7 @@ export default function ProvisionTenantModal({
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [type, setType] = useState<TenantType>("COLLEGE");
-  const [maxStudents, setMaxStudents] = useState("500");
+  const [licenseCount, setLicenseCount] = useState("0");
   const [adminName, setAdminName] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -51,7 +51,7 @@ export default function ProvisionTenantModal({
         name: name.trim(),
         slug: slug.trim(),
         type,
-        max_allowed_students: parseInt(maxStudents, 10) || 500,
+        license_count: parseInt(licenseCount, 10) || 0,
         admin_name: adminName.trim(),
         admin_email: adminEmail.trim().toLowerCase(),
       });
@@ -115,14 +115,14 @@ export default function ProvisionTenantModal({
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-foreground block mb-1">Max Student Licenses</label>
+            <label className="text-xs font-semibold text-foreground block mb-1">License Count</label>
             <GlassInput
               type="number"
-              placeholder="500"
-              value={maxStudents}
-              onChange={(e) => setMaxStudents(e.target.value)}
-              min="10"
-              max="50000"
+              placeholder="0"
+              value={licenseCount}
+              onChange={(e) => setLicenseCount(e.target.value)}
+              min="0"
+              max="100000"
             />
           </div>
 

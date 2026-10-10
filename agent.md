@@ -23,3 +23,8 @@
 
 ## 6. Database & Prisma Schema Standards
 - **Never Add `output` in `schema.prisma`**: The `generator client` block in `backend/prisma/schema.prisma` must never contain hardcoded `output` directory paths (e.g. `output = ...`). Custom output paths break containerized production Docker builds and CI/CD pipelines where Python packages and site-packages are resolved dynamically.
+
+## 7. Branching Strategy & Production Deployment Policy
+- **`main` Branch (Production Only)**: The `main` branch is strictly reserved for production deployments. Production CI/CD pipelines (`deploy.yml` -> Tailscale SSH backend deployment + Vercel frontend deployment) only trigger from `origin/main`. Never commit experimental or untested code directly to `main`.
+- **`dev` Branch (Active Development)**: All daily coding, feature implementation, and experimentation occur on the `dev` branch.
+- **CI Validation on PR/Push**: Continuous Integration (`ci.yml`) runs linting, static analysis, unit tests, and integration verification on both `dev` and `main`. Always ensure the CI suite passes cleanly on `dev` before creating a PR or merging into `main`.

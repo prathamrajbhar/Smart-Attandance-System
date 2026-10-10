@@ -38,6 +38,7 @@ jobs:
           --health-retries 5
 
     env:
+      PYTHONPATH: backend:.
       JWT_SECRET: "ci-testing-jwt-secret-key-32-chars-long-123456"
       DATABASE_URL: "postgresql://postgres:postgrespassword@localhost:5432/test_db"
       REDIS_URL: "redis://localhost:6379/0"

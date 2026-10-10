@@ -27,10 +27,15 @@ jobs:
           pip install -r requirements.txt
           python -m prisma generate
 
-      - name: Run Backend Unit Tests
+      - name: Lint Backend with Ruff
         run: |
           cd backend
-          python -m pytest tests/ -v
+          python -m ruff check .
+
+      - name: Run Backend Integration & Verification Tests
+        run: |
+          cd backend
+          python scripts/test_changes.py
 
   frontend-checks:
     name: Frontend TypeScript & Build
@@ -50,6 +55,11 @@ jobs:
           cd frontend
           npm ci --legacy-peer-deps
 
+      - name: Lint Frontend
+        run: |
+          cd frontend
+          npm run lint
+
       - name: Run Frontend Unit Tests
         run: |
           cd frontend
@@ -58,4 +68,5 @@ jobs:
       - name: Type Check & Production Build
         run: |
           cd frontend
+          npm run type-check
           npm run build

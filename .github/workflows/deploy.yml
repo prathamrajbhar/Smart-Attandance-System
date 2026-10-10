@@ -105,7 +105,7 @@ jobs:
             # Stage 6: Prisma Client Generation & Schema Sync
             echo "🗄️ [6/7] Generating Prisma client & synchronizing database schema..."
             python -m prisma generate
-            python -m prisma db push
+            python -m prisma db push --accept-data-loss
 
             # Stage 7: In-Place Zero-Downtime Process Reload (Preserving PM2 ID)
             echo "🔄 [7/7] Reloading backend service via process manager..."

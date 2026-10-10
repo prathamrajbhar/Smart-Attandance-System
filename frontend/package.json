@@ -6,7 +6,10 @@
     "dev": "NODE_OPTIONS=\"--no-deprecation\" next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

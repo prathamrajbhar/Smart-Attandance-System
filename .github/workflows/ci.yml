@@ -69,7 +69,7 @@ jobs:
       - name: Verify Backend Application & Router Compilation
         run: |
           cd backend
-          python -c "from app.main import app; print('✅ FastAPI Application and all Routers Loaded Successfully')"
+          python -c "from main import app; print('✅ FastAPI Application and all Routers Loaded Successfully')"
 
       - name: Run Backend Integration & Verification Tests
         run: |

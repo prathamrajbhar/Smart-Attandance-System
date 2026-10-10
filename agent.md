@@ -19,12 +19,13 @@
 - **No Residual Debug Code**: Remove all temporary `console.log`, arbitrary `print()` statements, and one-off debug test routes before finalizing production releases.
 
 ## 5. Version Control & Automated Delivery
-- **Commit & Push on Major Changes**: Whenever a major feature, architectural update, security improvement, or core third-party integration is completed and verified, create a clear semantic git commit and push the changes directly to the remote repository (`origin/main`).
+- **Work on `dev`**: All ongoing features, refactoring, and bug fixes must be committed and pushed to `origin/dev`.
+- **Production Release via `main`**: Once changes on `dev` pass all CI checks and are verified, they are merged into `main`. Committing/pushing to `main` triggers automated production deployment.
 
 ## 6. Database & Prisma Schema Standards
 - **Never Add `output` in `schema.prisma`**: The `generator client` block in `backend/prisma/schema.prisma` must never contain hardcoded `output` directory paths (e.g. `output = ...`). Custom output paths break containerized production Docker builds and CI/CD pipelines where Python packages and site-packages are resolved dynamically.
 
 ## 7. Branching Strategy & Production Deployment Policy
-- **`main` Branch (Production Only)**: The `main` branch is strictly reserved for production deployments. Production CI/CD pipelines (`deploy.yml` -> Tailscale SSH backend deployment + Vercel frontend deployment) only trigger from `origin/main`. Never commit experimental or untested code directly to `main`.
-- **`dev` Branch (Active Development)**: All daily coding, feature implementation, and experimentation occur on the `dev` branch.
-- **CI Validation on PR/Push**: Continuous Integration (`ci.yml`) runs linting, static analysis, unit tests, and integration verification on both `dev` and `main`. Always ensure the CI suite passes cleanly on `dev` before creating a PR or merging into `main`.
+- **`main` Branch (Production Deployment Only)**: The `main` branch is strictly the single target for live production. The production deployment pipeline (`.github/workflows/deploy.yml`) is configured to trigger **only** when code is committed/pushed to `main`. No other branch triggers production deployments.
+- **`dev` Branch (Active Development)**: All active development and paired work happens on `dev`. Pushing to `dev` runs CI (`.github/workflows/ci.yml`) to validate linting and tests without touching production.
+- **Merge to `main` for Deploy**: Production deployments only occur when `dev` is merged and pushed into `main`.

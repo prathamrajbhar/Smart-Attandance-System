@@ -63,12 +63,6 @@ export function runSystemCheck() {
     throw new Error("Python 3.11 is required. Please install Python 3.11.");
   }
 
-  const flutterVersion = getCommandOutput("flutter --version");
-  if (flutterVersion) {
-    logger.success(`Flutter: detected (${flutterVersion.split("\n")[0]})`);
-  } else {
-    logger.warn("Flutter: Not detected. (Optional if only developing Web/Backend).");
-  }
 
   const psqlVersion = getCommandOutput("psql --version");
   if (psqlVersion) {

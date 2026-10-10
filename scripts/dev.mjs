@@ -58,13 +58,15 @@ const backendProcess = spawn(
 
 pipeOutput(backendProcess, "BACKEND", colors.cyan);
 
+const npmCmd = process.platform === "win32" ? "npm.cmd" : "npm";
+
 const frontendProcess = spawn(
-  "npm",
+  npmCmd,
   ["run", "dev"],
   {
     cwd: frontendDir,
+    env: { ...process.env, NODE_OPTIONS: `${process.env.NODE_OPTIONS || ""} --no-deprecation`.trim() },
     stdio: ["ignore", "pipe", "pipe"],
-    shell: true,
   }
 );
 

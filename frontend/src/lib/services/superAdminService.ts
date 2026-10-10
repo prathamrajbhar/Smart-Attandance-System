@@ -103,6 +103,10 @@ export const superAdminService = {
     return data;
   },
 
+  async deleteTenant(id: string): Promise<void> {
+    await api.delete(`/super-admin/tenants/${id}`);
+  },
+
   async addTenantAdmin(tenantId: string, payload: { name: string; email: string; role?: string }): Promise<{ id: string; email: string; role: string }> {
     const { data } = await api.post<{ id: string; email: string; role: string }>(`/super-admin/tenants/${tenantId}/admins`, payload);
     return data;

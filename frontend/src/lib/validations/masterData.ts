@@ -31,6 +31,7 @@ export const subjectSchema = z.object({
     .max(20, "Subject code cannot exceed 20 characters")
     .toUpperCase(),
   description: z.string().trim().max(500, "Description cannot exceed 500 characters").optional().or(z.literal("")),
+  department_id: z.string().optional().or(z.literal("")),
 });
 
 export type SubjectFormData = z.infer<typeof subjectSchema>;

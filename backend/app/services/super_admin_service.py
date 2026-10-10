@@ -1,7 +1,7 @@
 import asyncio
 import math
 from datetime import datetime, timezone
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 from prisma import Json
 from app.core.logging_config import get_logger
 from app.db.client import db
@@ -267,17 +267,38 @@ class SuperAdminService:
             if data.license_count < current_usage:
                 raise ValueError(f"License count ({data.license_count}) cannot be less than current usage ({current_usage} students + teachers).")
 
+        if data.slug and data.slug != t.slug:
+            existing_slug = await db.tenant.find_unique(where={"slug": data.slug})
+            if existing_slug:
+                raise ValueError(f"Tenant slug '{data.slug}' is already in use by another institution.")
+
+        if data.domain and data.domain != t.domain:
+            existing_domain = await db.tenant.find_unique(where={"domain": data.domain})
+            if existing_domain:
+                raise ValueError(f"Domain '{data.domain}' is already mapped to another institution.")
+
         update_data: dict = {}
-        if data.name: update_data["name"] = data.name
-        if data.status: update_data["status"] = data.status
-        if data.domain is not None: update_data["domain"] = data.domain if data.domain else None
-        if data.license_count is not None: update_data["licenseCount"] = data.license_count
-        if data.config is not None: update_data["config"] = Json(data.config)
+        if data.name:
+            update_data["name"] = data.name
+        if data.slug:
+            update_data["slug"] = data.slug
+        if data.type:
+            update_data["type"] = data.type
+        if data.status:
+            update_data["status"] = data.status
+        if data.domain is not None:
+            update_data["domain"] = data.domain if data.domain else None
+        if data.license_count is not None:
+            update_data["licenseCount"] = data.license_count
+        if data.config is not None:
+            update_data["config"] = Json(data.config)
 
         updated = await db.tenant.update(where={"id": tenant_id}, data=update_data)
         try:
             from app.db.redis import get_redis
             r = get_redis()
+            if t.slug != updated.slug:
+                await r.delete(f"tenant:resolved:{t.slug}")
             if data.status == "SUSPENDED":
                 await r.delete(f"tenant:resolved:{updated.id}")
                 await r.delete(f"tenant:resolved:{updated.slug}")
@@ -310,6 +331,48 @@ class SuperAdminService:
             if updated.slug:
                 await ws_manager.force_close_tenant(updated.slug, f"Institution '{updated.name}' has been suspended. Please contact your administrator.")
         return await SuperAdminService.get_tenant_by_id(tenant_id)
+
+    @staticmethod
+    async def delete_tenant(tenant_id: str, actor: str = "super_admin") -> Dict[str, Any]:
+        t = await db.tenant.find_unique(where={"id": tenant_id})
+        if not t:
+            raise ValueError(f"Tenant with id '{tenant_id}' not found.")
+
+        # Disconnect connected websocket users for this tenant
+        try:
+            from app.api.ws import manager as ws_manager
+            await ws_manager.force_close_tenant(tenant_id, f"Institution '{t.name}' has been deleted by platform super admin.")
+            if t.slug:
+                await ws_manager.force_close_tenant(t.slug, f"Institution '{t.name}' has been deleted by platform super admin.")
+        except Exception:
+            pass
+
+        # Clear Redis keys
+        try:
+            from app.db.redis import get_redis
+            r = get_redis()
+            await r.delete(f"tenant:resolved:{t.id}")
+            await r.delete(f"tenant:resolved:{t.slug}")
+            if t.domain:
+                await r.delete(f"tenant:resolved:{t.domain.lower()}")
+        except Exception:
+            pass
+
+        # Delete dependent license requests if any
+        await db.licenserequest.delete_many(where={"tenantId": tenant_id})
+
+        # Delete dependent data using database cascade transaction or explicit cleanup
+        deleted = await db.tenant.delete(where={"id": tenant_id})
+
+        await db.auditlog.create(data={
+            "eventType": "DELETE_TENANT",
+            "severity": "WARNING",
+            "actor": actor,
+            "target": tenant_id,
+            "description": f"Super admin '{actor}' permanently deleted tenant '{deleted.name}' ({deleted.slug}).",
+        })
+
+        return {"id": tenant_id, "slug": deleted.slug, "name": deleted.name, "status": "DELETED"}
 
     @staticmethod
     async def get_platform_stats() -> SuperAdminStatsResponse:
@@ -458,19 +521,19 @@ class SuperAdminService:
 
         items = [
             {
-                "id": l.id,
-                "timestamp": l.timestamp,
-                "event_type": l.eventType,
-                "severity": l.severity,
-                "actor": l.actor,
-                "target": l.target,
-                "description": l.description,
-                "ip_address": l.ipAddress,
-                "tenant_id": l.tenantId,
-                "tenant_name": l.tenant.name if l.tenant else "Platform Global",
-                "metadata": l.metadata if isinstance(l.metadata, dict) else {},
+                "id": entry.id,
+                "timestamp": entry.timestamp,
+                "event_type": entry.eventType,
+                "severity": entry.severity,
+                "actor": entry.actor,
+                "target": entry.target,
+                "description": entry.description,
+                "ip_address": entry.ipAddress,
+                "tenant_id": entry.tenantId,
+                "tenant_name": entry.tenant.name if entry.tenant else "Platform Global",
+                "metadata": entry.metadata if isinstance(entry.metadata, dict) else {},
             }
-            for l in logs
+            for entry in logs
         ]
 
         total_pages = max(1, (total_items + page_size - 1) // page_size) if total_items > 0 else 1

@@ -3,6 +3,7 @@ from typing import Optional
 from prisma.models import LeaveRequest
 
 from app.core.logging_config import get_logger
+from app.db.client import db
 from app.repositories.leave_repo import LeaveRepository
 from app.repositories.attendance_repo import AttendanceRepository
 from app.repositories.enrollment_repo import EnrollmentRepository

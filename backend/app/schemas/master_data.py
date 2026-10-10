@@ -8,6 +8,7 @@ class SubjectCreate(BaseModel):
     name: str = Field(..., min_length=2, max_length=100, description="Subject name")
     code: str = Field(..., min_length=2, max_length=20, description="Unique subject code e.g. CS101")
     description: Optional[str] = Field(None, max_length=500, description="Optional subject overview")
+    department_id: Optional[str] = Field(None, description="Associated academic department ID")
 
     @field_validator("name", "code", mode="before")
     @classmethod
@@ -21,6 +22,7 @@ class SubjectUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=2, max_length=100)
     code: Optional[str] = Field(None, min_length=2, max_length=20)
     description: Optional[str] = Field(None, max_length=500)
+    department_id: Optional[str] = Field(None, description="Associated academic department ID")
 
     @field_validator("name", "code", mode="before")
     @classmethod
@@ -35,6 +37,7 @@ class SubjectResponse(BaseModel):
     name: str
     code: str
     description: Optional[str] = None
+    department_id: Optional[str] = None
 
 
 class ClassroomCreate(BaseModel):

@@ -153,7 +153,7 @@ class GlobalSearchService:
                     title=full_name,
                     subtitle=f"{std.enrollmentNumber} • {c_name} • {email}",
                     category="student",
-                    href=f"/teacher/analytics",
+                    href="/teacher/analytics",
                     icon_type="graduation-cap",
                     badge="Enrolled",
                 ))

@@ -53,6 +53,12 @@ __pycache__/
 htmlcov/
 .ruff_cache/
 
+# Dependencies & Virtualenvs
+node_modules/
+.venv/
+.kilo/
+temp/
+
 # Knowledge graph cache
 graphify-out/cache/
 

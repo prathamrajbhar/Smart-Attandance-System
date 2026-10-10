@@ -1,0 +1,262 @@
+name,code,description,department_id
+DISCRETE MATHEMATICS & PROBABILITY,2BS3102,Bachelor Of Technology In Computer Engineering - Semester 3 - (Basic Science),CSE
+MATHEMATICS FOR COMPUTER ENGINEERING & INFORMATION TECHNOLOGY,2BS4101,Bachelor Of Technology In Computer Engineering - Semester 4 - (Basic Science),CSE
+Mathematics For Mechanical & Mechatronics Engineering,2BS4102,Bachelor Of Technology In Mechatronics Engineering - Semester 4 - (Basic Science),MECH
+Mathematics - I,2BSC1101,Bachelor Of Technology In Computer Engineering - Semester 1 - (Basic Science),CSE
+Mathematics - II,2BSC1102,Bachelor Of Technology In Computer Engineering - Semester 2 - (Basic Science),CSE
+Environmental Science,2BSC1105,Bachelor Of Technology In Computer Engineering - Semester 1 - (Basic Science),CSE
+Engineering Physics,2BSC1106,Bachelor Of Technology In Computer Engineering - Semester 2 - (Basic Science),CSE
+Discrete Mathematics,2BSC1107,B.Tech (Computer Science And Business Systems) - Semester 1 - (Basic Science),CSE
+"Introductory Topics in Statistics, Probability and Calculus",2BSC1108,B.Tech (Computer Science And Business Systems) - Semester 1 - (Basic Science),CSE
+Linear Algebra,2BSC1109,B.Tech (Computer Science And Business Systems) - Semester 2 - (Basic Science),CSE
+Statistical Methods and Modelling,2BSC1110,B.Tech (Computer Science And Business Systems) - Semester 2 - (Basic Science),CSE
+Physics for Computing Science,2BSC1115,B.Tech (Computer Science And Business Systems) - Semester 2 - (Basic Science),CSE
+Applied Calculus,2BSC1116,Bachelor Of Technology In Mechatronics Engineering - Semester 2 - (Basic Science),MECH
+Computer Vision,2CEAI 701,Bachelor Of Technology In Computer Engineering - Semester 7 - (Professional Elective),CSE
+DATA VISUALIZATION USING POWER BI AND TABLEAU,2CEAI404,Bachelor Of Technology In Computer Engineering (Artificial Intelligence) - Semester 4 - (Professional Core),CSE
+Computational Data Analytics,2CEAI502,Bachelor Of Technology In Computer Engineering (Artificial Intelligence) - Semester 5 - (Professional Core),CSE
+Deep Neural Network,2CEAI603,Bachelor Of Technology In Computer Engineering (Artificial Intelligence) - Semester 6 - (Professional Core),CSE
+Natural Language Processing,2CEAI604,Bachelor Of Technology In Computer Engineering (Artificial Intelligence) - Semester 6 - (Professional Core),CSE
+Information Retrieval,2CEAI6PE2,Bachelor Of Technology In Computer Engineering (Artificial Intelligence) - Semester 6 - (Professional Elective),CSE
+"Advanced Social,Text and Media Analytics",2CEAI6PE3,Bachelor Of Technology In Computer Engineering (Artificial Intelligence) - Semester 6 - (Professional Elective),CSE
+Computer Vision,2CEAI701,Bachelor Of Technology In Computer Engineering (Artificial Intelligence) - Semester 7 - (Professional Core),CSE
+ML-Ops,2CEAI702,Bachelor Of Technology In Computer Engineering (Artificial Intelligence) - Semester 7 - (Professional Elective),CSE
+Reinforcement Learning,2CEAI703,Bachelor Of Technology In Computer Engineering (Artificial Intelligence) - Semester 7 - (Professional Elective),CSE
+DIGITAL ELECTRONICS,2CEIT301,Bachelor Of Technology In Computer Engineering - Semester 3 - (Professional Core),CSE
+OBJECT ORIENTED PROGRAMMING,2CEIT302,Bachelor Of Technology In Computer Engineering - Semester 3 - (Professional Core),CSE
+DATABASE MANAGEMENT SYSTEM,2CEIT303,Bachelor Of Technology In Computer Engineering - Semester 3 - (Professional Core),CSE
+DATA STRUCTURES,2CEIT304,Bachelor Of Technology In Computer Engineering - Semester 3 - (Professional Core),CSE
+OPERATING SYSTEMS,2CEIT401,Bachelor Of Technology In Computer Engineering - Semester 4 - (Professional Core),CSE
+DESIGN AND ANALYSIS OF ALGORITHMS,2CEIT402,Bachelor Of Technology In Computer Engineering - Semester 4 - (Professional Core),CSE
+PROGRAMMING WITH PYTHON,2CEIT404,Bachelor Of Technology In Computer Engineering - Semester 4 - (Professional Core),CSE
+NOSQL DATABASE SYSTEMS,2CEIT405,Bachelor Of Technology In Computer Engineering - Semester 4 - (Professional Core),CSE
+SOFTWARE ENGINEERING AND PROJECT MANAGEMENT,2CEIT406,Bachelor Of Technology In Computer Engineering - Semester 4 - (Professional Core),CSE
+DESIGN THINKING,2CEIT407,Bachelor Of Technology In Computer Engineering - Semester 4 - (Professional Core),CSE
+Computer Networks,2CEIT503,Bachelor Of Technology In Computer Engineering - Semester 5 - (Professional Core),CSE
+Capstone Project-I,2CEIT505,Bachelor Of Technology In Computer Engineering - Semester 5 - (Professional Core),CSE
+Machine Learning,2CEIT506,Bachelor Of Technology In Computer Engineering - Semester 5 - (Professional Core),CSE
+Computer Architecture & Organization,2CEIT507,Bachelor Of Technology In Computer Engineering - Semester 5 - (Professional Core),CSE
+Advanced Java,2CEIT5PE1,Bachelor Of Technology In Computer Engineering - Semester 5 - (Professional Elective),CSE
+3D Printing and Design,2CEIT5PE10,Bachelor Of Technology In Computer Engineering - Semester 5 - (Professional Elective),CSE
+Cryptography and Network Security,2CEIT5PE11,Bachelor Of Technology In Computer Engineering - Semester 5 - (Professional Elective),CSE
+Forensic and Cyber Law,2CEIT5PE12,Bachelor Of Technology In Computer Engineering - Semester 5 - (Professional Elective),CSE
+Object Oriented Analysis and Design,2CEIT5PE13,Bachelor Of Technology In Computer Engineering - Semester 5 - (Professional Elective),CSE
+Software Validation & Testing,2CEIT5PE14,Bachelor Of Technology In Computer Engineering - Semester 5 - (Professional Elective),CSE
+Programming with .NET,2CEIT5PE15,Bachelor Of Technology In Computer Engineering - Semester 5 - (Open Elective),CSE
+Innovation & Entrepreneurship,2CEIT5PE16,Bachelor Of Technology In Computer Engineering - Semester 5 - (Professional Elective),CSE
+Software Packages,2CEIT5PE17,Bachelor Of Technology In Computer Engineering - Semester 5 - (Professional Elective),CSE
+Mobile Application Development,2CEIT5PE18,Bachelor Of Technology In Computer Engineering - Semester 5 - (Professional Elective),CSE
+Computer Graphics & Visualization,2CEIT5PE2,Bachelor Of Technology In Computer Engineering - Semester 5 - (Professional Elective),CSE
+Quantum Computing,2CEIT5PE3,Bachelor Of Technology In Computer Engineering - Semester 5 - (Professional Elective),CSE
+Human Computer Interaction,2CEIT5PE6,Bachelor Of Technology In Computer Engineering - Semester 5 - (Professional Elective),CSE
+Fundamentals of Management,2CEIT5PE9,Bachelor Of Technology In Computer Engineering - Semester 5 - (Professional Elective),CSE
+Theory of Computation,2CEIT601,Bachelor Of Technology In Computer Engineering - Semester 6 - (Professional Core),CSE
+Cloud Computing,2CEIT603,Bachelor Of Technology In Computer Engineering - Semester 6 - (Professional Core),CSE
+Capstone Project-II,2CEIT605,Bachelor Of Technology In Computer Engineering - Semester 6 - (Professional Core),CSE
+Artificial Intelligence,2CEIT606,Bachelor Of Technology In Computer Engineering - Semester 6 - (Professional Core),CSE
+Web Technology,2CEIT6PE1,Bachelor Of Technology In Computer Engineering - Semester 6 - (Professional Elective),CSE
+Blockchain Technologies,2CEIT6PE10,Bachelor Of Technology In Computer Engineering - Semester 6 - (Professional Elective),CSE
+Robotics Process Automation,2CEIT6PE11,Bachelor Of Technology In Computer Engineering - Semester 6 - (Professional Elective),CSE
+Advanced Software Engineering,2CEIT6PE12,Bachelor Of Technology In Computer Engineering - Semester 6 - (Professional Elective),CSE
+Introduction to Game Theory,2CEIT6PE13,Bachelor Of Technology In Computer Engineering - Semester 6 - (Professional Elective),CSE
+Augmented Reality and Virtual Reality,2CEIT6PE14,Bachelor Of Technology In Computer Engineering - Semester 6 - (Professional Elective),CSE
+Fundamentals of Economics,2CEIT6PE15,Bachelor Of Technology In Computer Engineering - Semester 6 - (Professional Elective),CSE
+Advanced Programming with .NET,2CEIT6PE16,Bachelor Of Technology In Computer Engineering - Semester 6 - (Professional Elective),CSE
+Programming with Flutter,2CEIT6PE17,Bachelor Of Technology In Computer Engineering - Semester 6 - (Professional Elective),CSE
+Robotics,2CEIT6PE6,Bachelor Of Technology In Computer Engineering - Semester 6 - (Professional Elective),CSE
+Ethical Hacking,2CEIT6PE7,Bachelor Of Technology In Computer Engineering - Semester 6 - (Professional Elective),CSE
+IT Infrastructure & Management,2CEIT6PE8,Bachelor Of Technology In Computer Engineering - Semester 6 - (Professional Elective),CSE
+Internet of Things,2CEIT6PE9,Bachelor Of Technology In Computer Engineering - Semester 6 - (Professional Elective),CSE
+Compiler Design,2CEIT701,Bachelor Of Technology In Computer Engineering - Semester 7 - (Professional Core),CSE
+Big Data Analytics,2CEIT702,Bachelor Of Technology In Computer Engineering - Semester 7 - (Professional Core),CSE
+Minor Project,2CEIT705,Bachelor Of Technology In Computer Engineering - Semester 7 - (Professional Core),CSE
+Deep Learning,2CEIT7PE1,Bachelor Of Technology In Computer Engineering - Semester 7 - (Professional Elective),CSE
+Fog Computing,2CEIT7PE10,Bachelor Of Technology In Computer Engineering - Semester 7 - (Professional Elective),CSE
+Fault Tolerant Systems,2CEIT7PE11,Bachelor Of Technology In Computer Engineering - Semester 7 - (Professional Elective),CSE
+High Performance Computing,2CEIT7PE12,Bachelor Of Technology In Computer Engineering - Semester 7 - (Professional Elective),CSE
+Blockchain Security and Performance,2CEIT7PE14,Bachelor Of Technology In Computer Engineering - Semester 7 - (Professional Elective),CSE
+"Blockchain Policy: Legal, Social and Economic Impact",2CEIT7PE15,Bachelor Of Technology In Computer Engineering - Semester 7 - (Professional Elective),CSE
+Fundamentals of Image Processing,2CEIT7PE3,Bachelor Of Technology In Computer Engineering - Semester 7 - (Professional Elective),CSE
+Mobile Computing,2CEIT7PE4,Bachelor Of Technology In Computer Engineering - Semester 7 - (Professional Elective),CSE
+Search Engine Optimization,2CEIT7PE5,Bachelor Of Technology In Computer Engineering - Semester 7 - (Professional Elective),CSE
+Virtual Reality,2CEIT7PE6,Bachelor Of Technology In Computer Engineering - Semester 7 - (Professional Elective),CSE
+Natural Language Processing,2CEIT7PE7,Bachelor Of Technology In Computer Engineering - Semester 7 - (Professional Elective),CSE
+Advanced Algorithms,2CEIT7PE9,Bachelor Of Technology In Computer Engineering - Semester 7 - (Professional Elective),CSE
+Industrial Training,2CEIT801,Bachelor Of Technology In Computer Engineering - Semester 8 - (Professional Core),CSE
+MAJOR PROJECT,2CEIT802,Bachelor Of Technology In Computer Engineering - Semester 8 - (Professional Core),CSE
+AI and Public Policy,2CEIT8PE1,Bachelor Of Technology In Computer Engineering - Semester 8 - (Professional Elective),CSE
+Soft Computing,2CEIT8PE2,Bachelor Of Technology In Computer Engineering - Semester 8 - (Professional Elective),CSE
+Satellite Data Analysis,2CEIT8PE3,Bachelor Of Technology In Computer Engineering - Semester 8 - (Professional Elective),CSE
+AI in Healthcare,2CEIT8PE4,Bachelor Of Technology In Computer Engineering - Semester 8 - (Professional Elective),CSE
+Engineering Optimization,2CEIT8PE5,Bachelor Of Technology In Computer Engineering - Semester 8 - (Professional Elective),CSE
+Video Analytics,2CEIT8PE6,Bachelor Of Technology In Computer Engineering - Semester 8 - (Professional Elective),CSE
+Strength of Materials,2CI3111,Bachelor Of Technology In Mechatronics Engineering - Semester 3 - (Engineering Science),MECH
+Formal Language and Automata Theory,2CSBS3101,B.Tech (Computer Science And Business Systems) - Semester 3 - (Professional Core),CSE
+Computer organization and Architecture,2CSBS3102,B.Tech (Computer Science And Business Systems) - Semester 3 - (Professional Core),CSE
+Object Oriented Programming,2CSBS3103,B.Tech (Computer Science And Business Systems) - Semester 3 - (Professional Core),CSE
+Computational Statistics,2CSBS3104,B.Tech (Computer Science And Business Systems) - Semester 3 - (Professional Core),CSE
+Database Management System,2CSBS3105,B.Tech (Computer Science And Business Systems) - Semester 3 - (Professional Core),CSE
+Operating System,2CSBS4101,B.Tech (Computer Science And Business Systems) - Semester 4 - (Professional Core),CSE
+Design and Analysis of Algorithms,2CSBS4102,B.Tech (Computer Science And Business Systems) - Semester 4 - (Professional Core),CSE
+Software Engineering,2CSBS4103,B.Tech (Computer Science And Business Systems) - Semester 4 - (Professional Core),CSE
+"Introduction to Innovation, IP Management and Entrepreneurship",2CSBS4104,B.Tech (Computer Science And Business Systems) - Semester 4 - (Professional Core),CSE
+Design Thinking,2CSBS4105,B.Tech (Computer Science And Business Systems) - Semester 4 - (Professional Core),CSE
+Operations Research,2CSBS4106,B.Tech (Computer Science And Business Systems) - Semester 4 - (Professional Core),CSE
+Marketing Research & Marketing Management,2CSBS4107,B.Tech (Computer Science And Business Systems) - Semester 4 - (Professional Core),CSE
+Software Design with UML,2CSBS5101,B.Tech (Computer Science And Business Systems) - Semester 5 - (Professional Core),CSE
+Compiler Design,2CSBS5102,B.Tech (Computer Science And Business Systems) - Semester 5 - (Professional Core),CSE
+Fundamentals of Management,2CSBS5103,B.Tech (Computer Science And Business Systems) - Semester 5 - (Professional Core),CSE
+Business strategy,2CSBS5104,B.Tech (Computer Science And Business Systems) - Semester 5 - (Professional Core),CSE
+Business Communication & Value Science-III,2CSBS5105,B.Tech (Computer Science And Business Systems) - Semester 5 - (Professional Core),CSE
+Mini Project,2CSBS5106,B.Tech (Computer Science And Business Systems) - Semester 5 - (Professional Core),CSE
+Computer Networks,2CSBS6101,B.Tech (Computer Science And Business Systems) - Semester 6 - (Professional Core),CSE
+Information Security,2CSBS6102,B.Tech (Computer Science And Business Systems) - Semester 6 - (Professional Core),CSE
+Artificial Intelligence,2CSBS6103,B.Tech (Computer Science And Business Systems) - Semester 6 - (Professional Core),CSE
+Financial & Cost Accounting,2CSBS6104,B.Tech (Computer Science And Business Systems) - Semester 6 - (Professional Core),CSE
+Business Communication & Value Science-IV,2CSBS6105,B.Tech (Computer Science And Business Systems) - Semester 6 - (Professional Core),CSE
+Usability Design of Software Applications,2CSBS7101,B.Tech (Computer Science And Business Systems) - Semester 7 - (Professional Core),CSE
+IT Workshop Skylab/Matlab,2CSBS7102,B.Tech (Computer Science And Business Systems) - Semester 7 - (Professional Core),CSE
+IT Project Management,2CSBS7103,B.Tech (Computer Science And Business Systems) - Semester 7 - (Professional Core),CSE
+Data Visualization,2CSBS7104,B.Tech (Computer Science And Business Systems) - Semester 7 - (Professional Core),CSE
+Cognitive Science & Analytics,2CSBS7PE1,B.Tech (Computer Science And Business Systems) - Semester 7 - (Professional Elective),CSE
+Quantum Computation & Quantum Information,2CSBS7PE2,B.Tech (Computer Science And Business Systems) - Semester 7 - (Professional Elective),CSE
+Cryptology,2CSBS7PE3,B.Tech (Computer Science And Business Systems) - Semester 7 - (Professional Elective),CSE
+"Advance Social, Text and Media Analytics",2CSBS7PE4,B.Tech (Computer Science And Business Systems) - Semester 7 - (Professional Elective),CSE
+Introduction to IoT,2CSBS7PE5,B.Tech (Computer Science And Business Systems) - Semester 7 - (Professional Elective),CSE
+Mobile Computing,2CSBS7PE6,B.Tech (Computer Science And Business Systems) - Semester 7 - (Professional Elective),CSE
+Generative AI,2CSBS7PE7,B.Tech (Computer Science And Business Systems) - Semester 7 - (Professional Elective),CSE
+Information Retrieval,2CSBS7PE8,B.Tech (Computer Science And Business Systems) - Semester 7 - (Professional Elective),CSE
+Project,2CSBS8101,B.Tech (Computer Science And Business Systems) - Semester 8 - (Professional Core),CSE
+Conversational Systems,2CSBSPE5101,B.Tech (Computer Science And Business Systems) - Semester 5 - (Professional Elective),CSE
+"Cloud, Microservices & Application",2CSBSPE5102,B.Tech (Computer Science And Business Systems) - Semester 5 - (Professional Elective),CSE
+Machine Learning,2CSBSPE5103,B.Tech (Computer Science And Business Systems) - Semester 5 - (Professional Elective),CSE
+Behavioural Economics,2CSBSPE5104,B.Tech (Computer Science And Business Systems) - Semester 5 - (Professional Elective),CSE
+Computational Finance & Modeling,2CSBSPE5105,B.Tech (Computer Science And Business Systems) - Semester 5 - (Professional Elective),CSE
+Industrial Psychology,2CSBSPE5106,B.Tech (Computer Science And Business Systems) - Semester 5 - (Professional Elective),CSE
+Modern Day Robotics and its Industrial Applications,2CSBSPE6101,B.Tech (Computer Science And Business Systems) - Semester 6 - (Professional Elective),CSE
+Modern Web Applications,2CSBSPE6102,B.Tech (Computer Science And Business Systems) - Semester 6 - (Professional Elective),CSE
+Data Mining & Analytics,2CSBSPE6103,B.Tech (Computer Science And Business Systems) - Semester 6 - (Professional Elective),CSE
+Enterprise Systems,2CSBSPE6104,B.Tech (Computer Science And Business Systems) - Semester 6 - (Professional Elective),CSE
+Advance Finance,2CSBSPE6105,B.Tech (Computer Science And Business Systems) - Semester 6 - (Professional Elective),CSE
+Image Processing and Pattern Recognition,2CSBSPE6106,B.Tech (Computer Science And Business Systems) - Semester 6 - (Professional Elective),CSE
+Analog Circuits,2EC3101,Bachelor Of Technology In Electronics And Communication Engineering - Semester 3 - (Professional Core),ECE
+Programming with Python,2EC3102,Bachelor Of Technology In Electronics And Communication Engineering - Semester 3 - (Core),ECE
+Signals & Systems,2EC3103,Bachelor Of Technology In Electronics And Communication Engineering - Semester 3 - (Core),ECE
+Microprocessor & Microcontroller,2EC3104,Bachelor Of Technology In Electronics And Communication Engineering - Semester 3 - (Professional Core),ECE
+Network Analysis,2EC3105,Bachelor Of Technology In Electronics And Communication Engineering - Semester 3 - (Core),ECE
+Analog Communications,2EC4101,Bachelor Of Technology In Electronics And Communication Engineering - Semester 4 - (Professional Core),ECE
+Electromagnetic Theory,2EC4102,Bachelor Of Technology In Electronics And Communication Engineering - Semester 4 - (Professional Core),ECE
+Digital Signal Processing,2EC4103,Bachelor Of Technology In Electronics And Communication Engineering - Semester 4 - (Professional Core),ECE
+Object Oriented Programming,2EC4104,Bachelor Of Technology In Electronics And Communication Engineering - Semester 4 - (Core),ECE
+Data Structures,2EC4105,Bachelor Of Technology In Electronics And Communication Engineering - Semester 4 - (Core),ECE
+Digital Design using HDL,2EC4106,Bachelor Of Technology In Electronics And Communication Engineering - Semester 4 - (Professional Core),ECE
+Artificial Intelligence,2EC5101,Bachelor Of Technology In Electronics And Communication Engineering - Semester 5 - (Professional Core),ECE
+Digital communication,2EC5102,Bachelor Of Technology In Electronics And Communication Engineering - Semester 5 - (Professional Core),ECE
+VLSI Design,2EC5103,Bachelor Of Technology In Electronics And Communication Engineering - Semester 5 - (Professional Core),ECE
+Computer Networks,2EC5104,Bachelor Of Technology In Electronics And Communication Engineering - Semester 5 - (Professional Core),ECE
+"Scripting Languages (Linux, Perl and TCL)",2EC5105,Bachelor Of Technology In Electronics And Communication Engineering - Semester 5 - (Professional Core),ECE
+Semiconductor Device Physics and Modeling,2EC51PE01,Bachelor Of Technology In Electronics And Communication Engineering - Semester 5 - (Professional Elective),ECE
+Power Electronics and Applications,2EC51PE02,Bachelor Of Technology In Electronics And Communication Engineering - Semester 5 - (Professional Elective),ECE
+Optical Communication,2EC51PE04,Bachelor Of Technology In Electronics And Communication Engineering - Semester 5 - (Professional Elective),ECE
+Digital Image processing,2EC51PE05,Bachelor Of Technology In Electronics And Communication Engineering - Semester 5 - (Professional Elective),ECE
+Antenna Engineering,2EC6101,Bachelor Of Technology In Electronics And Communication Engineering - Semester 6 - (Professional Core),ECE
+Embedded systems,2EC6102,Bachelor Of Technology In Electronics And Communication Engineering - Semester 6 - (Professional Core),ECE
+Machine learning,2EC6103,Bachelor Of Technology In Electronics And Communication Engineering - Semester 6 - (Professional Core),ECE
+Control Systems,2EC61PE01,Bachelor Of Technology In Electronics And Communication Engineering - Semester 6 - (Professional Elective),ECE
+Analog CMOS Integrated Circuits,2EC61PE02,Bachelor Of Technology In Electronics And Communication Engineering - Semester 6 - (Professional Elective),ECE
+Cryptography and Network Security,2EC61PE03,Bachelor Of Technology In Electronics And Communication Engineering - Semester 6 - (Professional Elective),ECE
+Mobile Application Development,2EC61PE04,Bachelor Of Technology In Electronics And Communication Engineering - Semester 6 - (Professional Elective),ECE
+Computer Architecture,2EC61PE05,Bachelor Of Technology In Electronics And Communication Engineering - Semester 6 - (Professional Elective),ECE
+Satellite Communications,2EC61PE06,Bachelor Of Technology In Electronics And Communication Engineering - Semester 6 - (Professional Elective),ECE
+Modern Processor Architecture,2EC61PE07,Bachelor Of Technology In Electronics And Communication Engineering - Semester 6 - (Professional Elective),ECE
+Data Interface and Protocol,2EC61PE08,Bachelor Of Technology In Electronics And Communication Engineering - Semester 6 - (Professional Elective),ECE
+Theory of Computation,2EC61PE09,Bachelor Of Technology In Electronics And Communication Engineering - Semester 6 - (Professional Elective),ECE
+FPGA Design,2EC61PE10,Bachelor Of Technology In Electronics And Communication Engineering - Semester 6 - (Professional Elective),ECE
+Wireless Sensor Networks,2EC61PE11,Bachelor Of Technology In Electronics And Communication Engineering - Semester 6 - (Professional Elective),ECE
+Semiconductor manufacturing Process,2EC61PE12,Bachelor Of Technology In Electronics And Communication Engineering - Semester 6 - (Professional Elective),ECE
+Wireless Communication and Mobile Computing,2EC7101,Bachelor Of Technology In Electronics And Communication Engineering - Semester 7 - (Professional Core),ECE
+IoT Architecture and Protocols,2EC7102,Bachelor Of Technology In Electronics And Communication Engineering - Semester 7 - (Professional Core),ECE
+Mini Project,2EC7103,Bachelor Of Technology In Electronics And Communication Engineering - Semester 7 - (Professional Core),ECE
+Cloud Computing,2EC71PE01,Bachelor Of Technology In Electronics And Communication Engineering - Semester 7 - (Professional Elective I),ECE
+Cyber Physical Systems,2EC71PE02,Bachelor Of Technology In Electronics And Communication Engineering - Semester 7 - (Professional Elective I),ECE
+Microwave Engineering,2EC71PE03,Bachelor Of Technology In Electronics And Communication Engineering - Semester 7 - (Professional Elective I),ECE
+Low Power VLSI Design,2EC71PE04,Bachelor Of Technology In Electronics And Communication Engineering - Semester 7 - (Professional Elective I),ECE
+Optical Devices and Networks,2EC71PE05,Bachelor Of Technology In Electronics And Communication Engineering - Semester 7 - (Professional Elective I),ECE
+Big Data Analytics,2EC71PE06,Bachelor Of Technology In Electronics And Communication Engineering - Semester 7 - (Professional Elective II),ECE
+Quantum Computing,2EC71PE07,Bachelor Of Technology In Electronics And Communication Engineering - Semester 7 - (Professional Elective II),ECE
+Information Theory and Coding,2EC71PE08,Bachelor Of Technology In Electronics And Communication Engineering - Semester 7 - (Professional Elective II),ECE
+Introduction to MEMS,2EC71PE09,Bachelor Of Technology In Electronics And Communication Engineering - Semester 7 - (Professional Elective II),ECE
+Deep Learning and Applications,2EC71PE10,Bachelor Of Technology In Electronics And Communication Engineering - Semester 7 - (Professional Elective II),ECE
+Major Project,2EC8101,Bachelor Of Technology In Electronics And Communication Engineering - Semester 8 - (Professional Core),ECE
+Electrical Machines & Drives,2EE3107,Bachelor Of Technology In Mechatronics Engineering - Semester 3 - (Engineering Science),MECH
+INTRODUCTION TO INDUSTRY 4.0,2ES115,Bachelor Of Technology In Computer Engineering (Artificial Intelligence) - Semester 3 - (Engineering Science),CSE
+PROGRAMMING FOR SCIENTIFIC COMPUTING,2ES116,Bachelor Of Technology In Computer Engineering (Artificial Intelligence) - Semester 4 - (Engineering Science),CSE
+Basics of Electrical Engineering,2ESC1101,Bachelor Of Technology In Computer Engineering - Semester 1 - (Engineering Science),CSE
+Basics of Electronics,2ESC1102,Bachelor Of Technology In Computer Engineering - Semester 1 - (Engineering Science),CSE
+Elements of Mechanical Engineering,2ESC1103,Bachelor Of Technology In Mechatronics Engineering - Semester 2 - (Engineering Science),MECH
+Engineering Graphics and Design,2ESC1104,Bachelor Of Technology In Computer Engineering - Semester 2 - (Engineering Science),CSE
+Engineering Mechanics,2ESC1105,Bachelor Of Technology In Mechatronics Engineering - Semester 2 - (Engineering Science),MECH
+Engineering Workshop,2ESC1106,Bachelor Of Technology In Computer Engineering - Semester 2 - (Engineering Science),CSE
+Programming for Problem Solving,2ESC1107,Bachelor Of Technology In Computer Engineering - Semester 1 - (Engineering Science),CSE
+Engineering Materials and Applications,2ESC1108,Bachelor Of Technology In Mechatronics Engineering - Semester 2 - (Engineering Science),MECH
+Python Programming,2ESC1110,Bachelor Of Technology In Computer Engineering - Semester 2 - (Engineering Science),CSE
+Principles of Electrical Engineering,2ESC1112,B.Tech (Computer Science And Business Systems) - Semester 1 - (Engineering Science),CSE
+Principles of Electronics Engineering,2ESC1113,B.Tech (Computer Science And Business Systems) - Semester 1 - (Engineering Science),CSE
+Engineering Safety and Regulations,2ESC1120,Bachelor Of Technology In Mechatronics Engineering - Semester 2 - (Engineering Science),MECH
+Industrial Management_Open Course,2HS4101,Bachelor Of Technology In Mechatronics Engineering - Semester 4 - (Open Elective),MECH
+Aptitude Skill Building I,2HS5101,Bachelor Of Technology In Mechatronics Engineering - Semester 5 - (Humanity and Social Science),MECH
+Aptitude & Skill Building-I,2HS5201,Bachelor Of Technology In Computer Engineering - Semester 5 - (Humanity and Social Science),CSE
+Aptitude Skill Building II,2HS6101,Bachelor Of Technology In Electronics And Communication Engineering - Semester 6 - (Humanity and Social Science),ECE
+Aptitude & Skill Building-II,2HS6201,Bachelor Of Technology In Computer Engineering - Semester 6 - (Humanity and Social Science),CSE
+Communication Skills,2HSM1101,Bachelor Of Technology In Computer Engineering - Semester 1 - (Humanity and Social Science),CSE
+Universal Human Values (Integrated Personality Development Course),2HSM1102,Bachelor Of Technology In Computer Engineering - Semester 1 - (Humanity and Social Science),CSE
+Universal Human Values (Discovering Yourself through Bhagavad Gita),2HSM1103,Bachelor Of Technology In Computer Engineering - Semester 1 - (Humanity and Social Science),CSE
+Business Communication and Value Science - I,2HSM1104,B.Tech (Computer Science And Business Systems) - Semester 1 - (Humanity and Social Science),CSE
+Business Communication and Value Science - II,2HSM1105,B.Tech (Computer Science And Business Systems) - Semester 2 - (Humanity and Social Science),CSE
+Bhartiya Knowledge System,2IKS1101,Bachelor Of Technology In Computer Engineering - Semester 2 - (Open),CSE
+Thermal Engineering,2MC3102,Bachelor Of Technology In Mechatronics Engineering - Semester 3 - (Professional Core),MECH
+Kinematics and Dynamics of Machines,2MC3103,Bachelor Of Technology In Mechatronics Engineering - Semester 3 - (Professional Core),MECH
+Basics of Mechatronics,2MC31PE1,Bachelor Of Technology In Mechatronics Engineering - Semester 3 - (Elective),MECH
+Manufacturing Process,2MC31PE2,Bachelor Of Technology In Mechatronics Engineering - Semester 3 - (Elective),MECH
+Electronics Devices and Circuits,2MC31PE3,Bachelor Of Technology In Mechatronics Engineering - Semester 3 - (Elective),MECH
+Analog And Digital Electronics,2MC4101,Bachelor Of Technology In Mechatronics Engineering - Semester 4 - (Professional Core),MECH
+Design of Machine Elements,2MC4102,Bachelor Of Technology In Mechatronics Engineering - Semester 4 - (Professional Core),MECH
+Fluid Mechanics & Machines,2MC4103,Bachelor Of Technology In Mechatronics Engineering - Semester 4 - (Professional Core),MECH
+Materials and Manufacturing process-I,2MC4104,Bachelor Of Technology In Mechatronics Engineering - Semester 4 - (Professional Core),MECH
+Industrial Automation,2MC41PE1,Bachelor Of Technology In Mechatronics Engineering - Semester 4 - (Elective),MECH
+Data Communication and Networking,2MC41PE2,Bachelor Of Technology In Mechatronics Engineering - Semester 4 - (Elective),MECH
+Hydraulic & Pneumatics System,2MC5105,Bachelor Of Technology In Mechatronics Engineering - Semester 5 - (Professional Core),MECH
+Mechanical System Design,2MC5106,Bachelor Of Technology In Mechatronics Engineering - Semester 5 - (Professional Core),MECH
+Sensor Systems,2MC5108,Bachelor Of Technology In Mechatronics Engineering - Semester 5 - (Professional Core),MECH
+CONTROL ENGINEERING,2MC5110,Bachelor Of Technology In Mechatronics Engineering - Semester 5 - (Professional Core),MECH
+Microcontroller,2MC51PE1,Bachelor Of Technology In Mechatronics Engineering - Semester 5 - (Professional Elective),MECH
+Power Electronics,2MC51PE2,Bachelor Of Technology In Mechatronics Engineering - Semester 5 - (Professional Elective),MECH
+Computer vision,2MC6105,Bachelor Of Technology In Mechatronics Engineering - Semester 6 - (Professional Core),MECH
+Robotics,2MC6106,Bachelor Of Technology In Mechatronics Engineering - Semester 6 - (Professional Core),MECH
+Programmable Logic Controller,2MC6107,Bachelor Of Technology In Mechatronics Engineering - Semester 6 - (Professional Core),MECH
+Computer Aided Design,2MC6108,Bachelor Of Technology In Mechatronics Engineering - Semester 6 - (Professional Core),MECH
+Materials and Manufacturing process-II,2MC6109,Bachelor Of Technology In Mechatronics Engineering - Semester 6 - (Professional Core),MECH
+Embedded Systems,2MC61PE1,Bachelor Of Technology In Mechatronics Engineering - Semester 6 - (Professional Elective),MECH
+Industrial Drives,2MC61PE2,Bachelor Of Technology In Mechatronics Engineering - Semester 6 - (Professional Elective),MECH
+Computer Integrated Manufacturing,2MC7108,Bachelor Of Technology In Mechatronics Engineering - Semester 7 - (Professional Core),MECH
+Additive Manufacturing,2MC7109,Bachelor Of Technology In Mechatronics Engineering - Semester 7 - (Professional Core),MECH
+Engineering Optimization,2MC7110,Bachelor Of Technology In Mechatronics Engineering - Semester 7 - (Professional Core),MECH
+Summer Internship,2MC7111,Bachelor Of Technology In Mechatronics Engineering - Semester 7 - (Professional Core),MECH
+Minor Project,2MC7112,Bachelor Of Technology In Mechatronics Engineering - Semester 7 - (Professional Core),MECH
+Basics of Machine learning,2MC71OE1,Bachelor Of Technology In Mechatronics Engineering - Semester 7 - (Open Elective),MECH
+Advanced Robotics,2MC71PE3,Bachelor Of Technology In Mechatronics Engineering - Semester 7 - (Elective),MECH
+Industrial Internet of Things,2MC71PE4,Bachelor Of Technology In Mechatronics Engineering - Semester 7 - (Elective),MECH
+Major Project,2MC8106,Bachelor Of Technology In Mechatronics Engineering - Semester 8 - (Professional Core),MECH
+Solid Modeling,2ME3101,Bachelor Of Technology In Mechatronics Engineering - Semester 3 - (Professional Core),MECH
+Entrepreneurship Development,2ME51OE2,Bachelor Of Technology In Mechatronics Engineering - Semester 5 - (Open Elective),MECH
+Operation Research,2ME51OE3,Bachelor Of Technology In Mechatronics Engineering - Semester 5 - (Open Elective),MECH
+Automotive Troubleshooting & Repair,2ME72OE1,Bachelor Of Technology In Mechatronics Engineering - Semester 7 - (Open Elective),MECH
+Industrial Engineering,2ME72OE2,Bachelor Of Technology In Mechatronics Engineering - Semester 7 - (Open Elective),MECH
+Fundamentals of Computer Science,2PCC-CB-1101,B.Tech (Computer Science And Business Systems) - Semester 1 - (Professional Core),CSE
+Data Structures and Algorithms,2PCC-CB-1102,B.Tech (Computer Science And Business Systems) - Semester 2 - (Professional Core),CSE
+Fundamentals of Economics,2PCC-CB-1103,B.Tech (Computer Science And Business Systems) - Semester 2 - (Professional Core),CSE
+Basics of Web Technology,2PCC-CE-1101,Bachelor Of Technology In Computer Engineering - Semester 2 - (Professional Core),CSE
+Digital Electronics,2PCC-EC-1101,Bachelor Of Technology In Electronics And Communication Engineering - Semester 2 - (Professional Core),ECE
+Database management system,2ec51PE03,Bachelor Of Technology In Electronics And Communication Engineering - Semester 5 - (Professional Elective),ECE
+Universal Human Value (Integrated Personality Development Course-2),UHV2IPDC2,Bachelor Of Technology In Computer Engineering - Semester 3 - (Elective),CSE
+Universal Human Value (Discover Yourself Through Bhagavad Gita-2),UHV4DYSBG2,Bachelor Of Technology In Computer Engineering - Semester 3 - (Elective),CSE

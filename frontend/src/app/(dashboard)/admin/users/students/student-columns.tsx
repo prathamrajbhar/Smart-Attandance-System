@@ -49,16 +49,31 @@ export const studentColumns: TableColumn<StudentResponse & Record<string, unknow
     ),
   },
   {
+    key: "branch",
+    header: "Branch",
+    sortable: true,
+    render: (r) => {
+      const branch = r.branch || (r as { branch?: string }).branch;
+      return branch ? (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20">
+          {branch}
+        </span>
+      ) : (
+        <span className="text-muted-foreground text-xs">—</span>
+      );
+    },
+  },
+  {
     key: "department",
-    header: "Associated Entity",
+    header: "Department",
     sortable: true,
     render: (r) => {
       const deptName =
         r.department_name ||
         (typeof r.department === "string" ? r.department : (r.department as { name?: string })?.name) ||
-        "General Academic";
+        "—";
       return (
-        <span className="text-xs text-muted-foreground font-medium">
+        <span className="text-xs text-foreground font-medium">
           {deptName}
         </span>
       );

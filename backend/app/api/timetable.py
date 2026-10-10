@@ -22,6 +22,13 @@ from app.schemas.common import MessageResponse
 from app.services.ai_timetable_parser import AITimetableParser
 from app.services.timetable_qa_service import TimetableQAService
 from app.services.timetable_service import TimetableService
+_MAX_TIMETABLE_DOCUMENT_SIZE = 20 * 1024 * 1024  # 20 MB
+_VALID_TIMETABLE_DOCUMENT_TYPES = {
+    "application/pdf",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "text/csv",
+}
 
 router = APIRouter(prefix="/timetable", tags=["Timetable & Scheduling"])
 
@@ -45,13 +52,24 @@ async def parse_timetable_document(
             detail="Access forbidden: Only administrators and department heads can upload timetables.",
         )
 
-    file_bytes = await file.read()
-    if not file_bytes:
+    # Validate file type and size
+    if file.content_type not in _VALID_TIMETABLE_DOCUMENT_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Unsupported file type. Allowed types: PDF, Excel, CSV."
+        )
+    contents = await file.read()
+    if len(contents) > _MAX_TIMETABLE_DOCUMENT_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="File size too large. Maximum size is 20 MB."
+        )
+    if not contents:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Uploaded file is empty.",
         )
-
+    file_bytes = contents
     # 1. Store original timetable document safely in S3 / object storage
     doc_url = None
     doc_key = None

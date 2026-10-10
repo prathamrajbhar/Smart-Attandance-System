@@ -1,5 +1,5 @@
 import asyncio
-from typing import List, Optional
+from typing import Optional
 from app.core.security import hash_password, generate_temporary_password
 from app.db.client import db
 
@@ -71,6 +71,7 @@ class BulkImportService:
                 await db.student.create(data={k: v for k, v in {
                     "userId": user.id, "enrollmentNumber": item.enrollment_number,
                     "firstName": item.first_name, "lastName": item.last_name,
+                    "gender": item.gender, "branch": item.branch,
                     "phone": item.phone, "semester": item.semester,
                     "batch": item.batch, "departmentId": dept_id,
                 }.items() if v is not None})
@@ -181,7 +182,7 @@ class BulkImportService:
 
                 await db.teacher.create(data={k: v for k, v in {
                     "userId": user.id, "employeeId": item.employee_id, "firstName": item.first_name,
-                    "lastName": item.last_name, "phone": item.phone, "departmentId": dept_id, "designationId": desig_id,
+                    "lastName": item.last_name, "nameInitials": item.name_initials, "phone": item.phone, "departmentId": dept_id, "designationId": desig_id,
                 }.items() if v is not None})
                 imported_count += 1
 

@@ -31,6 +31,7 @@ export function usePlatformWebSocket(): void {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectCount = useRef(0);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const connectRef = useRef<() => void>(() => {});
 
   const handleMessage = useCallback(
     (raw: string): void => {
@@ -100,7 +101,9 @@ export function usePlatformWebSocket(): void {
         }
         if (reconnectCount.current < MAX_RECONNECT_ATTEMPTS && isAuthenticated) {
           reconnectCount.current += 1;
-          reconnectTimer.current = setTimeout(connect, RECONNECT_DELAY_MS);
+          reconnectTimer.current = setTimeout(() => {
+            connectRef.current();
+          }, RECONNECT_DELAY_MS);
         }
       };
 
@@ -111,6 +114,10 @@ export function usePlatformWebSocket(): void {
       // Graceful fallback for offline dev environments
     }
   }, [token, isAuthenticated, handleMessage, setSuspended, router]);
+
+  useEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
 
   useEffect(() => {
     if (!isAuthenticated || !token) return;

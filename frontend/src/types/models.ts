@@ -6,6 +6,7 @@ export interface StudentCreate {
   last_name: string;
   phone?: string;
   gender?: string;
+  branch?: string;
   date_of_birth?: string;
   semester?: number;
   batch?: string;
@@ -21,6 +22,7 @@ export interface StudentResponse {
   last_name?: string | null;
   phone?: string | null;
   gender?: string | null;
+  branch?: string | null;
   date_of_birth?: string | null;
   department_id?: string | null;
   department_name?: string | null;
@@ -34,6 +36,7 @@ export interface TeacherCreate {
   employee_id: string;
   first_name: string;
   last_name: string;
+  name_initials?: string;
   department_id: string;
   designation_id: string;
   phone?: string;
@@ -50,6 +53,7 @@ export interface TeacherResponse {
   employee_id: string;
   first_name: string;
   last_name: string;
+  name_initials?: string | null;
   department_id: string;
   designation_id: string;
   department: string;
@@ -106,6 +110,7 @@ export interface SubjectCreate {
   name: string;
   code: string;
   description?: string;
+  department_id?: string;
 }
 
 export interface SubjectResponse {
@@ -113,6 +118,7 @@ export interface SubjectResponse {
   name: string;
   code: string;
   description: string | null;
+  department_id?: string | null;
 }
 
 export interface ClassroomCreate {

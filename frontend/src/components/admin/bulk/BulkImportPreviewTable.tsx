@@ -10,7 +10,6 @@ interface BulkImportPreviewTableProps {
   sendInvite: boolean;
   onSendInviteChange: (send: boolean) => void;
   onRemoveRecord: (id: string) => void;
-  onReset: () => void;
 }
 
 export default function BulkImportPreviewTable({
@@ -19,7 +18,6 @@ export default function BulkImportPreviewTable({
   sendInvite,
   onSendInviteChange,
   onRemoveRecord,
-  onReset,
 }: BulkImportPreviewTableProps): React.ReactElement {
   const validCount = records.filter((r) => r.isValid).length;
   const invalidCount = records.length - validCount;

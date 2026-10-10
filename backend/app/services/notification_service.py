@@ -1,6 +1,5 @@
 import asyncio
 from typing import Any, Dict, List, Optional
-from datetime import datetime
 
 from app.core.logging_config import get_logger
 from app.db.client import db

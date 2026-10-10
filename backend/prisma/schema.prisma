@@ -84,7 +84,7 @@ model Tenant {
 
 model LicenseRequest {
   id             String              @id @default(uuid())
-  tenant         Tenant              @relation(fields: [tenantId], references: [id])
+  tenant         Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   tenantId       String
   requestedBy    User                @relation(fields: [requestedById], references: [id])
   requestedById  String
@@ -150,6 +150,7 @@ model Student {
   guardianPhone    String?                     @map("guardian_phone")
   guardianEmail    String?                     @map("guardian_email")
   gender           String?                     @map("gender")
+  branch           String?                     @map("branch")
   dateOfBirth      DateTime?                   @map("date_of_birth")
   semester         Int?                        @map("semester")
   batch            String?                     @map("batch")
@@ -180,6 +181,7 @@ model Teacher {
   userId          String    @unique @map("user_id")
   firstName       String    @map("first_name")
   lastName        String    @map("last_name")
+  nameInitials    String?   @map("name_initials")
   employeeId      String    @unique @map("employee_id")
   phone           String?   @map("phone")
   qualification   String?   @map("qualification")
@@ -313,6 +315,7 @@ model Department {
   tenant   Tenant?   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   teachers Teacher[]
   students Student[]
+  subjects Subject[]
   cohorts  AcademicCohort[]
 
   @@index([tenantId])
@@ -320,19 +323,22 @@ model Department {
 }
 
 model Subject {
-  id          String   @id @default(uuid())
-  tenantId    String?  @map("tenant_id")
-  name        String
-  code        String
-  description String?
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id           String   @id @default(uuid())
+  tenantId     String?  @map("tenant_id")
+  departmentId String?  @map("department_id")
+  name         String
+  code         String
+  description  String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   tenant        Tenant?         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  department    Department?     @relation(fields: [departmentId], references: [id], onDelete: Cascade)
   classes       AcademicClass[]
   cohortCourses CohortCourse[]
 
   @@index([tenantId])
+  @@index([departmentId])
   @@map("subjects")
 }
 

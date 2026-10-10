@@ -151,8 +151,14 @@ class AdminService:
     async def get_subject_by_id(self, id: str, tenant_id: Optional[str] = None) -> Optional[Subject]:
         return await SubjectService.get_subject_by_id(id, tenant_id=tenant_id)
 
-    async def create_subject(self, name: str, code: str, description: Optional[str] = None, tenant_id: Optional[str] = None) -> Subject:
-        return await SubjectService.create_subject(name, code, description, tenant_id=tenant_id)
+    async def create_subject(
+        name: str,
+        code: str,
+        description: Optional[str] = None,
+        department_id: Optional[str] = None,
+        tenant_id: Optional[str] = None,
+    ) -> Subject:
+        return await SubjectService.create_subject(name, code, description, department_id=department_id, tenant_id=tenant_id)
 
     async def update_subject(self, id: str, data: dict, tenant_id: Optional[str] = None) -> Subject:
         return await SubjectService.update_subject(id, data, tenant_id=tenant_id)
@@ -244,7 +250,7 @@ class AdminService:
         imported, failed, errors = 0, 0, []
         for idx, item in enumerate(subjects):
             try:
-                await SubjectService.create_subject(name=item.name, code=item.code, description=item.description, tenant_id=tenant_id)
+                await SubjectService.create_subject(name=item.name, code=item.code, description=item.description, department_id=getattr(item, "department_id", None), tenant_id=tenant_id)
                 imported += 1
             except Exception as e:
                 errors.append(f"Row {idx + 1} ({item.name}): {str(e)}")

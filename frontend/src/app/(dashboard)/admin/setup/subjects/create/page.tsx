@@ -17,6 +17,19 @@ import GlassButton from "@/components/ui/GlassButton";
 
 export default function CreateSubjectPage(): React.ReactElement {
   const router = useRouter();
+  const [departments, setDepartments] = React.useState<Array<{ id: string; name: string }>>([]);
+
+  React.useEffect(() => {
+    async function loadDepts(): Promise<void> {
+      try {
+        const { data } = await api.get<Array<{ id: string; name: string }>>("/admin/departments");
+        setDepartments(data);
+      } catch {
+        // non-blocking
+      }
+    }
+    void loadDepts();
+  }, []);
 
   const {
     register,
@@ -29,6 +42,7 @@ export default function CreateSubjectPage(): React.ReactElement {
       name: "",
       code: "",
       description: "",
+      department_id: "",
     },
   });
 
@@ -38,6 +52,7 @@ export default function CreateSubjectPage(): React.ReactElement {
         name: formData.name.trim(),
         code: formData.code.trim().toUpperCase(),
         description: formData.description ? formData.description.trim() : undefined,
+        department_id: formData.department_id ? formData.department_id : undefined,
       });
       toast.success("Subject created successfully");
       router.push("/admin/setup/subjects");
@@ -74,6 +89,20 @@ export default function CreateSubjectPage(): React.ReactElement {
             {...register("code")}
             error={errors.code?.message}
           />
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">Department (Optional)</label>
+            <select
+              {...register("department_id")}
+              className="w-full h-10 px-3 text-xs rounded-lg border border-input bg-background focus:outline-hidden focus:ring-2 focus:ring-primary/30"
+            >
+              <option value="">No Department (General / Common)</option>
+              {departments.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
+                </option>
+              ))}
+            </select>
+          </div>
           <GlassTextarea
             label="Description (optional)"
             placeholder="Brief details about the subject curriculum..."

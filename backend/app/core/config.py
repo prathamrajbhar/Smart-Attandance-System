@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=os.getenv("ENV_FILE", ".env"),
+        env_file=(os.getenv("ENV_FILE"), ".env", "../.env") if os.getenv("ENV_FILE") else (".env", "../.env"),
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -14,11 +14,10 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Smart Attendance System API"
     API_V1_STR: str = "/api/v1"
     DATABASE_URL: str = Field(
-        default="postgresql://postgres:postgres@localhost:5432/smart_attendance",
-        description="PostgreSQL Connection URL"
+        default="",
+        description="PostgreSQL Connection URL (must be set via environment variable)"
     )
     JWT_SECRET: str = Field(
-        default="supersecretkeychangeinproduction",
         description="JWT signing secret (must be set in production)"
     )
 

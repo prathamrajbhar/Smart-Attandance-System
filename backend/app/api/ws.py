@@ -78,13 +78,16 @@ class ConnectionManager:
                 await conn.send_json(message)
             except Exception as e:
                 logger.debug("Broadcast socket send failed, discarded stale connection: %s", e)
-                for s in self.role_connections.values(): s.discard(conn)
-                for s in self.tenant_connections.values(): s.discard(conn)
+                for s in self.role_connections.values():
+                    s.discard(conn)
+                for s in self.tenant_connections.values():
+                    s.discard(conn)
 
 
     async def send_personal_message(self, message: dict, target_id: str | None = None, student_id: str | None = None):
         tid = target_id or student_id
-        if not tid: return
+        if not tid:
+            return
         await self.deliver_personal_message(message, tid)
         from app.services.realtime_bus import realtime_bus
         asyncio.create_task(realtime_bus.publish("personal", message, target_id=tid))
@@ -130,10 +133,12 @@ class ConnectionManager:
                 pass
         self.tenant_connections.pop(tenant_id, None)
         dead = set(sockets)
-        for role_set in self.role_connections.values(): role_set.difference_update(sockets)
+        for role_set in self.role_connections.values():
+            role_set.difference_update(sockets)
         for uid, conns in list(self.user_connections.items()):
             conns.difference_update(dead)
-            if not conns: del self.user_connections[uid]
+            if not conns:
+                del self.user_connections[uid]
 
 manager = ConnectionManager()
 

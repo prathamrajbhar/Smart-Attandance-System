@@ -1,15 +1,13 @@
 import io
 import json
 import re
-from typing import Optional, Dict, Any
+from typing import Optional, Any, List
 
 import pandas as pd
 from app.core.config import settings
 from app.core.logging_config import get_logger
 from app.schemas.timetable import (
     ParsedTimetableDocument,
-    ParsedTimeSlot,
-    ParsedTimetableCell,
 )
 
 logger = get_logger("app.ai.timetable_parser")

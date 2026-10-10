@@ -3,10 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from prisma.models import User
 from app.api.dependencies import RoleChecker, get_current_user
 from app.schemas.super_admin import (
-    TenantProvisionRequest, TenantUpdateRequest, TenantResponse,
-    TenantDetailResponse, SuperAdminStatsResponse,
-    GlobalUserStatusUpdateRequest, GlobalUserPasswordResetRequest,
-    GlobalBroadcastRequest, PlatformHealthResponse,
+    TenantProvisionRequest, TenantUpdateRequest, TenantDetailResponse, SuperAdminStatsResponse,
+    GlobalUserStatusUpdateRequest, GlobalBroadcastRequest, PlatformHealthResponse,
     PaginatedBroadcastHistory,
     LicenseRequestProcessRequest, LicenseRequestProcessedResponse,
     PaginatedLicenseRequests,
@@ -53,6 +51,14 @@ async def get_tenant_details(tenant_id: str):
 async def update_tenant(tenant_id: str, data: TenantUpdateRequest):
     try:
         return await SuperAdminService.update_tenant(tenant_id, data)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.delete("/tenants/{tenant_id}")
+async def delete_tenant(tenant_id: str, current_user: User = Depends(get_current_user)):
+    try:
+        return await SuperAdminService.delete_tenant(tenant_id, actor=current_user.email)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 

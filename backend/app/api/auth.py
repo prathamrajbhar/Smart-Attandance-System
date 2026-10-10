@@ -5,7 +5,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from prisma.models import User
 
 from app.api.dependencies import get_current_user, reusable_oauth2, auth_rate_limit
-from app.core.config import settings
 from app.core.logging_config import get_logger
 from app.core.security import decode_access_token
 from app.core.url_resolver import resolve_frontend_url

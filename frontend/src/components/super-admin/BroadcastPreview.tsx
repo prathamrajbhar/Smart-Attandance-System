@@ -47,7 +47,7 @@ export default function BroadcastPreview({ broadcast }: BroadcastPreviewProps): 
       </div>
 
       <GlassCard className="p-5 border-border space-y-4">
-        {/* Mock Notification Item */}
+        {/* Live Broadcast UI Preview Card */}
         <div className="p-4 rounded-xl bg-muted/40 border border-border space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-2.5">

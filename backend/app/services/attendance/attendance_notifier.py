@@ -18,7 +18,7 @@ class AttendanceNotifier:
             msg = {"type": "attendance_updated", "session_id": session_id, "status": status}
             await manager.send_personal_message(msg, student_id=student_id)
             msg["student_id"] = student_id
-            
+
             # Resolve tenant isolation for teacher broadcast
             tenant_id = None
             sess = await db.session.find_unique(

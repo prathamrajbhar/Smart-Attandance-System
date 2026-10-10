@@ -1,9 +1,8 @@
 "use client";
 
 import React from "react";
-import { Megaphone, Users, Send, RotateCcw, AlertTriangle, Info, CheckCircle2, ShieldAlert } from "lucide-react";
+import { Megaphone, Users, Send, RotateCcw } from "lucide-react";
 import GlassCard from "@/components/ui/GlassCard";
-import GlassButton from "@/components/ui/GlassButton";
 import type { NotificationBroadcastCreate, NotificationCategory, NotificationType } from "@/types/notification";
 
 interface CampusBroadcastFormProps {

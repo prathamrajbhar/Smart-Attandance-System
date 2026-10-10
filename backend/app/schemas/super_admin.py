@@ -24,6 +24,8 @@ class TenantProvisionRequest(BaseModel):
 
 class TenantUpdateRequest(BaseModel):
     name: Optional[str] = None
+    slug: Optional[str] = Field(None, pattern=r"^[a-z0-9-]+$")
+    type: Optional[str] = Field(None, pattern=r"^(SCHOOL|COLLEGE|COACHING_CENTER)$")
     status: Optional[str] = Field(None, pattern=r"^(ACTIVE|SUSPENDED|TRIAL|EXPIRED)$")
     domain: Optional[str] = None
     license_count: Optional[int] = Field(None, ge=0)

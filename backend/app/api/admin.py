@@ -584,7 +584,11 @@ async def create_subject(
     tenant_id: str = Depends(get_tenant_context),
     admin_service: AdminService = Depends(),
 ):
-    return await admin_service.create_subject(data.name, data.code, data.description, tenant_id=tenant_id)
+    if data.department_id:
+        await _require_department_in_tenant(data.department_id, tenant_id)
+    return await admin_service.create_subject(
+        data.name, data.code, data.description, department_id=data.department_id, tenant_id=tenant_id
+    )
 
 
 @router.put("/subjects/{id}", response_model=SubjectResponse)
@@ -596,7 +600,9 @@ async def update_subject(
     admin_service: AdminService = Depends(),
 ):
     await _require_subject_in_tenant(id, tenant_id)
-    return await admin_service.update_subject(id, data.model_dump(exclude_unset=True))
+    if data.department_id:
+        await _require_department_in_tenant(data.department_id, tenant_id)
+    return await admin_service.update_subject(id, data.model_dump(exclude_unset=True), tenant_id=tenant_id)
 
 
 @router.delete("/subjects/{id}", response_model=MessageResponse)

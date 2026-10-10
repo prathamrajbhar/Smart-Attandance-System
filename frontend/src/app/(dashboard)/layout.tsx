@@ -52,7 +52,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       router.replace("/super-admin/dashboard");
       return;
     }
-  }, [isHydrated, isAuthenticated, user, pathname, router]);
+  }, [isHydrated, isAuthenticated, isSuspended, user, pathname, router]);
 
   if (!isHydrated || !isAuthenticated) {
     return (

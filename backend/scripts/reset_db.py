@@ -5,7 +5,7 @@ Wipes all data, student/teacher records, classes, attendances, and logs.
 Seeds NO mock data.
 Initializes only:
   1. Default System Configuration
-  2. Root Administrator Account (admin@smartattendance.edu.in / Admin@123)
+  2. Super Admin Account (superadmin@smartattendance.edu.in / SuperAdmin@123)
 
 Usage:
   cd backend
@@ -55,6 +55,7 @@ async def reset_production_database():
         await db.designation.delete_many()
         await db.department.delete_many()
         await db.systemconfiguration.delete_many()
+        await db.tenant.delete_many()
         print("  ✓ All domain tables successfully wiped.")
 
         # Purge Redis cache
@@ -77,23 +78,23 @@ async def reset_production_database():
         })
         print("  ✓ Base verification configuration initialized.")
 
-        # Initialize Root Admin User
-        print("\n3. Provisioning root administrator account...")
-        admin_email = os.getenv("DEFAULT_ADMIN_EMAIL", "admin@smartattendance.edu.in")
-        admin_pass = os.getenv("DEFAULT_ADMIN_PASSWORD", "Admin@123")
-        admin_user = await db.user.create(data={
-            "email": admin_email,
-            "hashedPassword": _hash_password(admin_pass),
-            "role": "ADMIN",
+        # Initialize Super Admin User ONLY
+        print("\n3. Provisioning Super Admin account...")
+        superadmin_email = os.getenv("DEFAULT_SUPERADMIN_EMAIL", "superadmin@smartattendance.edu.in")
+        superadmin_pass = os.getenv("DEFAULT_SUPERADMIN_PASSWORD", "SuperAdmin@123")
+        superadmin_user = await db.user.create(data={
+            "email": superadmin_email,
+            "hashedPassword": _hash_password(superadmin_pass),
+            "role": "SUPER_ADMIN",
             "isActive": True,
             "mustChangePassword": False,
         })
-        print(f"  ✓ Root Admin created: {admin_user.email} (ID: {admin_user.id})")
+        print(f"  ✓ Super Admin created: {superadmin_user.email} (ID: {superadmin_user.id})")
 
         print("\n" + "=" * 60)
         print("✅ DATABASE RESET COMPLETED SUCCESSFULLY")
-        print("   Database is completely clean with 0 mock data.")
-        print(f"   Login with Admin Credentials: {admin_email} / {admin_pass}")
+        print("   Database is completely clean with 0 mock data and 0 tenant admin accounts.")
+        print(f"   Super Admin Credentials: {superadmin_email} / {superadmin_pass}")
         print("=" * 60)
 
     except Exception as exc:

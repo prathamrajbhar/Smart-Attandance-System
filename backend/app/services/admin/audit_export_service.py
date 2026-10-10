@@ -88,9 +88,9 @@ class AuditExportService:
         output = io.StringIO()
         writer = csv.writer(output)
         writer.writerow(["ID", "Timestamp", "Event Type", "Severity", "Actor", "Target", "Description", "IP Address"])
-        for l in logs:
+        for log_entry in logs:
             writer.writerow([
-                l.id, l.timestamp.isoformat() if l.timestamp else "",
-                l.eventType, l.severity, l.actor, l.target, l.description, l.ipAddress or "",
+                log_entry.id, log_entry.timestamp.isoformat() if log_entry.timestamp else "",
+                log_entry.eventType, log_entry.severity, log_entry.actor, log_entry.target, log_entry.description, log_entry.ipAddress or "",
             ])
         return output.getvalue()

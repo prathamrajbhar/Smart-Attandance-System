@@ -4,13 +4,15 @@ import React from "react";
 import GlassBadge from "@/components/ui/GlassBadge";
 import GlassEmptyState from "@/components/ui/GlassEmptyState";
 import Link from "next/link";
-import { Building2, Power, PowerOff, ExternalLink } from "lucide-react";
+import { Building2, Power, PowerOff, ExternalLink, Edit3, Trash2 } from "lucide-react";
 import type { Tenant, TenantStatus } from "@/types/tenant";
 
 interface TenantTableProps {
   tenants: Tenant[];
   loading: boolean;
   onToggleStatus: (tenant: Tenant) => void;
+  onEditTenant?: (tenant: Tenant) => void;
+  onDeleteTenant?: (tenant: Tenant) => void;
   statusUpdatingId?: string | null;
 }
 
@@ -46,6 +48,8 @@ export default function TenantTable({
   tenants,
   loading,
   onToggleStatus,
+  onEditTenant,
+  onDeleteTenant,
   statusUpdatingId,
 }: TenantTableProps): React.ReactElement {
   if (loading) {
@@ -130,18 +134,29 @@ export default function TenantTable({
                   </td>
 
                   <td className="px-4 py-3.5 text-right">
-                    <div className="inline-flex items-center gap-2">
+                    <div className="inline-flex items-center gap-1.5">
                       <Link
                         href={`/super-admin/tenants/${tenant.id}`}
                         className="px-2.5 py-1 rounded-md text-xs font-semibold bg-secondary hover:bg-secondary/80 text-foreground transition-colors"
                       >
                         Manage
                       </Link>
+                      {onEditTenant && (
+                        <button
+                          type="button"
+                          onClick={() => onEditTenant(tenant)}
+                          title="Edit institution details"
+                          className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                        >
+                          <Edit3 size={14} />
+                        </button>
+                      )}
                       <button
                         type="button"
                         disabled={isUpdating}
                         onClick={() => onToggleStatus(tenant)}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-colors disabled:opacity-50 ${
+                        title={isActive ? "Suspend tenant" : "Activate tenant"}
+                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold transition-colors disabled:opacity-50 ${
                           isActive
                             ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20"
                             : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20"
@@ -150,6 +165,16 @@ export default function TenantTable({
                         {isActive ? <PowerOff size={12} /> : <Power size={12} />}
                         <span>{isActive ? "Suspend" : "Activate"}</span>
                       </button>
+                      {onDeleteTenant && (
+                        <button
+                          type="button"
+                          onClick={() => onDeleteTenant(tenant)}
+                          title="Delete institution permanently"
+                          className="p-1 rounded-md text-destructive/80 hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

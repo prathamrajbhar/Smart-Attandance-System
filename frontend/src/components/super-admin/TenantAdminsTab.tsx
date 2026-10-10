@@ -23,7 +23,7 @@ export default function TenantAdminsTab({
   const [showAddAdmin, setShowAddAdmin] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("TENANT_ADMIN");
+  const role = "TENANT_ADMIN";
   const [submitting, setSubmitting] = useState(false);
   const [adminToReset, setAdminToReset] = useState<{ id: string; email: string } | null>(null);
 

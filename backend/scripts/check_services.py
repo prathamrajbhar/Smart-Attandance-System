@@ -6,7 +6,6 @@ Checks AWS S3 and PostgreSQL RDS connectivity using .env / .env.prod configurati
 
 import os
 import socket
-import sys
 import boto3
 from botocore.exceptions import ClientError
 from dotenv import load_dotenv

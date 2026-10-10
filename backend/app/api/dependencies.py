@@ -116,8 +116,8 @@ async def get_current_user_from_token(token: str) -> User:
 async def get_tenant_context(current_user: User = Depends(get_current_user)) -> str:
     """
     Injects the verified tenant_id for the current request.
-    Primary source: current_user.tenantId (DB-verified user row).
-    Secondary fallback: resolved tenant ID from request context (only for legacy mock objects).
+    Primary source: current_user.tenantId (DB-verified user record).
+    Secondary source: context-resolved tenant ID from subdomain/request header.
     """
     if hasattr(current_user, "tenantId"):
         if not current_user.tenantId:

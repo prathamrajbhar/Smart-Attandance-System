@@ -1,54 +1,22 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// Enforce local database environment fallback for E2E tests
-process.env.DATABASE_URL =
-  process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/smart_attendance";
-process.env.NEXT_PUBLIC_API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
-
 export default defineConfig({
-  testDir: "./e2e/specs",
-  timeout: 60 * 1000,
-  expect: {
-    timeout: 10 * 1000,
-  },
-  fullyParallel: false, // Run sequentially or controlled per file to avoid DB race conditions
+  testDir: "./e2e",
+  fullyParallel: false,
+  workers: 1,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 1,
-  workers: 1, // Single worker preserves clean transactional test states on local DB
-  reporter: [
-    ["list"],
-    ["html", { open: "never", outputFolder: "playwright-report" }],
-  ],
-  globalSetup: "./e2e/setup/global-setup.ts",
+  retries: 0,
+  reporter: "list",
   use: {
-    baseURL: process.env.FRONTEND_URL || "http://localhost:3000",
-    trace: "on",
-    screenshot: "on",
-    video: "on",
-    actionTimeout: 15 * 1000,
-    navigationTimeout: 30 * 1000,
+    baseURL: "http://localhost:3000",
+    trace: "on-first-retry",
+    headless: true,
+    screenshot: "only-on-failure",
   },
   projects: [
     {
-      name: "Chromium",
-      use: {
-        ...devices["Desktop Chrome"],
-        viewport: { width: 1280, height: 800 },
-      },
-    },
-    {
-      name: "Firefox",
-      use: {
-        ...devices["Desktop Firefox"],
-        viewport: { width: 1280, height: 800 },
-      },
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
     },
   ],
-  webServer: {
-    command: "npm run dev",
-    url: "http://localhost:3000",
-    reuseExistingServer: true,
-    timeout: 120 * 1000,
-  },
 });

@@ -1,0 +1,145 @@
+email,employee_id,first_name,last_name,name_initials,department_id,designation_id
+vijay.patel@yopmail.com,FAC-VIJAYPATEL,Vijaykumar,Patel,VIJAYPATEL,ECE,PROF
+anand.mankodia@yopmail.com,FAC-ANANDMANKODIA,Anand,Mankodia,ANANDMANKODIA,ECE,PROF
+nmd@yopmail.com,FAC-NMD,N.,M. Devashrayee,NMD,ECE,ADJ_PROF
+amrut.patel@yopmail.com,FAC-AMRUTPATEL,Amrut,Patel,AMRUTPATEL,ECE,ASSOC_PROF
+bhavesh.soni@yopmail.com,FAC-BHAVESHSONI,Bhavesh,Soni,BHAVESHSONI,ECE,ASST_PROF
+samir.joshi@yopmail.com,FAC-SAMIRJOSHI,Samir,Joshi,SAMIRJOSHI,ECE,ASST_PROF
+bhumit.patel@yopmail.com,FAC-BHUMITPATEL,Bhumit,Patel,BHUMITPATEL,ECE,ASST_PROF
+kjp02@yopmail.com,FAC-KJP,Ketan,Patel,KJP,ECE,ASST_PROF
+pkp02@yopmail.com,FAC-PKP,Priyankaben,Patel,PKP,ECE,ASST_PROF
+mab01@yopmail.com,FAC-MAB,Mohit,Bhavsar,MAB,ECE,ASST_PROF
+vbp02@yopmail.com,FAC-VBP,Vaishaliben,Patel,VBP,ECE,ASST_PROF
+jcp01@yopmail.com,FAC-JCP,Jaldipkumar,Patel,JCP,ECE,ASST_PROF
+haresh.a.patel@yopmail.com,FAC-HARESHAPATEL,Haresh,Patel,HARESHAPATEL,AUTO,PROF
+jpb01@yopmail.com,FAC-JPB,Jaimin,Brahmbhatt,JPB,AUTO,ASST_PROF
+ass01@yopmail.com,FAC-ASS,Ashish,Sharma,ASS,AUTO,ASST_PROF
+abj01@yopmail.com,FAC-ABJ,Ankit,Joshi,ABJ,AUTO,ASST_PROF
+kct01@yopmail.com,FAC-KCT,Kartikkumar,Thakkar,KCT,AUTO,ASST_PROF
+himanshu.patel@yopmail.com,FAC-HIMANSHUPATEL,Himanshu,Patel,HIMANSHUPATEL,BME,ASSOC_PROF
+raksha.patel@yopmail.com,FAC-RAKSHAPATEL,Rakshaben,Patel,RAKSHAPATEL,BME,ASSOC_PROF
+tejas.bhatt@yopmail.com,FAC-TEJASBHATT,Tejaskumar,Bhatt,TEJASBHATT,BME,ASSOC_PROF
+hkp01@yopmail.com,FAC-HKP,Heena,Patel,HKP,BME,ASST_PROF
+tbp01@yopmail.com,FAC-TBP,Tasveerkumar,Prajapati,TBP,BME,ASST_PROF
+shagun3733@yopmail.com,FAC-SHAGUN,Shagun,Varshney,SHAGUN,BME,ASST_PROF
+hitesh.yadav125@yopmail.com,FAC-HITESHYADAV,Hitesh,Shivkumar Yadav,HITESHYADAV,BME,ASST_PROF
+principal.uvpce@yopmail.com,FAC-PRINCIPALUVPCE,Kiran,Amin,PRINCIPALUVPCE,CSE,PROF
+paresh.solanki@yopmail.com,FAC-PARESHSOLANKI,Pareshkumar,Solanki,PARESHSOLANKI,CSE,PROF
+naresh.jotwani@yopmail.com,FAC-NARESHJOTWANI,Naresh,Jotwani,NARESHJOTWANI,CSE,PROF
+rohadiasameer@yopmail.com,FAC-ROHADIASAMEER,Sameer,Rohadia,ROHADIASAMEER,CSE,PROF
+pravesh.patel@yopmail.com,FAC-PRAVESHPATEL,Praveshkumar,Patel,PRAVESHPATEL,CSE,ASSOC_PROF
+rfr01@yopmail.com,FAC-RFR,Ravi,Raval,RFR,CSE,ASST_PROF
+ccg01@yopmail.com,FAC-CCG,Chirag,Gami,CCG,CSE,ASST_PROF
+hms02@yopmail.com,FAC-HMS,Hiten,Sadani,HMS,CSE,ASST_PROF
+mdt01@yopmail.com,FAC-MDT,Manan,Thakkar,MDT,CSE,ASST_PROF
+nap02@yopmail.com,FAC-NAP,Nilesh,Parmar,NAP,CSE,ASST_PROF
+vrp02@yopmail.com,FAC-VRP,Venus,Patel,VRP,CSE,ASST_PROF
+ads01@yopmail.com,FAC-ADS,Amit,Solanki,ADS,CSE,ASST_PROF
+npp06@yopmail.com,FAC-NPP,Nishi,Patwa,NPP,CSE,ASST_PROF
+dtp01@yopmail.com,FAC-DTP,Dhiren,Prajapati,DTP,CSE,ASST_PROF
+satish.prajapati@yopmail.com,FAC-SATISHPRAJAPATI,Satishkumar,Prajapati,SATISHPRAJAPATI,CSE,ASST_PROF
+mbp07@yopmail.com,FAC-MBP,Megha,Patel,MBP,CSE,ASST_PROF
+cnp02@yopmail.com,FAC-CNP,Chiragkumar,Patel,CNP,CSE,ASST_PROF
+kmp04@yopmail.com,FAC-KMP,Kavindra,Patel,KMP,CSE,ASST_PROF
+skd02@yopmail.com,FAC-SKD,Sheetal,Kumar Dixit,SKD,CSE,ASST_PROF
+jss01@yopmail.com,FAC-JSS,Jyoti,Srivastava,JSS,CSE,ASST_PROF
+kdm02@yopmail.com,FAC-KDM,Karankumar,Modh,KDM,CSE,ASST_PROF
+hkp08@yopmail.com,FAC-046,Hiteshkumar,Patel,HKP,CSE,ASST_PROF
+shp04@yopmail.com,FAC-SHP,Sonalben,Parmar,SHP,CSE,ASST_PROF
+rlk01@yopmail.com,FAC-RLK,Rahul,Kushwaha,RLK,CSE,ASST_PROF
+adm02@yopmail.com,FAC-ADM,Arpita,Modi,ADM,CSE,ASST_PROF
+mokshi.patel@yopmail.com,FAC-MOKSHIPATEL,Mokshi,Patel,MOKSHIPATEL,CSE,ASST_PROF
+vrundaben.dave@yopmail.com,FAC-VRUNDABENDAVE,Vrundaben,Dave,VRUNDABENDAVE,CSE,ASST_PROF
+ashvipatel1301@yopmail.com,FAC-ASHVIPATEL,Ashviben,Patel,ASHVIPATEL,CSE,ASST_PROF
+dean.foet2@yopmail.com,FAC-DEANFOET,Vikram,Patel,DEANFOET,CIVIL,PROF
+chandresh.patel@yopmail.com,FAC-CHANDRESHPATEL,Chandresh,Patel,CHANDRESHPATEL,CIVIL,PROF
+amb03@yopmail.com,FAC-AMB,Arjunkumar,Butala,AMB,CIVIL,ASST_PROF
+php01@yopmail.com,FAC-PHP,Pareshkumar,Patel,PHP,CIVIL,ASST_PROF
+jvs01@yopmail.com,FAC-JVS,Jayraj,Solanki,JVS,CIVIL,HEAD_PG
+nsm01@yopmail.com,FAC-NSM,Nirmal,Mehta,NSM,CIVIL,ASST_PROF
+jsp02@yopmail.com,FAC-JSP,Jatinkumar,Patel,JSP,CIVIL,ASST_PROF
+krd01@yopmail.com,FAC-KRD,Kamlesh,Damdoo,KRD,CIVIL,ASST_PROF
+pvp05@yopmail.com,FAC-PVP,Prachi,Pandya,PVP,CIVIL,ASST_PROF
+ds02@yopmail.com,FAC-DS,Durgesh,Kumar Singh,DS,CIVIL,ASST_PROF
+vks01@yopmail.com,FAC-VKS,Vikki,Shah,VKS,CIVIL,ASST_PROF
+has01@yopmail.com,FAC-HAS,Hitesh,Sonarghare,HAS,CIVIL,ASST_PROF
+jk01@yopmail.com,FAC-JK,Jagdish,Khatik,JK,CIVIL,ASST_PROF
+jmp09@yopmail.com,FAC-JMP,JaiminKumar,Patel,JMP,CIVIL,ASST_PROF
+sms04@yopmail.com,FAC-SMS,Sumit,Sharma,SMS,CIVIL,ASST_PROF
+dss01@yopmail.com,FAC-DSS,Darshan,Shah,DSS,CIVIL,ASST_PROF
+arp12@yopmail.com,FAC-ARP,Apurv,Prajapati,ARP,CIVIL,ASST_PROF
+aas03@yopmail.com,FAC-AAS,Anvita,Sharma,AAS,PETRO,ASST_PROF
+dean.research@yopmail.com,FAC-DEANRESEARCH,Rajesh,Bhosale,DEANRESEARCH,PETRO,PROF
+ycs01@yopmail.com,FAC-YCS,Yug,Chandra Saraswat,YCS,PETRO,ASST_PROF
+dp01@yopmail.com,FAC-DP,Deoashish,Panjiara,DP,PETRO,ASST_PROF
+devang.pandya@yopmail.com,FAC-DEVANGPANDYA,Devang,Pandya,DEVANGPANDYA,IT,PROF
+ketan.sarvakar@yopmail.com,FAC-KETANSARVAKAR,Ketan,Sarvakar,KETANSARVAKAR,IT,ASST_PROF
+rvm02@yopmail.com,FAC-RVM,Rachana,Modi,RVM,IT,ASST_PROF
+hhp01@yopmail.com,FAC-HHP,Himanshu,Patel,HHP,IT,ASST_PROF
+brs01@yopmail.com,FAC-BRS,Bhavishaben,Suthar,BRS,IT,ASST_PROF
+hnm01@yopmail.com,FAC-HNM,Hiteshri,Modi,HNM,IT,ASST_PROF
+pds01@yopmail.com,FAC-PDS,Prachi,Shah,PDS,IT,ASST_PROF
+yjp01@yopmail.com,FAC-YJP,Yogeshkumar,Prajapati,YJP,IT,ASST_PROF
+jds01@yopmail.com,FAC-JDS,Thakkar,Jankiben,JDS,IT,ASST_PROF
+rhy01@yopmail.com,FAC-RHY,Rahul,Yadav,RHY,IT,ASST_PROF
+dhr02@yopmail.com,FAC-DHR,Divya,Rami,DHR,IT,ASST_PROF
+svv01@yopmail.com,FAC-SVV,Shreedhar,Visalpara,SVV,IT,ASST_PROF
+khushi.modi@yopmail.com,FAC-KHUSHIMODI,Modi,Khushi,KHUSHIMODI,IT,ASST_PROF
+urmila.patel@yopmail.com,FAC-URMILAPATEL,Urmila,Patel,URMILAPATEL,IT,ASST_PROF
+vishanu.patel@yopmail.com,FAC-VISHANUPATEL,Vishnubhai,Patel,VISHANUPATEL,EE,PROF
+msp01@yopmail.com,FAC-MSP,Manishkumar,Patel,MSP,EE,ASST_PROF
+rcb01@yopmail.com,FAC-RCB,Ravi,Bhavsar,RCB,EE,ASST_PROF
+nnp01@yopmail.com,FAC-NNP,Nikunjkumar,Patel,NNP,EE,ASST_PROF
+kbs01@yopmail.com,FAC-KBS,Kaumil,Shah,KBS,EE,ASST_PROF
+dhg01@yopmail.com,FAC-DHG,Diptiben,Ganatra,DHG,EE,ASST_PROF
+tpj01@yopmail.com,FAC-TPJ,Tanuj,Purushottam Jhankal,TPJ,EE,ASST_PROF
+jdm01@yopmail.com,FAC-JDM,Jimil,Dharmendra Mehta,JDM,EE,ASST_PROF
+mhm02@yopmail.com,FAC-MHM,Mansuri,Mahamadtalha Habibahmad,MHM,EE,ASST_PROF
+trt01@yopmail.com,FAC-TRT,T,Ramachandran,TRT,EE,ASST_PROF
+ritesh.tirole@yopmail.com,FAC-RITESHTIROLE,Ritesh,Tirole,RITESHTIROLE,EE,PROF
+asp08@yopmail.com,FAC-ASP,Amarjeet,S Pandey,ASP,EE,ASST_PROF
+dbr01@yopmail.com,FAC-DBR,Dinesh,Rao,DBR,EE,ASST_PROF
+aga01@yopmail.com,FAC-AGA,ACHARYA,ANANDKUMAR GIRISHKUMAR,AGA,EE,ASST_PROF
+uvpce.vf16@yopmail.com,FAC-UVPCEVF,Utsav,Yogesh Desai,UVPCEVF,EE,ASST_PROF
+unnat.patel@yopmail.com,FAC-UNNATPATEL,Unnat,Patel,UNNATPATEL,HBS,PROF
+sdp01@yopmail.com,FAC-SDP,Snehal,Patel,SDP,HBS,ASST_PROF
+hrp07@yopmail.com,FAC-HRP,Hetal,Patel,HRP,HBS,ASST_PROF
+sbp04@yopmail.com,FAC-SBP,Sagar,Patel,SBP,HBS,ASST_PROF
+mirav.patel@yopmail.com,FAC-MIRAVPATEL,Mirav,Patel,MIRAVPATEL,HBS,ASST_PROF
+hrp19@yopmail.com,FAC-108,Harshad,Patel,HRP,HBS,ASST_PROF
+shailesh.patel@yopmail.com,FAC-SHAILESHPATEL,SHAILESHKUMAR,PATEL,SHAILESHPATEL,HBS,ASST_PROF
+jignesh.mevada@yopmail.com,FAC-JIGNESHMEVADA,Jigneshkumar,Mevada,JIGNESHMEVADA,MTR,PROF
+jitendra.prajapati@yopmail.com,FAC-JITENDRAPRAJAPATI,Jitendra,Prajapati,JITENDRAPRAJAPATI,MTR,ASST_PROF
+dks01@yopmail.com,FAC-DKS,Dhavalkumar,Soni,DKS,MTR,ASST_PROF
+vdp02@yopmail.com,FAC-VDP,Vijaykumar,Patel,VDP,MTR,ASSOC_PROF
+mjb01@yopmail.com,FAC-MJB,Mittal,Brahmbhatt,MJB,MTR,ASST_PROF
+njt01@yopmail.com,FAC-NJT,Nehul,Thakkar,NJT,MTR,ASST_PROF
+bhp02@yopmail.com,FAC-BHP,Brijesh,Patel,BHP,MTR,ASST_PROF
+bharat.yadav@yopmail.com,FAC-BHARATYADAV,Bharat,Yadav,BHARATYADAV,MTR,ASST_PROF
+chirag.p.patel@yopmail.com,FAC-CHIRAGPPATEL,Chirag,Patel,CHIRAGPPATEL,MECH,PROF
+bpp01@yopmail.com,FAC-BPP,Bhaveshkumar,Patel,BPP,MECH,PROF
+brd02@yopmail.com,FAC-BRD,Bharat,Doshi,BRD,MECH,PROF
+pradip.chaudhari@yopmail.com,FAC-PRADIPCHAUDHARI,Pradipkumar,Chaudhari,PRADIPCHAUDHARI,MECH,ASST_PROF
+gaurang.joshi@yopmail.com,FAC-GAURANGJOSHI,Gaurang,Joshi,GAURANGJOSHI,MECH,IR_ASSOC_PROF
+ujp02@yopmail.com,FAC-UJP,Uchit,Patel,UJP,MECH,ASST_PROF
+vpp04@yopmail.com,FAC-VPP,Vipulkumar,Patel,VPP,MECH,ASST_PROF
+avp01@yopmail.com,FAC-AVP,Ashishkumar,Patel,AVP,MECH,ASST_PROF
+smm01@yopmail.com,FAC-SMM,Shahabuddin,Modasiya,SMM,MECH,ASST_PROF
+hrs01@yopmail.com,FAC-HRS,Himanshu,Sathavara,HRS,MECH,ASST_PROF
+asp02@yopmail.com,FAC-128,Amitkumar,Patel,ASP,MECH,ASST_PROF
+mkt01@yopmail.com,FAC-MKT,Maharishi,Trivedi,MKT,MECH,ASST_PROF
+pgb01@yopmail.com,FAC-PGB,Puneet,Bansal,PGB,MECH,ASST_PROF
+rrm02@yopmail.com,FAC-RRM,Ramnarayan,Meena,RRM,MECH,ASST_PROF
+bvb01@yopmail.com,FAC-BVB,Bhailal,Bhuva,BVB,MECH,ASST_PROF
+avt01@yopmail.com,FAC-AVT,Achyut,Virendrabhai Trivedi,AVT,MECH,ASST_PROF
+hcp03@yopmail.com,FAC-HCP,Harshadkumar,Patel,HCP,MECH,ASST_PROF
+ami01@yopmail.com,FAC-AMI,Apurva,Indrodia,AMI,MECH,ASST_PROF
+tcr01@yopmail.com,FAC-TCR,Tejesh,Reddy,TCR,BT,ASST_PROF
+mrp07@yopmail.com,FAC-MRP,Mrunali,Patel,MRP,BT,ASST_PROF
+hdd03@yopmail.com,FAC-HDD,Hemanga,Kumar Das,HDD,BT,ASST_PROF
+kpk01@yopmail.com,FAC-KPK,Krishan,Kumar,KPK,BT,ASST_PROF
+tss01@yopmail.com,FAC-TSS,Trivima,Sharma,TSS,BT,ASST_PROF
+vnp02@yopmail.com,FAC-VNP,Vijay,Patel,VNP,CHEM,ASST_PROF
+sarvesh.namdeo@yopmail.com,FAC-SARVESHNAMDEO,Sarvesh,Namdeo,SARVESHNAMDEO,CHEM,ASST_PROF
+abm01@yopmail.com,FAC-ABM,Anil,Mundhe,ABM,CHEM,ASST_PROF
+hjb03@yopmail.com,FAC-HJB,Hiral,Bhatt,HJB,CHEM,ASST_PROF

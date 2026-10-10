@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Activity, Sliders, Users } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -12,16 +12,22 @@ import TenantHeaderBanner from "@/components/super-admin/TenantHeaderBanner";
 import TenantOverviewTab from "@/components/super-admin/TenantOverviewTab";
 import TenantPoliciesTab from "@/components/super-admin/TenantPoliciesTab";
 import TenantAdminsTab from "@/components/super-admin/TenantAdminsTab";
-import type { TenantDetail } from "@/types/tenant";
+import EditTenantModal from "@/components/super-admin/EditTenantModal";
+import DeleteTenantModal from "@/components/super-admin/DeleteTenantModal";
+import type { TenantDetail, TenantType, TenantStatus } from "@/types/tenant";
 
 export default function TenantDetailPage(): React.ReactElement {
   const params = useParams();
+  const router = useRouter();
   const tenantId = params.id as string;
 
   const [tenant, setTenant] = useState<TenantDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"overview" | "config" | "admins">("overview");
   const [savingConfig, setSavingConfig] = useState(false);
+
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const fetchDetails = useCallback(async (): Promise<void> => {
     try {
@@ -55,6 +61,28 @@ export default function TenantDetailPage(): React.ReactElement {
     } finally {
       setSavingConfig(false);
     }
+  };
+
+  const handleSaveModal = async (
+    id: string,
+    payload: {
+      name: string;
+      slug: string;
+      type: TenantType;
+      status: TenantStatus;
+      domain?: string;
+      license_count: number;
+    }
+  ): Promise<void> => {
+    const updated = await superAdminService.updateTenant(id, payload);
+    setTenant(updated);
+    toast.success(`Tenant '${updated.name}' updated successfully.`);
+  };
+
+  const handleDeleteTenant = async (id: string): Promise<void> => {
+    await superAdminService.deleteTenant(id);
+    toast.success("Institution deleted successfully.");
+    router.push("/super-admin/tenants");
   };
 
   const handleToggleStatus = async (): Promise<void> => {
@@ -93,6 +121,8 @@ export default function TenantDetailPage(): React.ReactElement {
         tenant={tenant}
         onRefresh={() => void fetchDetails()}
         onToggleStatus={() => void handleToggleStatus()}
+        onEdit={() => setIsEditOpen(true)}
+        onDelete={() => setIsDeleteOpen(true)}
       />
 
       {/* Navigation Tabs */}
@@ -146,6 +176,20 @@ export default function TenantDetailPage(): React.ReactElement {
       {activeTab === "admins" && (
         <TenantAdminsTab tenant={tenant} onRefresh={() => void fetchDetails()} />
       )}
+
+      <EditTenantModal
+        isOpen={isEditOpen}
+        tenant={tenant}
+        onClose={() => setIsEditOpen(false)}
+        onSave={handleSaveModal}
+      />
+
+      <DeleteTenantModal
+        isOpen={isDeleteOpen}
+        tenant={tenant}
+        onClose={() => setIsDeleteOpen(false)}
+        onConfirm={handleDeleteTenant}
+      />
     </div>
   );
 }

@@ -1,6 +1,4 @@
-import os
 import json
-from dataclasses import dataclass
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 from prisma.models import Attendance

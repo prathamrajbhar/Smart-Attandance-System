@@ -96,7 +96,7 @@ class EmailService:
         role_display = "Student" if role == "STUDENT" else ("Teacher" if role == "TEACHER" else "Administrator")
 
         if settings.ENVIRONMENT != "production":
-            logger.info("DEV MODE - Invitation link for %s: %s (temp password: %s)", to_email, invite_url, temp_password)
+            logger.info("DEV MODE - Invitation link for %s: %s", to_email, invite_url)
 
         return await self.send_email(
             to_email=to_email,

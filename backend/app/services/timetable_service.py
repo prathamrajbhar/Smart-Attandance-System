@@ -1,5 +1,5 @@
-from datetime import datetime, timezone, date, time
-from typing import List, Optional, Dict, Any
+from datetime import datetime, timezone, time
+from typing import List, Optional, Dict
 
 from app.core.logging_config import get_logger
 from app.db.client import db
@@ -376,7 +376,7 @@ class TimetableService:
         schedule: List[StudentTodayScheduleItem] = []
         for e in entries:
             is_live = e.timeSlot.startTime <= current_time_str <= e.timeSlot.endTime
-            
+
             # Check attendance status from linked session if exists
             att_status: Optional[str] = None
             active_s_id: Optional[str] = None

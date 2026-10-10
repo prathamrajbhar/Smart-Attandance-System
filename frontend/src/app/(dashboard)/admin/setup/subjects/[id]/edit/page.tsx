@@ -21,6 +21,7 @@ export default function EditSubjectPage(): React.ReactElement {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [subject, setSubject] = useState<SubjectResponse | null>(null);
+  const [departments, setDepartments] = useState<Array<{ id: string; name: string }>>([]);
   const [loading, setLoading] = useState(true);
 
   const {
@@ -36,13 +37,23 @@ export default function EditSubjectPage(): React.ReactElement {
   useEffect(() => {
     async function fetch(): Promise<void> {
       try {
-        const { data } = await api.get<SubjectResponse>(`/admin/subjects/${id}`);
-        setSubject(data);
-        reset({
-          name: data.name,
-          code: data.code,
-          description: data.description || "",
-        });
+        const [subRes, deptRes] = await Promise.allSettled([
+          api.get<SubjectResponse>(`/admin/subjects/${id}`),
+          api.get<Array<{ id: string; name: string }>>("/admin/departments"),
+        ]);
+        if (deptRes.status === "fulfilled") {
+          setDepartments(deptRes.value.data);
+        }
+        if (subRes.status === "fulfilled") {
+          const data = subRes.value.data;
+          setSubject(data);
+          reset({
+            name: data.name,
+            code: data.code,
+            description: data.description || "",
+            department_id: data.department_id || "",
+          });
+        }
       } catch {
         toast.error("Failed to load subject");
       } finally {
@@ -58,6 +69,7 @@ export default function EditSubjectPage(): React.ReactElement {
         name: formData.name.trim(),
         code: formData.code.trim().toUpperCase(),
         description: formData.description ? formData.description.trim() : undefined,
+        department_id: formData.department_id ? formData.department_id : undefined,
       });
       toast.success("Subject updated successfully");
       router.push("/admin/setup/subjects");
@@ -96,6 +108,20 @@ export default function EditSubjectPage(): React.ReactElement {
             {...register("code")}
             error={errors.code?.message}
           />
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">Department (Optional)</label>
+            <select
+              {...register("department_id")}
+              className="w-full h-10 px-3 text-xs rounded-lg border border-input bg-background focus:outline-hidden focus:ring-2 focus:ring-primary/30"
+            >
+              <option value="">No Department (General / Common)</option>
+              {departments.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
+                </option>
+              ))}
+            </select>
+          </div>
           <GlassTextarea
             label="Description"
             {...register("description")}

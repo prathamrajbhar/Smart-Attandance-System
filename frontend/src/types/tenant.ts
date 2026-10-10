@@ -101,6 +101,8 @@ export interface TenantProvisionRequest {
 
 export interface TenantUpdateRequest {
   name?: string;
+  slug?: string;
+  type?: TenantType;
   status?: TenantStatus;
   domain?: string;
   license_count?: number;

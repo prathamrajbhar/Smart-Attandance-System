@@ -62,7 +62,7 @@ class StudentAdminService:
         student_data = {k: v for k, v in {
             "userId": user.id, "enrollmentNumber": data.enrollment_number,
             "firstName": data.first_name, "lastName": data.last_name,
-            "phone": data.phone, "gender": data.gender, "dateOfBirth": data.date_of_birth,
+            "phone": data.phone, "gender": data.gender, "branch": data.branch, "dateOfBirth": data.date_of_birth,
             "semester": data.semester, "batch": data.batch, "departmentId": data.department_id,
         }.items() if v is not None}
 
@@ -85,7 +85,7 @@ class StudentAdminService:
         return StudentResponse(
             id=student.id, user_id=user.id, enrollment_number=student.enrollmentNumber, email=user.email,
             first_name=student.firstName, last_name=student.lastName, phone=student.phone,
-            gender=student.gender, date_of_birth=student.dateOfBirth, department_id=student.departmentId,
+            gender=student.gender, branch=student.branch, date_of_birth=student.dateOfBirth, department_id=student.departmentId,
             department_name=student.department.name if student.department else None,
             semester=student.semester, batch=student.batch,
         )
@@ -112,6 +112,7 @@ class StudentAdminService:
                 {"firstName": {"contains": query_str, "mode": "insensitive"}},
                 {"lastName": {"contains": query_str, "mode": "insensitive"}},
                 {"enrollmentNumber": {"contains": query_str, "mode": "insensitive"}},
+                {"branch": {"contains": query_str, "mode": "insensitive"}},
                 {"user": {"is": {"email": {"contains": query_str, "mode": "insensitive"}}}},
             ]
 
@@ -132,7 +133,7 @@ class StudentAdminService:
             StudentResponse(
                 id=s.id, user_id=s.userId, enrollment_number=s.enrollmentNumber,
                 email=s.user.email if s.user else "", first_name=s.firstName,
-                last_name=s.lastName, phone=s.phone, gender=s.gender,
+                last_name=s.lastName, phone=s.phone, gender=s.gender, branch=s.branch,
                 date_of_birth=s.dateOfBirth, department_id=s.departmentId,
                 department_name=s.department.name if s.department else None,
                 semester=s.semester, batch=s.batch,
@@ -163,7 +164,7 @@ class StudentAdminService:
 
         mapping = {
             "enrollment_number": "enrollmentNumber", "first_name": "firstName", "last_name": "lastName",
-            "phone": "phone", "gender": "gender", "date_of_birth": "dateOfBirth",
+            "phone": "phone", "gender": "gender", "branch": "branch", "date_of_birth": "dateOfBirth",
             "semester": "semester", "batch": "batch", "department_id": "departmentId",
         }
         update_data = {mapping[k]: v for k, v in data.items() if k in mapping}
@@ -171,7 +172,7 @@ class StudentAdminService:
         return StudentResponse(
             id=student.id, user_id=student.userId, enrollment_number=student.enrollmentNumber,
             email=student.user.email if student.user else "", first_name=student.firstName,
-            last_name=student.lastName, phone=student.phone, gender=student.gender,
+            last_name=student.lastName, phone=student.phone, gender=student.gender, branch=student.branch,
             date_of_birth=student.dateOfBirth, department_id=student.departmentId,
             department_name=student.department.name if student.department else None,
             semester=student.semester, batch=student.batch,

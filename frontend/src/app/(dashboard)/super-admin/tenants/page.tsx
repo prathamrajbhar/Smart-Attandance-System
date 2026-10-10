@@ -8,9 +8,11 @@ import GlassButton from "@/components/ui/GlassButton";
 import EnterprisePagination from "@/components/ui/EnterprisePagination";
 import TenantFilterBar from "@/components/super-admin/TenantFilterBar";
 import TenantTable from "@/components/super-admin/TenantTable";
+import EditTenantModal from "@/components/super-admin/EditTenantModal";
+import DeleteTenantModal from "@/components/super-admin/DeleteTenantModal";
 import { superAdminService } from "@/lib/services/superAdminService";
 import { useDebounce } from "@/hooks/useDebounce";
-import type { Tenant } from "@/types";
+import type { Tenant, TenantType, TenantStatus } from "@/types/tenant";
 import toast from "react-hot-toast";
 
 export default function SuperAdminTenantsPage(): React.JSX.Element {
@@ -25,6 +27,9 @@ export default function SuperAdminTenantsPage(): React.JSX.Element {
   const [typeFilter, setTypeFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
+  const [deletingTenant, setDeletingTenant] = useState<Tenant | null>(null);
 
   const fetchTenants = useCallback(async (): Promise<void> => {
     try {
@@ -45,7 +50,6 @@ export default function SuperAdminTenantsPage(): React.JSX.Element {
     }
   }, [page, pageSize, debouncedSearch, statusFilter, typeFilter]);
 
-
   useEffect(() => {
     void fetchTenants();
   }, [fetchTenants]);
@@ -62,6 +66,28 @@ export default function SuperAdminTenantsPage(): React.JSX.Element {
     } finally {
       setUpdatingId(null);
     }
+  }
+
+  async function handleSaveTenant(
+    id: string,
+    payload: {
+      name: string;
+      slug: string;
+      type: TenantType;
+      status: TenantStatus;
+      domain?: string;
+      license_count: number;
+    }
+  ): Promise<void> {
+    const updated = await superAdminService.updateTenant(id, payload);
+    setTenants((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+    toast.success(`Tenant '${updated.name}' updated successfully.`);
+  }
+
+  async function handleDeleteTenant(id: string): Promise<void> {
+    await superAdminService.deleteTenant(id);
+    toast.success("Institution deleted successfully.");
+    void fetchTenants();
   }
 
   function handleResetFilters(): void {
@@ -99,6 +125,8 @@ export default function SuperAdminTenantsPage(): React.JSX.Element {
           tenants={tenants}
           loading={loading}
           onToggleStatus={handleToggleStatus}
+          onEditTenant={(t) => setEditingTenant(t)}
+          onDeleteTenant={(t) => setDeletingTenant(t)}
           statusUpdatingId={updatingId}
         />
         {!loading && total > 0 && (
@@ -112,6 +140,20 @@ export default function SuperAdminTenantsPage(): React.JSX.Element {
           />
         )}
       </div>
+
+      <EditTenantModal
+        isOpen={!!editingTenant}
+        tenant={editingTenant}
+        onClose={() => setEditingTenant(null)}
+        onSave={handleSaveTenant}
+      />
+
+      <DeleteTenantModal
+        isOpen={!!deletingTenant}
+        tenant={deletingTenant}
+        onClose={() => setDeletingTenant(null)}
+        onConfirm={handleDeleteTenant}
+      />
     </div>
   );
 }

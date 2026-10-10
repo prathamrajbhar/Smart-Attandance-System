@@ -66,6 +66,7 @@ class TeacherAdminService:
         teacher_data = {k: v for k, v in {
             "userId": user.id, "employeeId": data.employee_id,
             "firstName": data.first_name, "lastName": data.last_name,
+            "nameInitials": data.name_initials,
             "departmentId": data.department_id, "designationId": data.designation_id,
             "phone": data.phone, "qualification": data.qualification,
             "specialization": data.specialization, "experienceYears": data.experience_years,
@@ -90,7 +91,7 @@ class TeacherAdminService:
 
         return TeacherResponse(
             id=teacher.id, user_id=user.id, email=user.email, employee_id=teacher.employeeId,
-            first_name=teacher.firstName, last_name=teacher.lastName,
+            first_name=teacher.firstName, last_name=teacher.lastName, name_initials=teacher.nameInitials,
             department_id=teacher.departmentId, designation_id=teacher.designationId,
             department=teacher.department.name if teacher.department else "",
             designation=teacher.designation.name if teacher.designation else "",
@@ -116,6 +117,7 @@ class TeacherAdminService:
                 {"firstName": {"contains": query_str, "mode": "insensitive"}},
                 {"lastName": {"contains": query_str, "mode": "insensitive"}},
                 {"employeeId": {"contains": query_str, "mode": "insensitive"}},
+                {"nameInitials": {"contains": query_str, "mode": "insensitive"}},
                 {"user": {"is": {"email": {"contains": query_str, "mode": "insensitive"}}}},
             ]
 
@@ -136,6 +138,7 @@ class TeacherAdminService:
             TeacherResponse(
                 id=t.id, user_id=t.userId, email=t.user.email if t.user else "",
                 employee_id=t.employeeId, first_name=t.firstName, last_name=t.lastName,
+                name_initials=t.nameInitials,
                 department_id=t.departmentId, designation_id=t.designationId,
                 department=t.department.name if t.department else "",
                 designation=t.designation.name if t.designation else "",
@@ -175,6 +178,7 @@ class TeacherAdminService:
 
         mapping = {
             "employee_id": "employeeId", "first_name": "firstName", "last_name": "lastName",
+            "name_initials": "nameInitials",
             "department_id": "departmentId", "designation_id": "designationId", "phone": "phone",
             "qualification": "qualification", "specialization": "specialization",
             "experience_years": "experienceYears", "joining_date": "joiningDate",
@@ -184,6 +188,7 @@ class TeacherAdminService:
         return TeacherResponse(
             id=teacher.id, user_id=teacher.userId, email=teacher.user.email if teacher.user else "",
             employee_id=teacher.employeeId, first_name=teacher.firstName, last_name=teacher.lastName,
+            name_initials=teacher.nameInitials,
             department_id=teacher.departmentId, designation_id=teacher.designationId,
             department=teacher.department.name if teacher.department else "",
             designation=teacher.designation.name if teacher.designation else "",

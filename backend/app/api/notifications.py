@@ -3,12 +3,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from prisma.models import User
 
 from app.api.dependencies import RoleChecker, get_current_user
-from app.schemas.common import ActionSuccessResponse, MessageResponse
+from app.schemas.common import ActionSuccessResponse
 from app.schemas.notification import (
     NotificationBroadcastCreate,
     NotificationBulkDeleteRequest,
     NotificationListResponse,
-    NotificationResponse,
 )
 from app.services.notification_service import (
     broadcast_announcement,

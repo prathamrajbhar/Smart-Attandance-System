@@ -4,23 +4,12 @@ os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
 os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
 
-try:
-    import sentry_sdk
-    sentry_sdk.init(
-        dsn=os.getenv("SENTRY_DSN", "https://9e62f4cdab9492bcc05c312bddeb6918@o4512113532010496.ingest.us.sentry.io/4512113546297344"),
-        enable_logs=True,
-        send_default_pii=os.getenv("ENVIRONMENT") == "development",
-        traces_sample_rate=1.0,
-        profile_session_sample_rate=1.0,
-        profile_lifecycle="trace",
-    )
-except ImportError:
-    pass
+
 
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -92,14 +81,6 @@ app.include_router(ws_module.router, prefix=settings.API_V1_STR)
 app.include_router(search.router, prefix=settings.API_V1_STR)
 app.include_router(scim.router, prefix=settings.API_V1_STR)
 app.include_router(timetable.router, prefix=settings.API_V1_STR)
-
-
-@app.get("/sentry-debug")
-async def trigger_sentry_debug():
-    if settings.ENVIRONMENT != "development":
-        raise HTTPException(status_code=404, detail="Not found")
-    division_by_zero = 1 / 0
-    return {"division_by_zero": division_by_zero}
 
 
 

@@ -46,6 +46,16 @@ from app.db.redis import get_redis
 _MAX_IMAGE_SIZE = 5 * 1024 * 1024
 _VALID_IMAGE_TYPES = {"image/jpeg", "image/png", "image/jpg"}
 
+_MAX_LEAVE_DOCUMENT_SIZE = 10 * 1024 * 1024  # 10 MB
+_VALID_LEAVE_DOCUMENT_TYPES = {
+    "application/pdf",
+    "image/jpeg",
+    "image/png",
+    "image/jpg",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+}
+
 
 async def _rate_limit_student(student_id: str, max_requests: int = 15, window_seconds: int = 60) -> None:
     if settings.ENVIRONMENT == "development":
@@ -351,6 +361,28 @@ async def create_leave_request(
 
     document_url = None
     if document and document.filename:
+        # Validate file type
+        if document.content_type not in _VALID_LEAVE_DOCUMENT_TYPES:
+            raise HTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                detail="Unsupported file type. Allowed types: PDF, JPG, PNG, DOC, DOCX."
+            )
+        # Check file size
+        if hasattr(document, 'size') and document.size is not None:
+            if document.size > _MAX_LEAVE_DOCUMENT_SIZE:
+                raise HTTPException(
+                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                    detail="File size too large. Maximum size is 10 MB."
+                )
+        else:
+            # If size is not available, read the file to check the size
+            contents = await document.read()
+            if len(contents) > _MAX_LEAVE_DOCUMENT_SIZE:
+                raise HTTPException(
+                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                    detail="File size too large. Maximum size is 10 MB."
+                )
+            await document.seek(0)  # Reset file position for reading again
         try:
             _key, document_url, _ = await s3_service.upload_uploadfile(document, "leaves")
         except Exception as exc:

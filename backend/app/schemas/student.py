@@ -13,6 +13,7 @@ class StudentCreate(BaseModel):
     last_name: str = Field(..., min_length=1, max_length=100, description="Student last name")
     phone: Optional[str] = Field(None, max_length=20, description="Contact phone number")
     gender: Optional[str] = Field(None, max_length=20, description="Gender identity")
+    branch: Optional[str] = Field(None, max_length=50, description="Academic branch e.g. CE, IT, AI")
     date_of_birth: Optional[datetime] = Field(None, description="Date of birth")
     semester: Optional[int] = Field(None, ge=1, le=8, description="Current academic semester (1–8)")
     batch: Optional[str] = Field(None, max_length=20, description="Batch year range e.g. 2022-2026")
@@ -24,7 +25,7 @@ class StudentCreate(BaseModel):
     def strip_email(cls, v: str) -> str:
         return v.strip().lower() if isinstance(v, str) else v
 
-    @field_validator("enrollment_number", "first_name", "last_name", "phone", "gender", "batch", mode="before")
+    @field_validator("enrollment_number", "first_name", "last_name", "phone", "gender", "branch", "batch", mode="before")
     @classmethod
     def strip_text(cls, v: Optional[str]) -> Optional[str]:
         return v.strip() if isinstance(v, str) else v
@@ -38,12 +39,13 @@ class StudentUpdate(BaseModel):
     last_name: Optional[str] = Field(None, min_length=1, max_length=100)
     phone: Optional[str] = Field(None, max_length=20)
     gender: Optional[str] = Field(None, max_length=20)
+    branch: Optional[str] = Field(None, max_length=50)
     date_of_birth: Optional[datetime] = Field(None)
     semester: Optional[int] = Field(None, ge=1, le=8)
     batch: Optional[str] = Field(None, max_length=20)
     department_id: Optional[str] = Field(None, max_length=64)
 
-    @field_validator("enrollment_number", "first_name", "last_name", "phone", "gender", "batch", mode="before")
+    @field_validator("enrollment_number", "first_name", "last_name", "phone", "gender", "branch", "batch", mode="before")
     @classmethod
     def strip_text(cls, v: Optional[str]) -> Optional[str]:
         return v.strip() if isinstance(v, str) else v
@@ -60,6 +62,7 @@ class StudentResponse(BaseModel):
     last_name: Optional[str] = Field(None, description="Student last name")
     phone: Optional[str] = Field(None, description="Contact phone number")
     gender: Optional[str] = Field(None, description="Gender identity")
+    branch: Optional[str] = Field(None, description="Academic branch")
     date_of_birth: Optional[datetime] = Field(None, description="Date of birth")
     department_id: Optional[str] = Field(None, description="Raw department UUID")
     department_name: Optional[str] = Field(None, description="Resolved department name")

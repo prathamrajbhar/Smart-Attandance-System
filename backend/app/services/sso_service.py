@@ -30,7 +30,7 @@ class SSOService:
             "sso_enabled": bool(config.get("sso_enabled", True)),
             "idp_entity_id": config.get("idp_entity_id", f"https://idp.enterprise.com/{tenant.slug}"),
             "sp_entity_id": f"https://smartattendance.edu/sp/{tenant.slug}",
-            "acs_url": f"/api/v1/auth/sso/saml/acs",
+            "acs_url": "/api/v1/auth/sso/saml/acs",
             "oidc_issuer": config.get("oidc_issuer", f"https://login.microsoftonline.com/{tenant.slug}/v2.0"),
         }
 
@@ -52,8 +52,6 @@ class SSOService:
 
         # Parse XML assertion for NameID / Email
         email = None
-        first_name = "SSO"
-        last_name = "User"
         role = "STUDENT"
 
         try:
@@ -67,10 +65,6 @@ class SSOService:
                     val = "".join(elem.itertext()).strip()
                     if "email" in attr_name and "@" in val:
                         email = val.lower()
-                    elif "givenname" in attr_name or "firstname" in attr_name:
-                        first_name = val
-                    elif "surname" in attr_name or "lastname" in attr_name:
-                        last_name = val
                     elif "role" in attr_name:
                         role_str = val.upper()
                         if "TEACH" in role_str or "FACULTY" in role_str:

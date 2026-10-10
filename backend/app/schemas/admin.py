@@ -139,6 +139,8 @@ class StudentBulkItem(BaseModel):
     first_name: str = Field(..., min_length=1, max_length=100)
     last_name: str = Field(..., min_length=1, max_length=100)
     department_id: Optional[str] = Field(None, max_length=64)
+    gender: Optional[str] = Field(None, max_length=20)
+    branch: Optional[str] = Field(None, max_length=50)
     semester: Optional[int] = Field(None, ge=1, le=8)
     batch: Optional[str] = Field(None, max_length=20)
     phone: Optional[str] = Field(None, max_length=20)
@@ -162,6 +164,7 @@ class TeacherBulkItem(BaseModel):
     employee_id: str = Field(..., min_length=3, max_length=30)
     first_name: str = Field(..., min_length=1, max_length=100)
     last_name: str = Field(..., min_length=1, max_length=100)
+    name_initials: Optional[str] = Field(None, max_length=30)
     department_id: Optional[str] = Field(None, max_length=100)
     designation_id: Optional[str] = Field(None, max_length=100)
     qualification: Optional[str] = Field(None, max_length=100)
@@ -220,6 +223,7 @@ class SubjectBulkItem(BaseModel):
     name: str = Field(..., min_length=2, max_length=100)
     code: str = Field(..., min_length=2, max_length=20)
     description: Optional[str] = Field(None, max_length=500)
+    department_id: Optional[str] = Field(None, max_length=64)
 
 
 class SubjectBulkCreateRequest(BaseModel):

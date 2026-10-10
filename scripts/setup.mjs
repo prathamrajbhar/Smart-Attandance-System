@@ -6,7 +6,6 @@ import { logger } from "./cli/logger.mjs";
 import { runSystemCheck } from "./cli/systemCheck.mjs";
 import { setupBackend } from "./cli/backendSetup.mjs";
 import { setupFrontend } from "./cli/frontendSetup.mjs";
-import { setupMobile } from "./cli/mobileSetup.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,18 +16,15 @@ function printUsage() {
   process.stdout.write(
     `Usage: npm run [command]  OR  node scripts/setup.mjs [options]\n\n` +
     `Commands:\n` +
-    `  npm run --setup       Run full workspace setup (all components)\n` +
-    `  npm run setup         Run full workspace setup\n` +
+    `  npm run setup         Run full workspace setup (Frontend + Backend)\n` +
     `  npm run check         Check system dependencies only\n` +
     `  npm run backend:setup Setup backend (Python venv, pip, Prisma, env)\n` +
-    `  npm run frontend:setup Setup frontend (Next.js, npm, env)\n` +
-    `  npm run mobile:setup  Setup mobile app (Flutter pub get, env)\n\n` +
+    `  npm run frontend:setup Setup frontend (Next.js, npm, env)\n\n` +
     `Options:\n` +
     `  --setup, -s           Full setup (default)\n` +
     `  --check, -c           Run system checks only\n` +
     `  --backend, -b         Setup backend only\n` +
     `  --frontend, -f        Setup frontend only\n` +
-    `  --mobile, -m          Setup mobile only\n` +
     `  --help, -h            Show this help message\n\n`
   );
 }
@@ -46,11 +42,10 @@ async function main() {
   const isCheckOnly = args.includes("--check") || args.includes("-c");
   const isBackendOnly = args.includes("--backend") || args.includes("-b");
   const isFrontendOnly = args.includes("--frontend") || args.includes("-f");
-  const isMobileOnly = args.includes("--mobile") || args.includes("-m");
   const isFullSetup =
     args.includes("--setup") ||
     args.includes("-s") ||
-    (!isCheckOnly && !isBackendOnly && !isFrontendOnly && !isMobileOnly);
+    (!isCheckOnly && !isBackendOnly && !isFrontendOnly);
 
   const startTime = Date.now();
 
@@ -80,27 +75,15 @@ async function main() {
       return;
     }
 
-    if (isMobileOnly) {
-      logger.step(1, 2, "System Environment Check");
-      runSystemCheck();
-      logger.step(2, 2, "Mobile Setup");
-      setupMobile(rootDir);
-      logger.success("Mobile setup completed!");
-      return;
-    }
-
     if (isFullSetup) {
-      logger.step(1, 4, "System Environment Check");
+      logger.step(1, 3, "System Environment Check");
       runSystemCheck();
 
-      logger.step(2, 4, "Frontend Setup (Next.js)");
+      logger.step(2, 3, "Frontend Setup (Next.js)");
       setupFrontend(rootDir);
 
-      logger.step(3, 4, "Backend Setup (FastAPI & Prisma)");
+      logger.step(3, 3, "Backend Setup (FastAPI & Prisma)");
       setupBackend(rootDir);
-
-      logger.step(4, 4, "Mobile Setup (Flutter)");
-      setupMobile(rootDir);
 
       const elapsedSeconds = ((Date.now() - startTime) / 1000).toFixed(1);
       logger.divider();
@@ -109,7 +92,7 @@ async function main() {
       process.stdout.write(
         `  • Start Backend:  npm run dev:backend   (or: cd backend && uvicorn main:app --reload --port 8000)\n` +
         `  • Start Frontend: npm run dev:frontend  (or: cd frontend && npm run dev)\n` +
-        `  • Start Mobile:   npm run dev:mobile    (or: cd mobile && flutter run)\n\n`
+        `  • Start All:      npm run dev\n\n`
       );
     }
   } catch (error) {

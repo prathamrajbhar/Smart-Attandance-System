@@ -1,5 +1,5 @@
 import difflib
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Optional, Tuple
 
 from app.db.client import db
 from app.schemas.timetable import (
@@ -54,7 +54,7 @@ class TimetableQAService:
             # Check exact match or code inclusion
             score1 = self._similarity(clean_raw, it_name)
             score2 = self._similarity(clean_raw, it_sec) if it_sec else 0.0
-            
+
             # Bonus if abbreviation matches initials or code is directly inside raw text
             if it_sec and (it_sec.lower() in clean_raw or clean_raw in it_sec.lower()):
                 score2 = max(score2, 0.95)

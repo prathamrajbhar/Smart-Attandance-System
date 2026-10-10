@@ -83,6 +83,12 @@ export default function StudentFormFields({
         )}
       />
       <GlassInput
+        label="Branch (optional)"
+        placeholder="e.g. CE, IoT-IT, AI"
+        {...register("branch")}
+        error={errors.branch?.message}
+      />
+      <GlassInput
         label="Batch (optional)"
         placeholder="e.g. 2022-2026"
         {...register("batch")}

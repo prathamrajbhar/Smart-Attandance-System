@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { Radio, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 import { superAdminService } from "@/lib/services/superAdminService";
 import { getApiErrorMessage } from "@/lib/api";

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Building2, Power, PowerOff, RefreshCw } from "lucide-react";
+import { Building2, Power, PowerOff, RefreshCw, Edit3, Trash2 } from "lucide-react";
 import GlassBadge from "@/components/ui/GlassBadge";
 import GlassButton from "@/components/ui/GlassButton";
 import type { TenantDetail } from "@/types/tenant";
@@ -10,12 +10,16 @@ interface TenantHeaderBannerProps {
   tenant: TenantDetail;
   onRefresh: () => void;
   onToggleStatus: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 export default function TenantHeaderBanner({
   tenant,
   onRefresh,
   onToggleStatus,
+  onEdit,
+  onDelete,
 }: TenantHeaderBannerProps): React.ReactElement {
   return (
     <div className="bg-card border border-border rounded-2xl p-6 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -36,19 +40,31 @@ export default function TenantHeaderBanner({
         </div>
       </div>
 
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex flex-wrap items-center gap-2 shrink-0">
         <GlassButton variant="secondary" onClick={onRefresh} className="gap-1.5">
           <RefreshCw size={13} />
           <span>Refresh</span>
         </GlassButton>
+        {onEdit && (
+          <GlassButton variant="secondary" onClick={onEdit} className="gap-1.5">
+            <Edit3 size={13} />
+            <span>Edit Details</span>
+          </GlassButton>
+        )}
         <GlassButton
-          variant={tenant.status === "ACTIVE" ? "danger" : "primary"}
+          variant={tenant.status === "ACTIVE" ? "secondary" : "primary"}
           onClick={onToggleStatus}
           className="gap-1.5"
         >
           {tenant.status === "ACTIVE" ? <PowerOff size={13} /> : <Power size={13} />}
-          <span>{tenant.status === "ACTIVE" ? "Suspend Tenant" : "Activate Tenant"}</span>
+          <span>{tenant.status === "ACTIVE" ? "Suspend" : "Activate"}</span>
         </GlassButton>
+        {onDelete && (
+          <GlassButton variant="danger" onClick={onDelete} className="gap-1.5">
+            <Trash2 size={13} />
+            <span>Delete Tenant</span>
+          </GlassButton>
+        )}
       </div>
     </div>
   );

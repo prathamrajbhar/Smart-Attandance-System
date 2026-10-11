@@ -10,9 +10,10 @@ Production Database & Storage Reset and Seeder
    - 6 Designations
    - 104 Classrooms / Labs
    - 261 Subjects
-   - 144 Teachers (with initials & department/designation links)
-   - 462 Students (with branch, gender, & department links)
+   - 144 Teachers (all @yopmail.com with initials & department/designation links)
+   - 462 Students (all @yopmail.com with branch, gender, & department links)
 5. Sets up System Configurations.
+6. Generates Academic Classes, Geofences, Student Enrollments, and Active/Historical Sessions.
 """
 
 import asyncio
@@ -21,9 +22,9 @@ import os
 import sys
 import boto3
 import bcrypt
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
-# Ensure backend root is in sys.path
 backend_root = Path(__file__).resolve().parent.parent
 if str(backend_root) not in sys.path:
     sys.path.insert(0, str(backend_root))
@@ -31,7 +32,6 @@ if str(backend_root) not in sys.path:
 from dotenv import load_dotenv
 from prisma import Prisma
 
-# Load environment variables
 load_dotenv(backend_root / ".env.prod")
 load_dotenv(backend_root / ".env")
 
@@ -53,13 +53,18 @@ AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
 AWS_REGION = os.getenv("AWS_REGION", "ap-south-1")
 S3_BUCKET_NAME = os.getenv("AWS_S3_BUCKET_NAME", os.getenv("S3_BUCKET_NAME", "smart-attndance-system"))
 
+# Campus Coordinates: Ganpat University (UVPCE)
+CAMPUS_LAT = 23.5293
+CAMPUS_LNG = 72.4578
+CAMPUS_RADIUS = 100.0
+
 
 def _hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt(rounds=12)).decode()
 
 
 def cleanup_s3():
-    print("\n[1/5] Cleaning AWS S3 Storage...")
+    print("\n[1/6] Cleaning AWS S3 Storage...")
     s3 = boto3.client(
         "s3",
         region_name=AWS_REGION,
@@ -79,33 +84,42 @@ def cleanup_s3():
 
 
 async def main():
-    print("=" * 60)
-    print("🚨 PRODUCTION RDS & S3 CLEANUP AND SEEDING")
-    print("=" * 60)
+    print("=" * 65)
+    print("🚨 PRODUCTION RDS & S3 CLEANUP AND COMPREHENSIVE SEEDING")
+    print("=" * 65)
 
     # Step 1: Clean S3
     cleanup_s3()
 
     # Step 2: Connect to RDS Postgres via Prisma
-    print("\n[2/5] Connecting to AWS RDS PostgreSQL...")
+    print("\n[2/6] Connecting to AWS RDS PostgreSQL...")
     db = Prisma(datasource={"url": PROD_DB_URL})
     await db.connect()
     print("  ✓ Connected to AWS RDS PostgreSQL database.")
 
     try:
         # Step 3: Purge all RDS Tables
-        print("\n[3/5] Purging all domain tables in RDS PostgreSQL...")
+        print("\n[3/6] Purging all domain tables in RDS PostgreSQL...")
         await db.attendance.delete_many()
         await db.devicechangerequest.delete_many()
         await db.leaverequest.delete_many()
         await db.enrollment.delete_many()
         await db.geofence.delete_many()
+        await db.teachersubstitution.delete_many()
+        await db.timetableentry.delete_many()
+        await db.timeslot.delete_many()
+        await db.cohortcourse.delete_many()
+        await db.cohortstudent.delete_many()
+        await db.cohortbatch.delete_many()
+        await db.academiccohort.delete_many()
         await db.session.delete_many()
         await db.academicclass.delete_many()
+        await db.campus.delete_many()
         await db.teacher.delete_many()
         await db.student.delete_many()
         await db.notification.delete_many()
         await db.auditlog.delete_many()
+        await db.licenserequest.delete_many()
         await db.user.delete_many()
         await db.subject.delete_many()
         await db.classroom.delete_many()
@@ -116,7 +130,7 @@ async def main():
         print("  ✓ All domain tables successfully wiped.")
 
         # Step 4: Create Super Admin & System Config
-        print("\n[4/5] Provisioning Super Admin & System Configurations...")
+        print("\n[4/6] Provisioning Super Admin & System Configurations...")
         superadmin = await db.user.create(
             data={
                 "email": SUPERADMIN_EMAIL,
@@ -137,8 +151,8 @@ async def main():
         )
         print("  ✓ System Configuration created.")
 
-        # Step 5: Seed Tenant & Real Master Datasets
-        print("\n[5/5] Seeding Real World Dataset for Production Tenant (UVPCE)...")
+        # Step 5: Seed Tenant & Master Datasets
+        print("\n[5/6] Seeding Real World Dataset for Production Tenant (UVPCE)...")
         tenant = await db.tenant.create(
             data={
                 "slug": TENANT_SLUG,
@@ -150,7 +164,20 @@ async def main():
         )
         print(f"  ✓ Tenant provisioned: {tenant.name} (ID: {tenant.id})")
 
-        # 5a: Tenant Admin User
+        # 5a: Campus
+        campus = await db.campus.create(
+            data={
+                "tenantId": tenant.id,
+                "name": "UVPCE Main Campus",
+                "code": "UVPCE-MAIN",
+                "address": "Ganpat University, Mehsana-Gozaria Highway, Kherva, Gujarat 384017",
+                "latitude": CAMPUS_LAT,
+                "longitude": CAMPUS_LNG,
+            }
+        )
+        print(f"  ✓ Main Campus created: {campus.name}")
+
+        # 5b: Tenant Admin User
         admin_user = await db.user.create(
             data={
                 "email": TENANT_ADMIN_EMAIL,
@@ -163,7 +190,7 @@ async def main():
         )
         print(f"  ✓ Tenant Admin created: {admin_user.email}")
 
-        # 5b: Departments
+        # 5c: Departments
         dept_csv = DATASET_DIR / "departments.csv"
         dept_map = {}
         if dept_csv.exists():
@@ -182,7 +209,7 @@ async def main():
                     dept_map[d.code.upper()] = d.id
             print(f"  ✓ Created {len(dept_map)} Departments.")
 
-        # 5c: Designations
+        # 5d: Designations
         desig_csv = DATASET_DIR / "designations.csv"
         desig_map = {}
         if desig_csv.exists():
@@ -200,33 +227,34 @@ async def main():
                     desig_map[ds.code.upper()] = ds.id
             print(f"  ✓ Created {len(desig_map)} Designations.")
 
-        # 5d: Classrooms
+        # 5e: Classrooms
         room_csv = DATASET_DIR / "classrooms.csv"
-        total_rooms = 0
+        created_rooms = []
         if room_csv.exists():
             with open(room_csv, encoding="utf-8") as f:
                 reader = csv.DictReader(f)
                 for r in reader:
-                    await db.classroom.create(
+                    cr = await db.classroom.create(
                         data={
                             "tenantId": tenant.id,
                             "name": r["name"].strip(),
                             "building": r.get("building", "").strip() or "Main Campus",
                         }
                     )
-                    total_rooms += 1
-            print(f"  ✓ Created {total_rooms} Classrooms and Labs.")
+                    created_rooms.append(cr)
+            print(f"  ✓ Created {len(created_rooms)} Classrooms and Labs.")
 
-        # 5e: Subjects
+        # 5f: Subjects
         subj_csv = DATASET_DIR / "subjects.csv"
-        total_subjects = 0
+        created_subjects = []
+        subjects_by_dept = {}
         if subj_csv.exists():
             with open(subj_csv, encoding="utf-8") as f:
                 reader = csv.DictReader(f)
                 for r in reader:
-                    d_code = (r.get("department_code") or "").strip().upper()
-                    d_id = dept_map.get(d_code)
-                    await db.subject.create(
+                    dept_key = (r.get("department_id") or r.get("department_code") or "").strip().upper()
+                    d_id = dept_map.get(dept_key)
+                    sub = await db.subject.create(
                         data={
                             "tenantId": tenant.id,
                             "code": r["code"].strip(),
@@ -235,15 +263,18 @@ async def main():
                             "description": r.get("description", "").strip() or None,
                         }
                     )
-                    total_subjects += 1
-            print(f"  ✓ Created {total_subjects} Subjects with department relations.")
+                    created_subjects.append(sub)
+                    if dept_key:
+                        subjects_by_dept.setdefault(dept_key, []).append(sub)
+            print(f"  ✓ Created {len(created_subjects)} Subjects with department relations.")
 
-        # 5f: Teachers
+        # 5g: Teachers
         teachers_csv = DATASET_DIR / "teachers.csv"
-        total_teachers = 0
         hashed_default = _hash_password(DEFAULT_PASSWORD)
         default_dept_id = list(dept_map.values())[0] if dept_map else None
         default_desig_id = list(desig_map.values())[0] if desig_map else None
+        created_teachers = []
+        teachers_by_dept = {}
 
         if teachers_csv.exists():
             with open(teachers_csv, encoding="utf-8") as f:
@@ -254,10 +285,10 @@ async def main():
                     first_name = r["first_name"].strip()
                     last_name = r.get("last_name", "").strip()
                     initials = r.get("name_initials", "").strip().lower() or None
-                    d_code = (r.get("department_code") or "").strip().upper()
-                    ds_code = (r.get("designation_code") or "").strip().upper()
-                    d_id = dept_map.get(d_code) or default_dept_id
-                    ds_id = desig_map.get(ds_code) or default_desig_id
+                    dept_key = (r.get("department_id") or r.get("department_code") or "").strip().upper()
+                    ds_key = (r.get("designation_id") or r.get("designation_code") or "").strip().upper()
+                    d_id = dept_map.get(dept_key) or default_dept_id
+                    ds_id = desig_map.get(ds_key) or default_desig_id
 
                     user = await db.user.create(
                         data={
@@ -268,7 +299,7 @@ async def main():
                             "isActive": True,
                         }
                     )
-                    await db.teacher.create(
+                    teacher = await db.teacher.create(
                         data={
                             "userId": user.id,
                             "employeeId": emp_id,
@@ -279,12 +310,15 @@ async def main():
                             "designationId": ds_id,
                         }
                     )
-                    total_teachers += 1
-            print(f"  ✓ Created {total_teachers} Faculty / Teachers with initials & links.")
+                    created_teachers.append(teacher)
+                    teachers_by_dept.setdefault(dept_key, []).append(teacher)
+            print(f"  ✓ Created {len(created_teachers)} Faculty / Teachers with initials & links.")
 
-        # 5g: Students
+        # 5h: Students
         students_csv = DATASET_DIR / "students.csv"
-        total_students = 0
+        created_students = []
+        students_by_branch = {}
+
         if students_csv.exists():
             with open(students_csv, encoding="utf-8") as f:
                 reader = csv.DictReader(f)
@@ -295,9 +329,14 @@ async def main():
                     last_name = r.get("last_name", "").strip()
                     branch = r.get("branch", "").strip() or None
                     gender = r.get("gender", "").strip() or None
-                    sem = int(r["semester"]) if r.get("semester") and r["semester"].isdigit() else None
-                    d_code = (r.get("department_code") or "").strip().upper()
-                    d_id = dept_map.get(d_code) or default_dept_id
+                    
+                    # Compute semester and batch from enrollment prefix
+                    prefix = enrollment[:2]
+                    sem = 4 if prefix == "23" else (2 if prefix == "24" else 6)
+                    batch = f"20{prefix}-20{int(prefix)+4}" if prefix.isdigit() else "2023-2027"
+                    
+                    dept_key = (r.get("department_id") or r.get("department_code") or "").strip().upper()
+                    d_id = dept_map.get(dept_key) or default_dept_id
 
                     user = await db.user.create(
                         data={
@@ -308,7 +347,7 @@ async def main():
                             "isActive": True,
                         }
                     )
-                    await db.student.create(
+                    student = await db.student.create(
                         data={
                             "userId": user.id,
                             "enrollmentNumber": enrollment,
@@ -316,16 +355,160 @@ async def main():
                             "lastName": last_name,
                             "departmentId": d_id,
                             "semester": sem,
+                            "batch": batch,
                             "branch": branch,
                             "gender": gender,
                         }
                     )
-                    total_students += 1
-            print(f"  ✓ Created {total_students} Students with branch, gender & department links.")
+                    created_students.append(student)
+                    if branch:
+                        students_by_branch.setdefault(branch, []).append(student)
+            print(f"  ✓ Created {len(created_students)} Students with branch, batch & department links.")
 
-        print("\n" + "=" * 60)
-        print("🎉 PRODUCTION CLEANUP & SEEDING COMPLETED SUCCESSFULLY")
-        print("=" * 60)
+        # Step 6: Academic Classes, Geofences, Enrollments & Sessions
+        print("\n[6/6] Provisioning Academic Classes, Geofences, Enrollments & Live Sessions...")
+
+        # Branch to department and subject mapping
+        branch_configs = [
+            {"branch": "CE", "dept": "CSE", "semester": 4, "batch": "2023-2027", "code_filter": ["2CE", "2BS", "2BSC"]},
+            {"branch": "CE-AI", "dept": "CSE", "semester": 4, "batch": "2023-2027", "code_filter": ["2CEAI", "2CE", "2BS"]},
+            {"branch": "IT", "dept": "IT", "semester": 4, "batch": "2023-2027", "code_filter": ["2IT", "2CE", "2BS"]},
+            {"branch": "IoT-CE", "dept": "CSE", "semester": 2, "batch": "2024-2028", "code_filter": ["2CE", "2BSC"]},
+            {"branch": "IoT-IT", "dept": "IT", "semester": 2, "batch": "2024-2028", "code_filter": ["2IT", "2BSC"]},
+        ]
+
+        total_classes_created = 0
+        total_enrollments_created = 0
+        total_sessions_created = 0
+        total_attendance_created = 0
+
+        now = datetime.now(timezone.utc)
+        room_idx = 0
+
+        for config in branch_configs:
+            branch_name = config["branch"]
+            dept_key = config["dept"]
+            branch_students = students_by_branch.get(branch_name, [])
+            if not branch_students:
+                continue
+
+            available_subjects = subjects_by_dept.get(dept_key, []) or created_subjects
+            available_teachers = teachers_by_dept.get(dept_key, []) or created_teachers
+
+            # Pick 4 core subjects for each branch
+            selected_subjects = []
+            for sub in available_subjects:
+                if any(sub.code.startswith(pf) for pf in config["code_filter"]):
+                    selected_subjects.append(sub)
+                if len(selected_subjects) >= 4:
+                    break
+
+            if not selected_subjects:
+                selected_subjects = available_subjects[:4]
+
+            for idx, subject in enumerate(selected_subjects):
+                teacher = available_teachers[idx % len(available_teachers)]
+                classroom = created_rooms[room_idx % len(created_rooms)]
+                room_idx += 1
+
+                class_name = f"{branch_name} - Sem {config['semester']} - {subject.code}"
+
+                # 6a: Create AcademicClass
+                academic_class = await db.academicclass.create(
+                    data={
+                        "tenantId": tenant.id,
+                        "campusId": campus.id,
+                        "name": class_name,
+                        "subjectId": subject.id,
+                        "teacherId": teacher.id,
+                        "classroomId": classroom.id,
+                        "semester": config["semester"],
+                        "batch": config["batch"],
+                    }
+                )
+                total_classes_created += 1
+
+                # 6b: Create Geofence
+                await db.geofence.create(
+                    data={
+                        "academicClassId": academic_class.id,
+                        "latitude": CAMPUS_LAT,
+                        "longitude": CAMPUS_LNG,
+                        "radiusMeters": CAMPUS_RADIUS,
+                    }
+                )
+
+                # 6c: Enroll all students in this branch
+                for st in branch_students:
+                    await db.enrollment.create(
+                        data={
+                            "studentId": st.id,
+                            "academicClassId": academic_class.id,
+                        }
+                    )
+                    total_enrollments_created += 1
+
+                # 6d: Create 1 Active Session
+                active_session = await db.session.create(
+                    data={
+                        "academicClassId": academic_class.id,
+                        "startTime": now - timedelta(minutes=15),
+                        "endTime": now + timedelta(minutes=45),
+                        "isActive": True,
+                    }
+                )
+                total_sessions_created += 1
+
+                # 6e: Create 2 Completed Past Sessions with Attendance
+                for past_offset in [1, 2]:
+                    past_start = now - timedelta(days=past_offset, hours=2)
+                    past_end = past_start + timedelta(hours=1)
+                    past_session = await db.session.create(
+                        data={
+                            "academicClassId": academic_class.id,
+                            "startTime": past_start,
+                            "endTime": past_end,
+                            "isActive": False,
+                        }
+                    )
+                    total_sessions_created += 1
+
+                    # Seed attendance for students (85% Present, 10% Absent, 5% Flagged)
+                    for s_idx, st in enumerate(branch_students):
+                        if (s_idx + past_offset) % 10 == 0:
+                            status_val = "Absent"
+                            face_sc, live_sc, bg_sc, final_sc = 0.0, 0.0, 0.0, 0.0
+                        elif (s_idx + past_offset) % 15 == 0:
+                            status_val = "Flagged"
+                            face_sc, live_sc, bg_sc, final_sc = 0.72, 0.65, 0.70, 0.69
+                        else:
+                            status_val = "Present"
+                            face_sc, live_sc, bg_sc, final_sc = 0.95, 0.94, 0.96, 0.95
+
+                        await db.attendance.create(
+                            data={
+                                "studentId": st.id,
+                                "sessionId": past_session.id,
+                                "status": status_val,
+                                "faceScore": face_sc,
+                                "livenessScore": live_sc,
+                                "backgroundScore": bg_sc,
+                                "finalAiScore": final_sc,
+                                "gpsLatitude": CAMPUS_LAT,
+                                "gpsLongitude": CAMPUS_LNG,
+                                "remarks": f"System automated seed - {status_val}",
+                            }
+                        )
+                        total_attendance_created += 1
+
+        print(f"  ✓ Created {total_classes_created} Academic Classes with Geofences.")
+        print(f"  ✓ Created {total_enrollments_created} Student Enrollments.")
+        print(f"  ✓ Created {total_sessions_created} Sessions (Active & Historical).")
+        print(f"  ✓ Generated {total_attendance_created} Attendance records.")
+
+        print("\n" + "=" * 65)
+        print("🎉 PRODUCTION CLEANUP & COMPLETE SEEDING SUCCEEDED")
+        print("=" * 65)
 
     finally:
         if db.is_connected():
@@ -334,3 +517,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+

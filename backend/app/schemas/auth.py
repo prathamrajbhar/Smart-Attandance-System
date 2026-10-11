@@ -42,9 +42,12 @@ class StudentProfileBrief(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     phone: Optional[str] = None
+    gender: Optional[str] = None
+    branch: Optional[str] = None
     semester: Optional[int] = None
     batch: Optional[str] = None
     department_id: Optional[str] = None
+    department_name: Optional[str] = None
     face_registered: Optional[bool] = None
 
 

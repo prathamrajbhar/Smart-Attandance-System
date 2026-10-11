@@ -50,7 +50,10 @@ async def get_me(current_user: User = Depends(get_current_user)) -> UserProfileR
     teacher_profile = None
 
     if current_user.role == "STUDENT":
-        student = await db.student.find_unique(where={"userId": current_user.id})
+        student = await db.student.find_unique(
+            where={"userId": current_user.id},
+            include={"department": True},
+        )
         if student:
             embedding = await StudentRepository().get_face_embedding(student.id)
             student_profile = StudentProfileBrief(
@@ -58,6 +61,13 @@ async def get_me(current_user: User = Depends(get_current_user)) -> UserProfileR
                 enrollment_number=student.enrollmentNumber,
                 first_name=student.firstName,
                 last_name=student.lastName,
+                phone=student.phone,
+                gender=student.gender,
+                branch=student.branch,
+                semester=student.semester,
+                batch=student.batch,
+                department_id=student.departmentId,
+                department_name=student.department.name if student.department else None,
                 face_registered=embedding is not None and len(embedding) > 0,
             )
     elif current_user.role == "TEACHER":
